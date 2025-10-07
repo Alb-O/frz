@@ -4,8 +4,9 @@ use crate::types::SearchMode;
 use crate::types::UiConfig;
 use ratatui::layout::Rect;
 use ratatui::style::{Style, Stylize};
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
+use throbber_widgets_tui::{Throbber, ThrobberState};
 
 /// Render the input row with tabs at the right. This mirrors the behaviour
 /// previously implemented inside `app.rs`.
@@ -17,6 +18,8 @@ pub fn render_input_with_tabs(
     frame: &mut ratatui::Frame,
     area: Rect,
     theme: &Theme,
+    progress_text: &str,
+    throbber_state: &ThrobberState,
 ) {
     // Calculate tabs width: " Tags " + " Files " + extra padding = about 16 chars
     let tabs_width = 16u16;
@@ -57,13 +60,12 @@ pub fn render_input_with_tabs(
         let prompt_widget =
             ratatui::widgets::Paragraph::new(prompt_text).style(theme.prompt_style());
         frame.render_widget(prompt_widget, horizontal[0]);
-
-        // Render textarea in the middle section
-        search_input.render_textarea(frame, horizontal[1]);
-    } else {
-        // No prompt, render textarea in first section
-        search_input.render_textarea(frame, horizontal[0]);
     }
+
+    let input_index = if prompt.is_empty() { 0 } else { 1 };
+    let input_area = horizontal[input_index];
+    render_progress(frame, input_area, progress_text, throbber_state, theme);
+    search_input.render_textarea(frame, input_area);
 
     // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
@@ -96,4 +98,42 @@ pub fn render_input_with_tabs(
         .highlight_style(Style::default().bg(theme.header_bg));
 
     frame.render_widget(tabs, tabs_area);
+}
+
+fn render_progress(
+    frame: &mut ratatui::Frame,
+    area: Rect,
+    progress_text: &str,
+    throbber_state: &ThrobberState,
+    theme: &Theme,
+) {
+    if area.width == 0 || area.height == 0 || progress_text.is_empty() {
+        return;
+    }
+
+    let muted_style = theme.empty_style();
+    let spinner = Throbber::default()
+        .style(muted_style)
+        .throbber_style(muted_style);
+    let spinner_span = spinner.to_symbol_span(throbber_state);
+    let label_span = Span::styled(progress_text.to_string(), muted_style);
+    let mut line = Line::default();
+    line.spans.push(spinner_span);
+    line.spans.push(label_span);
+
+    let line_width = line.width() as u16;
+    if line_width == 0 {
+        return;
+    }
+
+    let max_width = area.width.min(line_width);
+    let start_x = if line_width >= area.width {
+        area.left()
+    } else {
+        area.right().saturating_sub(line_width)
+    };
+
+    frame
+        .buffer_mut()
+        .set_line(start_x, area.top(), &line, max_width);
 }

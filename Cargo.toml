@@ -11,3 +11,4 @@ frizbee = { git = "https://github.com/saghen/frizbee.git", branch = "main" }
 anyhow = "1.0.100"
 tui-textarea = "0.7.0"
 walkdir = "2.5.0"
+throbber-widgets-tui = "0.9.0"

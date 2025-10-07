@@ -14,6 +14,7 @@ use crate::tabs;
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, SearchSelection, UiConfig};
 use frizbee::{Config, match_list};
+use throbber_widgets_tui::ThrobberState;
 
 const PREFILTER_ENABLE_THRESHOLD: usize = 1_000;
 pub fn run(data: SearchData) -> Result<SearchOutcome> {
@@ -39,6 +40,7 @@ pub struct App<'a> {
     pub(crate) file_widths: Option<Vec<Constraint>>,
     pub(crate) ui: UiConfig,
     pub theme: crate::theme::Theme,
+    throbber_state: ThrobberState,
 }
 
 impl<'a> App<'a> {
@@ -68,6 +70,7 @@ impl<'a> App<'a> {
             file_widths: None,
             ui: UiConfig::default(),
             theme: Theme::default(),
+            throbber_state: ThrobberState::default(),
         };
         app.refresh();
         app
@@ -94,6 +97,7 @@ impl<'a> App<'a> {
         terminal.clear()?;
 
         let result = loop {
+            self.throbber_state.calc_next();
             terminal.draw(|frame| self.draw(frame))?;
 
             if event::poll(Duration::from_millis(250))? {
@@ -127,6 +131,7 @@ impl<'a> App<'a> {
             .split(area);
 
         // Delegate input + tabs rendering
+        let progress_text = self.progress_text();
         tabs::render_input_with_tabs(
             &self.search_input,
             &self.input_title,
@@ -135,6 +140,8 @@ impl<'a> App<'a> {
             frame,
             layout[0],
             &self.theme,
+            &progress_text,
+            &self.throbber_state,
         );
         self.render_results(frame, layout[1]);
 
@@ -146,6 +153,20 @@ impl<'a> App<'a> {
             frame.render_widget(Clear, layout[1]);
             frame.render_widget(empty, layout[1]);
         }
+    }
+
+    fn progress_text(&self) -> String {
+        let facet_label = self.ui.facets.count_label.as_str();
+        let file_label = self.ui.files.count_label.as_str();
+        format!(
+            "Indexed {}: {}/{} • Indexed {}: {}/{}",
+            facet_label,
+            self.filtered_facets.len(),
+            self.data.facets.len(),
+            file_label,
+            self.filtered_files.len(),
+            self.data.files.len(),
+        )
     }
 
     fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
