@@ -1,8 +1,8 @@
 [package]
-name = "tui_searcher"
+name = "riz"
 version = "0.1.0"
 edition = "2024"
-description = "Tui fuzzy searcher"
+description = "TUI fuzzy finder revolving around tabular data, utilising Saghen's Frizbee crate for matching"
 license = "MIT"
 
 [dependencies]

@@ -1,6 +1,6 @@
-# tui-searcher
+# riz
 
-A small, configurable TUI fuzzy finder inspired by `fzf`.
+TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://github.com/Saghen)'s [Frizbee](https://github.com/Saghen/frizbee) crate for matching.
 
 ## Features
 - Interactive TUI built on `ratatui`.
@@ -12,7 +12,7 @@ A small, configurable TUI fuzzy finder inspired by `fzf`.
 ## Quick example
 
 ```rust
-use tui_searcher::{SearchData, SearchMode, Searcher, UiConfig};
+use riz::{SearchData, SearchMode, Searcher, UiConfig};
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = Searcher::new(data)
@@ -28,10 +28,6 @@ if let Some(file) = outcome.selected_file() {
 ## Run the examples
 
 ```bash
-cargo run -p tui_searcher --example demo
-cargo run -p tui_searcher --example filesystem -- /path/to/project
+cargo run -p riz --example demo
+cargo run -p riz --example filesystem -- /path/to/project
 ```
-
-## Notes
-- This crate is meant to be a reusable component. You can integrate it into your own CLIs and customize headers/column widths using the builder API.
-- The underlying matching behavior is provided by `frizbee`.

@@ -1,4 +1,4 @@
-use tui_searcher::{
+use riz::{
     FacetRow, FileRow, SearchData, SearchMode, SearchSelection, Searcher, UiConfig,
 };
 

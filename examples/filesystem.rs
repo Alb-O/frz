@@ -1,7 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
-use tui_searcher::{SearchSelection, Searcher};
+use riz::{SearchSelection, Searcher};
 
 fn main() -> anyhow::Result<()> {
     let root = env::args()
