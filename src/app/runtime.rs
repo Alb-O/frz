@@ -1,4 +1,5 @@
-use std::time::Duration;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
@@ -18,6 +19,8 @@ impl<'a> App<'a> {
     pub fn run(&mut self) -> Result<SearchOutcome> {
         let mut terminal = ratatui::init();
         terminal.clear()?;
+
+        self.hydrate_initial_results();
 
         let result = loop {
             self.pump_index_updates();
@@ -40,5 +43,21 @@ impl<'a> App<'a> {
 
         ratatui::restore();
         Ok(result)
+    }
+
+    fn hydrate_initial_results(&mut self) {
+        if self.latest_query_id.is_none() {
+            self.mark_query_dirty();
+            self.request_search();
+        }
+
+        let deadline = Instant::now() + Duration::from_millis(250);
+        while self.search_in_flight && Instant::now() < deadline {
+            self.pump_search_results();
+            if self.search_in_flight {
+                thread::sleep(Duration::from_millis(10));
+            }
+        }
+        self.pump_search_results();
     }
 }

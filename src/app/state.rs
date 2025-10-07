@@ -57,7 +57,7 @@ impl<'a> App<'a> {
         let context_label = data.context_label.clone();
         let index_progress = IndexProgress::from(&data);
         let (search_tx, search_rx, search_latest_query_id) = search::spawn(data.clone());
-        let mut app = Self {
+        let app = Self {
             data,
             mode: SearchMode::Facets,
             search_input: SearchInput::new(initial_query),
@@ -86,8 +86,6 @@ impl<'a> App<'a> {
             pending_result_revision: 0,
             last_applied_revision: 0,
         };
-        app.request_search();
-        app.pump_search_results();
         app
     }
 
@@ -148,5 +146,51 @@ impl<'a> App<'a> {
                     .map(SearchSelection::File)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::{Duration, Instant};
+
+    use super::*;
+    use crate::types::{FacetRow, FileRow};
+
+    fn sample_data() -> SearchData {
+        let mut data = SearchData::new();
+        data.facets = vec![
+            FacetRow::new("alpha", 3),
+            FacetRow::new("beta", 5),
+            FacetRow::new("gamma", 2),
+        ];
+        data.files = vec![
+            FileRow::new("src/main.rs", ["alpha", "beta"]),
+            FileRow::new("src/lib.rs", ["beta"]),
+            FileRow::new("README.md", ["gamma"]),
+        ];
+        data
+    }
+
+    fn prime_and_wait_for_results(app: &mut App) {
+        app.mark_query_dirty();
+        app.request_search();
+
+        let deadline = Instant::now() + Duration::from_secs(1);
+        while app.search_in_flight && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+            app.pump_search_results();
+        }
+        app.pump_search_results();
+    }
+
+    #[test]
+    fn new_app_hydrates_initial_results() {
+        let data = sample_data();
+        let mut app = App::new(data);
+        prime_and_wait_for_results(&mut app);
+        assert!(
+            !app.filtered_facets.is_empty() || !app.filtered_files.is_empty(),
+            "expected initial search results to populate"
+        );
     }
 }

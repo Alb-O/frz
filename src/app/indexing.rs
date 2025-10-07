@@ -61,6 +61,7 @@ impl<'a> App<'a> {
         let changed = !update.files.is_empty() || !update.facets.is_empty();
         if changed {
             merge_update(&mut self.data, &update);
+            self.mark_query_dirty();
         }
 
         let progress = update.progress;
@@ -84,4 +85,60 @@ impl<'a> App<'a> {
     }
 
     pub(crate) fn pump_index_updates(&mut self) {}
+}
+
+#[cfg(all(test, feature = "fs"))]
+mod tests {
+    use super::*;
+    use crate::indexing::ProgressSnapshot;
+    use crate::types::{FacetRow, FileRow, SearchData};
+    use std::time::{Duration, Instant};
+
+    fn wait_for_results(app: &mut App) {
+        let deadline = Instant::now() + Duration::from_secs(1);
+        while app.search_in_flight && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+            app.pump_search_results();
+        }
+        app.pump_search_results();
+    }
+
+    #[test]
+    fn index_updates_refresh_results_without_input_changes() {
+        let data = SearchData::new();
+        let mut app = App::new(data);
+
+        app.mark_query_dirty();
+        app.request_search();
+        wait_for_results(&mut app);
+
+        assert_eq!(app.filtered_len(), 0);
+        let update = IndexUpdate {
+            files: vec![FileRow::new("src/lib.rs", ["alpha"])].into(),
+            facets: vec![FacetRow::new("alpha", 1)].into(),
+            progress: ProgressSnapshot {
+                indexed_facets: 1,
+                indexed_files: 1,
+                total_facets: Some(1),
+                total_files: Some(1),
+                complete: true,
+            },
+        };
+
+        app.notify_search_of_update(&update);
+        let changed = app.apply_index_update(update);
+        assert!(changed, "index update should report data changes");
+        assert!(
+            app.input_revision != app.last_applied_revision,
+            "data changes should mark the query dirty"
+        );
+
+        app.request_search_after_index_update();
+        wait_for_results(&mut app);
+
+        assert!(
+            app.filtered_len() > 0,
+            "expected refreshed results after indexing"
+        );
+    }
 }

@@ -21,12 +21,16 @@ impl<'a> SearchInput<'a> {
         Self { textarea }
     }
 
-    /// Handle input events, ignoring Enter and Ctrl+M to keep it single-line
+    /// Handle input events, ignoring Enter and Ctrl+M to keep it single-line.
+    ///
+    /// Returns `true` when the normalized query text changes in a way that would
+    /// affect search results.
     pub fn input(&mut self, input: impl Into<Input>) -> bool {
         let input = input.into();
 
-        // Ignore keys that would insert newlines
         match input {
+            // Ignore keys that would insert newlines to keep the widget
+            // single-line.
             Input {
                 key: Key::Char('m'),
                 ctrl: true,
@@ -36,9 +40,14 @@ impl<'a> SearchInput<'a> {
             | Input {
                 key: Key::Enter, ..
             } => false,
-            _ => {
-                self.textarea.input(input);
-                true
+            input => {
+                let before = self.normalized_text();
+                let modified = self.textarea.input(input);
+                if !modified {
+                    return false;
+                }
+                let after = self.normalized_text();
+                before != after
             }
         }
     }
@@ -46,6 +55,10 @@ impl<'a> SearchInput<'a> {
     /// Get the current input text
     pub fn text(&self) -> &str {
         self.textarea.lines()[0].as_str()
+    }
+
+    fn normalized_text(&self) -> String {
+        self.text().trim().to_string()
     }
 
     /// Set the input text
@@ -122,5 +135,49 @@ mod tests {
         let mut input = SearchInput::new("initial");
         input.set_text("updated");
         assert_eq!(input.text(), "updated");
+    }
+
+    #[test]
+    fn test_input_noop_backspace() {
+        let mut input = SearchInput::default();
+        let backspace = Input {
+            key: Key::Backspace,
+            ctrl: false,
+            alt: false,
+            shift: false,
+        };
+        assert!(!input.input(backspace));
+    }
+
+    #[test]
+    fn test_input_whitespace_only_change_is_ignored() {
+        let mut input = SearchInput::default();
+        let space = Input {
+            key: Key::Char(' '),
+            ctrl: false,
+            alt: false,
+            shift: false,
+        };
+        assert!(!input.input(space));
+        assert_eq!(input.text(), " ");
+    }
+
+    #[test]
+    fn test_input_actual_change_triggers_update() {
+        let mut input = SearchInput::default();
+        let letter = Input {
+            key: Key::Char('a'),
+            ctrl: false,
+            alt: false,
+            shift: false,
+        };
+        assert!(input.input(letter));
+        let delete = Input {
+            key: Key::Backspace,
+            ctrl: false,
+            alt: false,
+            shift: false,
+        };
+        assert!(input.input(delete));
     }
 }
