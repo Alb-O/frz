@@ -64,8 +64,8 @@ pub fn render_input_with_tabs(
 
     let input_index = if prompt.is_empty() { 0 } else { 1 };
     let input_area = horizontal[input_index];
-    render_progress(frame, input_area, progress_text, throbber_state, theme);
     search_input.render_textarea(frame, input_area);
+    render_progress(frame, input_area, progress_text, throbber_state, theme);
 
     // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
@@ -126,14 +126,43 @@ fn render_progress(
         return;
     }
 
-    let max_width = area.width.min(line_width);
-    let start_x = if line_width >= area.width {
+    let buffer = frame.buffer_mut();
+    let mut start_x = if line_width >= area.width {
         area.left()
     } else {
         area.right().saturating_sub(line_width)
     };
 
-    frame
-        .buffer_mut()
-        .set_line(start_x, area.top(), &line, max_width);
+    let input_row = area.top();
+    let mut last_char_x: Option<u16> = None;
+    for x in area.left()..area.right() {
+        if let Some(cell) = buffer.cell((x, input_row)) {
+            if !cell.symbol().trim().is_empty() {
+                last_char_x = Some(x);
+            }
+        }
+    }
+
+    if let Some(last_x) = last_char_x {
+        let min_start = last_x.saturating_add(3); // 1 column for the last char + 2 columns padding
+        if min_start > start_x {
+            start_x = min_start;
+        }
+    }
+
+    if start_x >= area.right() {
+        return;
+    }
+
+    let max_width = area
+        .right()
+        .saturating_sub(start_x)
+        .min(line_width)
+        .min(area.width);
+
+    if max_width == 0 {
+        return;
+    }
+
+    buffer.set_line(start_x, input_row, &line, max_width);
 }
