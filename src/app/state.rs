@@ -1,10 +1,7 @@
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
-use std::time::Duration;
+use std::sync::atomic::AtomicU64;
+use std::sync::mpsc::{Receiver, Sender};
 
-use anyhow::Result;
-use ratatui::crossterm::event::{self, Event, KeyEventKind};
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
@@ -13,12 +10,7 @@ use crate::input::SearchInput;
 use crate::progress::IndexProgress;
 use crate::search::{self, SearchCommand, SearchResult};
 use crate::theme::Theme;
-use crate::types::{SearchData, SearchMode, SearchOutcome, SearchSelection, UiConfig};
-
-pub fn run(data: SearchData) -> Result<SearchOutcome> {
-    let mut app: App = App::new(data);
-    app.run()
-}
+use crate::types::{SearchData, SearchMode, SearchSelection, UiConfig};
 
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
@@ -45,11 +37,11 @@ pub struct App<'a> {
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
-    search_tx: Sender<SearchCommand>,
-    search_rx: Receiver<SearchResult>,
-    search_latest_query_id: Arc<AtomicU64>,
-    next_query_id: u64,
-    latest_query_id: Option<u64>,
+    pub(super) search_tx: Sender<SearchCommand>,
+    pub(super) search_rx: Receiver<SearchResult>,
+    pub(super) search_latest_query_id: Arc<AtomicU64>,
+    pub(super) next_query_id: u64,
+    pub(super) latest_query_id: Option<u64>,
 }
 
 impl<'a> App<'a> {
@@ -100,79 +92,6 @@ impl<'a> App<'a> {
             self.table_state.select(Some(0));
             self.request_search();
         }
-    }
-
-    pub fn run(&mut self) -> Result<SearchOutcome> {
-        let mut terminal = ratatui::init();
-        terminal.clear()?;
-
-        let result = loop {
-            self.pump_index_updates();
-            self.pump_search_results();
-            self.throbber_state.calc_next();
-            terminal.draw(|frame| self.draw(frame))?;
-
-            if event::poll(Duration::from_millis(50))? {
-                match event::read()? {
-                    Event::Key(key) if key.kind == KeyEventKind::Press => {
-                        if let Some(outcome) = self.handle_key(key)? {
-                            break outcome;
-                        }
-                    }
-                    Event::Resize(_, _) => {}
-                    _ => {}
-                }
-            }
-        };
-
-        ratatui::restore();
-        Ok(result)
-    }
-
-    pub(crate) fn request_search(&mut self) {
-        self.next_query_id = self.next_query_id.saturating_add(1);
-        let id = self.next_query_id;
-        self.latest_query_id = Some(id);
-        let query = self.search_input.text().to_string();
-        let mode = self.mode;
-        self.search_latest_query_id
-            .store(id, AtomicOrdering::Release);
-        let _ = self
-            .search_tx
-            .send(SearchCommand::Query { id, query, mode });
-    }
-
-    pub(crate) fn notify_search_of_update(&self, update: &IndexUpdate) {
-        let _ = self.search_tx.send(SearchCommand::Update(update.clone()));
-    }
-
-    pub(crate) fn pump_search_results(&mut self) {
-        loop {
-            match self.search_rx.try_recv() {
-                Ok(result) => self.handle_search_result(result),
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => break,
-            }
-        }
-    }
-
-    fn handle_search_result(&mut self, result: SearchResult) {
-        if Some(result.id) != self.latest_query_id {
-            return;
-        }
-
-        match result.mode {
-            SearchMode::Facets => {
-                self.filtered_facets = result.indices;
-                self.facet_scores = result.scores;
-            }
-            SearchMode::Files => {
-                self.filtered_files = result.indices;
-                self.file_scores = result.scores;
-            }
-        }
-
-        self.ensure_selection();
     }
 
     pub(crate) fn ensure_selection(&mut self) {

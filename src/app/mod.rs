@@ -1,6 +1,9 @@
 mod actions;
 mod indexing;
 mod render;
+mod runtime;
+mod search;
 mod state;
 
-pub use state::{App, run};
+pub use runtime::run;
+pub use state::App;
