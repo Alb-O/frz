@@ -17,10 +17,22 @@ impl IndexCounts {
         self.facets = self.facets.max(facets);
         self.files = self.files.max(files);
     }
+}
 
-    fn set(&mut self, facets: usize, files: usize) {
-        self.facets = facets;
-        self.files = files;
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+struct IndexTotals {
+    facets: Option<usize>,
+    files: Option<usize>,
+}
+
+impl IndexTotals {
+    const fn new(facets: Option<usize>, files: Option<usize>) -> Self {
+        Self { facets, files }
+    }
+
+    fn set(&mut self, facets: Option<usize>, files: Option<usize>, indexed: &IndexCounts) {
+        self.facets = facets.map(|total| total.max(indexed.facets));
+        self.files = files.map(|total| total.max(indexed.files));
     }
 }
 
@@ -30,7 +42,7 @@ impl IndexCounts {
 /// format a progress label that remains stable once indexing has completed.
 #[derive(Debug, Clone)]
 pub struct IndexProgress {
-    totals: IndexCounts,
+    totals: IndexTotals,
     indexed: IndexCounts,
     complete: bool,
 }
@@ -39,10 +51,19 @@ impl IndexProgress {
     /// Create a new tracker with the provided total counts.
     #[must_use]
     pub const fn new(total_facets: usize, total_files: usize) -> Self {
-        let totals = IndexCounts::new(total_facets, total_files);
-        let complete = total_facets == 0 && total_files == 0;
+        Self::with_totals(Some(total_facets), Some(total_files))
+    }
+
+    /// Create a tracker where the totals are unknown and will be supplied later.
+    #[must_use]
+    pub const fn with_unknown_totals() -> Self {
+        Self::with_totals(None, None)
+    }
+
+    const fn with_totals(total_facets: Option<usize>, total_files: Option<usize>) -> Self {
+        let complete = matches!(total_facets, Some(0)) && matches!(total_files, Some(0));
         Self {
-            totals,
+            totals: IndexTotals::new(total_facets, total_files),
             indexed: IndexCounts::new(0, 0),
             complete,
         }
@@ -53,12 +74,9 @@ impl IndexProgress {
     /// The totals never shrink below the number of items that have already been
     /// indexed to ensure the completion state remains truthful if totals are
     /// adjusted after progress updates have been recorded.
-    pub fn set_totals(&mut self, total_facets: usize, total_files: usize) {
-        self.totals.set(
-            total_facets.max(self.indexed.facets),
-            total_files.max(self.indexed.files),
-        );
-        self.complete = self.is_complete();
+    pub fn set_totals(&mut self, total_facets: Option<usize>, total_files: Option<usize>) {
+        self.totals.set(total_facets, total_files, &self.indexed);
+        self.update_completion();
     }
 
     /// Record the number of indexed facets and files.
@@ -68,7 +86,12 @@ impl IndexProgress {
     /// the eventual completion snapshot once the full index is available.
     pub fn record_indexed(&mut self, facets: usize, files: usize) {
         self.indexed.update_max(facets, files);
-        self.complete = self.is_complete();
+        self.update_completion();
+    }
+
+    /// Mark indexing as complete regardless of the recorded totals.
+    pub fn mark_complete(&mut self) {
+        self.complete = true;
     }
 
     /// Return a formatted status label and a completion flag suitable for the UI.
@@ -83,27 +106,37 @@ impl IndexProgress {
         (progress, self.complete)
     }
 
-    fn format_progress(&self, indexed: usize, total: usize) -> ProgressDisplay {
-        if total == 0 {
-            ProgressDisplay::Fixed(0)
-        } else if self.complete {
-            ProgressDisplay::Fixed(total)
-        } else {
-            ProgressDisplay::Ratio { indexed, total }
+    fn format_progress(&self, indexed: usize, total: Option<usize>) -> ProgressDisplay {
+        match total {
+            Some(0) => ProgressDisplay::Fixed(0),
+            Some(total) if self.complete => ProgressDisplay::Fixed(total),
+            Some(total) => ProgressDisplay::Ratio { indexed, total },
+            None => ProgressDisplay::Unknown { indexed },
         }
     }
 
-    fn is_complete(&self) -> bool {
-        (self.totals.facets == 0 || self.indexed.facets >= self.totals.facets)
-            && (self.totals.files == 0 || self.indexed.files >= self.totals.files)
+    fn update_completion(&mut self) {
+        let facets_complete = match self.totals.facets {
+            Some(total) => total == 0 || self.indexed.facets >= total,
+            None => false,
+        };
+        let files_complete = match self.totals.files {
+            Some(total) => total == 0 || self.indexed.files >= total,
+            None => false,
+        };
+
+        if facets_complete && files_complete {
+            self.complete = true;
+        }
     }
 
     /// Reconcile the tracked counts with the provided search data snapshot.
     pub fn refresh_from_data(&mut self, data: &SearchData) {
         let total_facets = data.facets.len();
         let total_files = data.files.len();
-        self.set_totals(total_facets, total_files);
+        self.set_totals(Some(total_facets), Some(total_files));
         self.record_indexed(total_facets, total_files);
+        self.mark_complete();
     }
 }
 
@@ -111,6 +144,7 @@ impl IndexProgress {
 enum ProgressDisplay {
     Fixed(usize),
     Ratio { indexed: usize, total: usize },
+    Unknown { indexed: usize },
 }
 
 impl fmt::Display for ProgressDisplay {
@@ -118,6 +152,7 @@ impl fmt::Display for ProgressDisplay {
         match self {
             Self::Fixed(value) => write!(f, "{}", value),
             Self::Ratio { indexed, total } => write!(f, "{}/{}", indexed, total),
+            Self::Unknown { indexed } => write!(f, "{}/?", indexed),
         }
     }
 }
@@ -128,6 +163,7 @@ impl From<&SearchData> for IndexProgress {
         let total_files = data.files.len();
         let mut progress = IndexProgress::new(total_facets, total_files);
         progress.record_indexed(total_facets, total_files);
+        progress.mark_complete();
         progress
     }
 }
@@ -185,6 +221,22 @@ mod tests {
 
         let (label, complete) = progress.status("Facets", "Files");
         assert_eq!(label, "Indexed Facets: 1 • Indexed Files: 1");
+        assert!(complete);
+    }
+
+    #[test]
+    fn reports_unknown_totals_during_streaming() {
+        let mut progress = IndexProgress::with_unknown_totals();
+        progress.record_indexed(5, 12);
+
+        let (label, complete) = progress.status("Facets", "Files");
+        assert_eq!(label, "Indexed Facets: 5/? • Indexed Files: 12/?");
+        assert!(!complete);
+
+        progress.set_totals(Some(5), Some(12));
+        progress.mark_complete();
+        let (label, complete) = progress.status("Facets", "Files");
+        assert_eq!(label, "Indexed Facets: 5 • Indexed Files: 12");
         assert!(complete);
     }
 }

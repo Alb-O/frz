@@ -173,7 +173,7 @@ impl SearchMode {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SearchData {
     pub context_label: Option<String>,
     pub initial_query: String,

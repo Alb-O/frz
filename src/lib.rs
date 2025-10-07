@@ -1,6 +1,8 @@
 pub mod app;
+mod indexing;
 pub mod input;
 pub mod progress;
+mod search;
 pub mod tables;
 pub mod tabs;
 pub mod theme;
@@ -15,7 +17,12 @@ pub use types::{
     UiConfig,
 };
 
+use std::sync::mpsc::Receiver;
+
 use ratatui::layout::Constraint;
+
+use crate::indexing::IndexUpdate;
+use crate::indexing::spawn_filesystem_index;
 
 /// A small, ergonomic builder for configuring the TUI searcher.
 /// This presents a tiny fzf-like API for setting prompts, column
@@ -30,6 +37,7 @@ pub struct Searcher {
     ui_config: Option<UiConfig>,
     theme: Option<Theme>,
     start_mode: Option<SearchMode>,
+    index_updates: Option<Receiver<IndexUpdate>>,
 }
 
 impl Searcher {
@@ -45,13 +53,18 @@ impl Searcher {
             ui_config: None,
             theme: None,
             start_mode: None,
+            index_updates: None,
         }
     }
 
     /// Create a searcher pre-populated with files from the filesystem rooted at `path`.
     pub fn filesystem(path: impl AsRef<std::path::Path>) -> anyhow::Result<Self> {
-        let data = SearchData::from_filesystem(path)?;
-        Ok(Self::new(data).with_start_mode(SearchMode::Files))
+        let root = path.as_ref().to_path_buf();
+        let (data, updates) = spawn_filesystem_index(root)?;
+        let mut searcher = Self::new(data);
+        searcher.start_mode = Some(SearchMode::Files);
+        searcher.index_updates = Some(updates);
+        Ok(searcher)
     }
 
     pub fn with_input_title(mut self, title: impl Into<String>) -> Self {
@@ -99,7 +112,7 @@ impl Searcher {
     }
 
     /// Run the interactive searcher with the configured options.
-    pub fn run(self) -> anyhow::Result<crate::types::SearchOutcome> {
+    pub fn run(mut self) -> anyhow::Result<crate::types::SearchOutcome> {
         // Build an App and apply optional customizations, then run it.
         let mut app = crate::app::App::new(self.data);
         if let Some(title) = self.input_title {
@@ -125,6 +138,9 @@ impl Searcher {
         }
         if let Some(mode) = self.start_mode {
             app.set_mode(mode);
+        }
+        if let Some(updates) = self.index_updates.take() {
+            app.set_index_updates(updates);
         }
 
         app.run()
