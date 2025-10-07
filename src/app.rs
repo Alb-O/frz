@@ -9,6 +9,7 @@ use ratatui::{
 };
 
 use crate::input::SearchInput;
+use crate::progress::IndexProgress;
 use crate::tables;
 use crate::tabs;
 use crate::theme::Theme;
@@ -41,6 +42,7 @@ pub struct App<'a> {
     pub(crate) ui: UiConfig,
     pub theme: crate::theme::Theme,
     throbber_state: ThrobberState,
+    index_progress: IndexProgress,
 }
 
 impl<'a> App<'a> {
@@ -53,6 +55,7 @@ impl<'a> App<'a> {
         };
         let initial_query = data.initial_query.clone();
         let context_label = data.context_label.clone();
+        let index_progress = IndexProgress::from(&data);
         let mut app = Self {
             data,
             mode: SearchMode::Facets,
@@ -71,6 +74,7 @@ impl<'a> App<'a> {
             ui: UiConfig::default(),
             theme: Theme::default(),
             throbber_state: ThrobberState::default(),
+            index_progress,
         };
         app.refresh();
         app
@@ -131,7 +135,7 @@ impl<'a> App<'a> {
             .split(area);
 
         // Delegate input + tabs rendering
-        let progress_text = self.progress_text();
+        let (progress_text, progress_complete) = self.progress_status();
         tabs::render_input_with_tabs(
             &self.search_input,
             &self.input_title,
@@ -141,6 +145,7 @@ impl<'a> App<'a> {
             layout[0],
             &self.theme,
             &progress_text,
+            progress_complete,
             &self.throbber_state,
         );
         self.render_results(frame, layout[1]);
@@ -155,18 +160,11 @@ impl<'a> App<'a> {
         }
     }
 
-    fn progress_text(&self) -> String {
+    fn progress_status(&mut self) -> (String, bool) {
         let facet_label = self.ui.facets.count_label.as_str();
         let file_label = self.ui.files.count_label.as_str();
-        format!(
-            "Indexed {}: {}/{} • Indexed {}: {}/{}",
-            facet_label,
-            self.filtered_facets.len(),
-            self.data.facets.len(),
-            file_label,
-            self.filtered_files.len(),
-            self.data.files.len(),
-        )
+        self.index_progress.refresh_from_data(&self.data);
+        self.index_progress.status(facet_label, file_label)
     }
 
     fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {

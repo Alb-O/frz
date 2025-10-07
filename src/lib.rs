@@ -1,5 +1,6 @@
 pub mod app;
 pub mod input;
+pub mod progress;
 pub mod tables;
 pub mod tabs;
 pub mod theme;

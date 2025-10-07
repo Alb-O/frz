@@ -19,6 +19,7 @@ pub fn render_input_with_tabs(
     area: Rect,
     theme: &Theme,
     progress_text: &str,
+    progress_complete: bool,
     throbber_state: &ThrobberState,
 ) {
     // Calculate tabs width: " Tags " + " Files " + extra padding = about 16 chars
@@ -65,7 +66,14 @@ pub fn render_input_with_tabs(
     let input_index = if prompt.is_empty() { 0 } else { 1 };
     let input_area = horizontal[input_index];
     search_input.render_textarea(frame, input_area);
-    render_progress(frame, input_area, progress_text, throbber_state, theme);
+    render_progress(
+        frame,
+        input_area,
+        progress_text,
+        progress_complete,
+        throbber_state,
+        theme,
+    );
 
     // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
@@ -104,6 +112,7 @@ fn render_progress(
     frame: &mut ratatui::Frame,
     area: Rect,
     progress_text: &str,
+    progress_complete: bool,
     throbber_state: &ThrobberState,
     theme: &Theme,
 ) {
@@ -112,13 +121,15 @@ fn render_progress(
     }
 
     let muted_style = theme.empty_style();
-    let spinner = Throbber::default()
-        .style(muted_style)
-        .throbber_style(muted_style);
-    let spinner_span = spinner.to_symbol_span(throbber_state);
     let label_span = Span::styled(progress_text.to_string(), muted_style);
     let mut line = Line::default();
-    line.spans.push(spinner_span);
+    if !progress_complete {
+        let spinner = Throbber::default()
+            .style(muted_style)
+            .throbber_style(muted_style);
+        let spinner_span = spinner.to_symbol_span(throbber_state);
+        line.spans.push(spinner_span);
+    }
     line.spans.push(label_span);
 
     let line_width = line.width() as u16;
