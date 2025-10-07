@@ -7,6 +7,7 @@ use std::thread;
 
 use frizbee::{Config, match_list};
 
+#[cfg(feature = "fs")]
 use crate::indexing::{IndexUpdate, merge_update};
 use crate::types::{SearchData, SearchMode};
 
@@ -22,6 +23,7 @@ pub(crate) enum SearchCommand {
         query: String,
         mode: SearchMode,
     },
+    #[cfg(feature = "fs")]
     Update(IndexUpdate),
     Shutdown,
 }
@@ -36,6 +38,7 @@ pub(crate) struct SearchResult {
     pub(crate) complete: bool,
 }
 
+#[cfg_attr(not(feature = "fs"), allow(unused_mut))]
 pub(crate) fn spawn(
     mut data: SearchData,
 ) -> (
@@ -56,6 +59,7 @@ pub(crate) fn spawn(
                         break;
                     }
                 }
+                #[cfg(feature = "fs")]
                 SearchCommand::Update(update) => {
                     merge_update(&mut data, &update);
                 }

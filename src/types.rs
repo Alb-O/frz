@@ -1,11 +1,20 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
+#[cfg(not(feature = "fs"))]
+use anyhow::bail;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;
+#[cfg(feature = "fs")]
 use std::collections::{BTreeMap, BTreeSet};
 use std::mem;
-use std::path::{Component, Path};
-use walkdir::WalkDir;
+#[cfg(feature = "fs")]
+use std::path::Component;
+use std::path::Path;
+
+#[cfg(feature = "fs")]
+use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
+#[cfg(feature = "fs")]
+use std::sync::{Arc, mpsc};
 
 #[derive(Debug, Clone)]
 pub struct FacetRow {
@@ -211,45 +220,58 @@ impl SearchData {
         self
     }
 
+    #[cfg(feature = "fs")]
     pub fn from_filesystem(root: impl AsRef<Path>) -> Result<Self> {
-        let root = root.as_ref();
+        let root = root.as_ref().to_path_buf();
+        let (tx, rx) = mpsc::channel();
+        let walker_root = Arc::new(root.clone());
+        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+
+        WalkBuilder::new(walker_root.as_path())
+            .hidden(false)
+            .git_ignore(true)
+            .git_global(true)
+            .git_exclude(true)
+            .ignore(true)
+            .parents(true)
+            .threads(threads)
+            .build_parallel()
+            .run(|| {
+                let sender = tx.clone();
+                let root = Arc::clone(&walker_root);
+                Box::new(move |entry: Result<DirEntry, IgnoreError>| {
+                    if let Ok(entry) = entry {
+                        let Some(file_type) = entry.file_type() else {
+                            return WalkState::Continue;
+                        };
+                        if !file_type.is_file() {
+                            return WalkState::Continue;
+                        }
+
+                        let path = entry.path();
+                        let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
+                        let tags = tags_for_relative_path(relative);
+                        let relative_display = relative.to_string_lossy().replace("\\", "/");
+                        let file = FileRow::new(relative_display, tags);
+                        if sender.send(file).is_err() {
+                            return WalkState::Quit;
+                        }
+                    }
+
+                    WalkState::Continue
+                })
+            });
+
+        drop(tx);
+
         let mut files = Vec::new();
         let mut facet_counts: BTreeMap<String, usize> = BTreeMap::new();
 
-        for entry in WalkDir::new(root).into_iter() {
-            let entry = entry.with_context(|| format!("failed to walk {}", root.display()))?;
-            if !entry.file_type().is_file() {
-                continue;
-            }
-
-            let path = entry.path();
-            let relative = path.strip_prefix(root).unwrap_or(path);
-            let mut tags: BTreeSet<String> = BTreeSet::new();
-
-            if let Some(parent) = relative.parent() {
-                for component in parent.components() {
-                    if let Component::Normal(part) = component {
-                        let value = part.to_string_lossy().to_string();
-                        if !value.is_empty() {
-                            tags.insert(value);
-                        }
-                    }
-                }
-            }
-
-            if let Some(ext) = relative.extension().and_then(|ext| ext.to_str())
-                && !ext.is_empty()
-            {
-                tags.insert(format!("*.{ext}"));
-            }
-
-            let tags_vec: Vec<String> = tags.into_iter().collect();
-            for tag in &tags_vec {
+        for file in rx {
+            for tag in &file.tags {
                 *facet_counts.entry(tag.clone()).or_default() += 1;
             }
-
-            let relative_display = relative.to_string_lossy().replace("\\", "/");
-            files.push(FileRow::new(relative_display, tags_vec));
+            files.push(file);
         }
 
         files.sort_by(|a, b| a.path.cmp(&b.path));
@@ -266,6 +288,35 @@ impl SearchData {
             files,
         })
     }
+
+    #[cfg(not(feature = "fs"))]
+    pub fn from_filesystem(_root: impl AsRef<Path>) -> Result<Self> {
+        bail!("filesystem support is disabled; enable the `fs` feature");
+    }
+}
+
+#[cfg(feature = "fs")]
+pub(crate) fn tags_for_relative_path(relative: &Path) -> Vec<String> {
+    let mut tags: BTreeSet<String> = BTreeSet::new();
+
+    if let Some(parent) = relative.parent() {
+        for component in parent.components() {
+            if let Component::Normal(part) = component {
+                let value = part.to_string_lossy().to_string();
+                if !value.is_empty() {
+                    tags.insert(value);
+                }
+            }
+        }
+    }
+
+    if let Some(ext) = relative.extension().and_then(|ext| ext.to_str())
+        && !ext.is_empty()
+    {
+        tags.insert(format!("*.{ext}"));
+    }
+
+    tags.into_iter().collect()
 }
 
 #[derive(Debug, Clone)]

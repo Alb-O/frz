@@ -1,14 +1,28 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Component, PathBuf};
+#[cfg(feature = "fs")]
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+#[cfg(not(feature = "fs"))]
+use std::sync::mpsc::Receiver;
+#[cfg(feature = "fs")]
 use std::sync::mpsc::{self, Receiver, Sender};
+#[cfg(feature = "fs")]
 use std::thread;
 
 use anyhow::Result;
-use walkdir::WalkDir;
+#[cfg(not(feature = "fs"))]
+use anyhow::bail;
 
+#[cfg(feature = "fs")]
+use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
+#[cfg(feature = "fs")]
+use std::sync::Arc;
+
+#[cfg(feature = "fs")]
+use crate::types::tags_for_relative_path;
 use crate::types::{FacetRow, FileRow, SearchData};
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
+#[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone)]
 pub(crate) struct IndexUpdate {
     pub(crate) files: Vec<FileRow>,
@@ -17,6 +31,7 @@ pub(crate) struct IndexUpdate {
 }
 
 /// Snapshot of the indexing progress suitable for updating the UI tracker.
+#[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct ProgressSnapshot {
     pub(crate) indexed_facets: usize,
@@ -26,8 +41,10 @@ pub(crate) struct ProgressSnapshot {
     pub(crate) complete: bool,
 }
 
+#[cfg(feature = "fs")]
 const BATCH_SIZE: usize = 50;
 
+#[cfg(feature = "fs")]
 pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Receiver<IndexUpdate>)> {
     let (tx, rx) = mpsc::channel();
 
@@ -35,82 +52,103 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
     data.context_label = Some(root.display().to_string());
 
     thread::spawn(move || {
-        let mut facet_counts: BTreeMap<String, usize> = BTreeMap::new();
-        let mut pending_facets: BTreeMap<String, usize> = BTreeMap::new();
-        let mut pending_files: Vec<FileRow> = Vec::new();
-        let mut indexed_files: usize = 0;
+        let (file_tx, file_rx) = mpsc::channel::<FileRow>();
+        let walker_root = Arc::new(root);
+        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        let update_tx = tx;
 
-        let walker = WalkDir::new(&root).into_iter();
-        for entry in walker {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(_) => continue,
-            };
+        let aggregator = thread::spawn(move || {
+            let mut facet_counts: BTreeMap<String, usize> = BTreeMap::new();
+            let mut pending_facets: BTreeMap<String, usize> = BTreeMap::new();
+            let mut pending_files: Vec<FileRow> = Vec::new();
+            let mut indexed_files: usize = 0;
 
-            if !entry.file_type().is_file() {
-                continue;
-            }
+            while let Ok(file) = file_rx.recv() {
+                for tag in &file.tags {
+                    let count = facet_counts.entry(tag.clone()).or_insert(0);
+                    *count += 1;
+                    pending_facets.insert(tag.clone(), *count);
+                }
 
-            let path = entry.path();
-            let relative = path.strip_prefix(&root).unwrap_or(path);
-            let mut tags: BTreeSet<String> = BTreeSet::new();
+                pending_files.push(file);
+                indexed_files += 1;
 
-            if let Some(parent) = relative.parent() {
-                for component in parent.components() {
-                    if let Component::Normal(part) = component {
-                        let value = part.to_string_lossy().to_string();
-                        if !value.is_empty() {
-                            tags.insert(value);
-                        }
-                    }
+                if pending_files.len() >= BATCH_SIZE
+                    && dispatch_update(
+                        &update_tx,
+                        &mut pending_files,
+                        &mut pending_facets,
+                        &facet_counts,
+                        indexed_files,
+                        false,
+                    )
+                    .is_err()
+                {
+                    return;
                 }
             }
 
-            if let Some(ext) = relative.extension().and_then(|ext| ext.to_str())
-                && !ext.is_empty()
-            {
-                tags.insert(format!("*.{ext}"));
-            }
+            let _ = dispatch_update(
+                &update_tx,
+                &mut pending_files,
+                &mut pending_facets,
+                &facet_counts,
+                indexed_files,
+                true,
+            );
+        });
 
-            let tags_vec: Vec<String> = tags.into_iter().collect();
-            for tag in &tags_vec {
-                let count = facet_counts.entry(tag.clone()).or_insert(0);
-                *count += 1;
-                pending_facets.insert(tag.clone(), *count);
-            }
+        WalkBuilder::new(walker_root.as_path())
+            .hidden(false)
+            .git_ignore(true)
+            .git_global(true)
+            .git_exclude(true)
+            .ignore(true)
+            .parents(true)
+            .threads(threads)
+            .build_parallel()
+            .run(|| {
+                let sender = file_tx.clone();
+                let root = Arc::clone(&walker_root);
+                Box::new(move |entry: Result<DirEntry, IgnoreError>| {
+                    if let Ok(entry) = entry {
+                        let Some(file_type) = entry.file_type() else {
+                            return WalkState::Continue;
+                        };
+                        if !file_type.is_file() {
+                            return WalkState::Continue;
+                        }
 
-            let relative_display = relative.to_string_lossy().replace("\\", "/");
-            pending_files.push(FileRow::new(relative_display, tags_vec));
-            indexed_files += 1;
+                        let path = entry.path();
+                        let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
+                        let tags = tags_for_relative_path(relative);
+                        let relative_display = relative.to_string_lossy().replace("\\", "/");
+                        let file = FileRow::new(relative_display, tags);
+                        if sender.send(file).is_err() {
+                            return WalkState::Quit;
+                        }
+                    }
 
-            if pending_files.len() >= BATCH_SIZE
-                && dispatch_update(
-                    &tx,
-                    &mut pending_files,
-                    &mut pending_facets,
-                    &facet_counts,
-                    indexed_files,
-                    false,
-                )
-                .is_err()
-            {
-                return;
-            }
-        }
+                    WalkState::Continue
+                })
+            });
 
-        let _ = dispatch_update(
-            &tx,
-            &mut pending_files,
-            &mut pending_facets,
-            &facet_counts,
-            indexed_files,
-            true,
-        );
+        drop(file_tx);
+        let _ = aggregator.join();
     });
 
     Ok((data, rx))
 }
 
+#[cfg(not(feature = "fs"))]
+#[allow(dead_code)]
+pub(crate) fn spawn_filesystem_index(
+    _root: PathBuf,
+) -> Result<(SearchData, Receiver<IndexUpdate>)> {
+    bail!("filesystem support is disabled; enable the `fs` feature");
+}
+
+#[cfg(feature = "fs")]
 fn dispatch_update(
     tx: &Sender<IndexUpdate>,
     pending_files: &mut Vec<FileRow>,
@@ -145,6 +183,7 @@ fn dispatch_update(
     })
 }
 
+#[cfg(feature = "fs")]
 pub(crate) fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
     if !update.files.is_empty() {
         data.files.extend(update.files.iter().cloned());

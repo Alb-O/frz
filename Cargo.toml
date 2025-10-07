@@ -5,10 +5,14 @@ edition = "2024"
 description = "TUI fuzzy finder revolving around tabular data, utilising Saghen's Frizbee crate for matching"
 license = "MIT"
 
+[features]
+default = ["fs"]
+fs = ["ignore"]
+
 [dependencies]
 ratatui = "0.29.0"
 frizbee = { git = "https://github.com/saghen/frizbee.git", branch = "main" }
 anyhow = "1.0.100"
 tui-textarea = "0.7.0"
-walkdir = "2.5.0"
+ignore = { version = "0.4.22", optional = true }
 throbber-widgets-tui = "0.9.0"

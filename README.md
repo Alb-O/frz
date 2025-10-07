@@ -7,6 +7,7 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 - Uses `frizbee` fuzzy matching for typo-tolerant search.
 - Builder-style API to configure prompts, column headers and widths.
 - Ready-to-use filesystem scanner (`Searcher::filesystem`) that walks directories recursively.
+- Multi-threaded filesystem traversal powered by the [`ignore`](https://docs.rs/ignore) crate with built-in `.gitignore` support.
 - Rich outcome information including which entry was selected and the final query string.
 
 ## Quick example
@@ -24,6 +25,9 @@ if let Some(file) = outcome.selected_file() {
     println!("Selected file: {}", file.path);
 }
 ```
+
+> **Note:** Filesystem helpers are gated behind the default-enabled `fs` feature. Disable default features or omit `fs` when you
+> want to build riz without any filesystem access.
 
 ## Run the examples
 

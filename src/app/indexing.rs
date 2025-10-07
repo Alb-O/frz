@@ -1,10 +1,17 @@
-use std::sync::mpsc::{Receiver, TryRecvError};
+use std::sync::mpsc::Receiver;
 
-use crate::indexing::{IndexUpdate, merge_update};
+#[cfg(feature = "fs")]
+use std::sync::mpsc::TryRecvError;
+
+use crate::indexing::IndexUpdate;
+#[cfg(feature = "fs")]
+use crate::indexing::merge_update;
+#[cfg(feature = "fs")]
 use crate::progress::IndexProgress;
 
 use super::App;
 
+#[cfg(feature = "fs")]
 impl<'a> App<'a> {
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
@@ -60,4 +67,14 @@ impl<'a> App<'a> {
 
         changed
     }
+}
+
+#[cfg(not(feature = "fs"))]
+impl<'a> App<'a> {
+    #[allow(dead_code)]
+    pub(crate) fn set_index_updates(&mut self, _updates: Receiver<IndexUpdate>) {
+        let _ = _updates;
+    }
+
+    pub(crate) fn pump_index_updates(&mut self) {}
 }

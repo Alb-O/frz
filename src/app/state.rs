@@ -36,6 +36,7 @@ pub struct App<'a> {
     pub theme: Theme,
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
+    #[cfg_attr(not(feature = "fs"), allow(dead_code))]
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search_tx: Sender<SearchCommand>,
     pub(super) search_rx: Receiver<SearchResult>,

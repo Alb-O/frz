@@ -1,9 +1,13 @@
+#[cfg(feature = "fs")]
 use std::sync::mpsc::Receiver;
 
 use anyhow::Result;
+#[cfg(not(feature = "fs"))]
+use anyhow::bail;
 use ratatui::layout::Constraint;
 
 use crate::app::App;
+#[cfg(feature = "fs")]
 use crate::indexing::{IndexUpdate, spawn_filesystem_index};
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
@@ -21,6 +25,7 @@ pub struct Searcher {
     ui_config: Option<UiConfig>,
     theme: Option<Theme>,
     start_mode: Option<SearchMode>,
+    #[cfg(feature = "fs")]
     index_updates: Option<Receiver<IndexUpdate>>,
 }
 
@@ -37,11 +42,13 @@ impl Searcher {
             ui_config: None,
             theme: None,
             start_mode: None,
+            #[cfg(feature = "fs")]
             index_updates: None,
         }
     }
 
     /// Create a searcher pre-populated with files from the filesystem rooted at `path`.
+    #[cfg(feature = "fs")]
     pub fn filesystem(path: impl AsRef<std::path::Path>) -> Result<Self> {
         let root = path.as_ref().to_path_buf();
         let (data, updates) = spawn_filesystem_index(root)?;
@@ -49,6 +56,11 @@ impl Searcher {
         searcher.start_mode = Some(SearchMode::Files);
         searcher.index_updates = Some(updates);
         Ok(searcher)
+    }
+
+    #[cfg(not(feature = "fs"))]
+    pub fn filesystem(_path: impl AsRef<std::path::Path>) -> Result<Self> {
+        bail!("filesystem support is disabled; enable the `fs` feature");
     }
 
     pub fn with_input_title(mut self, title: impl Into<String>) -> Self {
@@ -92,6 +104,7 @@ impl Searcher {
     }
 
     /// Run the interactive searcher with the configured options.
+    #[cfg_attr(not(feature = "fs"), allow(unused_mut))]
     pub fn run(mut self) -> Result<SearchOutcome> {
         // Build an App and apply optional customizations, then run it.
         let mut app = App::new(self.data);
@@ -119,6 +132,7 @@ impl Searcher {
         if let Some(mode) = self.start_mode {
             app.set_mode(mode);
         }
+        #[cfg(feature = "fs")]
         if let Some(updates) = self.index_updates.take() {
             app.set_index_updates(updates);
         }

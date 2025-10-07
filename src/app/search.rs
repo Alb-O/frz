@@ -1,6 +1,7 @@
 use std::sync::atomic::Ordering as AtomicOrdering;
 use std::sync::mpsc::TryRecvError;
 
+#[cfg(feature = "fs")]
 use crate::indexing::IndexUpdate;
 use crate::search::{SearchCommand, SearchResult};
 use crate::types::SearchMode;
@@ -23,6 +24,7 @@ impl<'a> App<'a> {
     }
 
     /// Propagate an index update to the background search worker.
+    #[cfg(feature = "fs")]
     pub(crate) fn notify_search_of_update(&self, update: &IndexUpdate) {
         let _ = self.search_tx.send(SearchCommand::Update(update.clone()));
     }

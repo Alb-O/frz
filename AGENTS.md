@@ -1,0 +1,1 @@
+- General instructions for Codex cloud agent: Do not attempt to run formatting on the code, it will not work in your environment.

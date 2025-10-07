@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use riz::{SearchSelection, Searcher};
 
+#[cfg(feature = "fs")]
 fn main() -> anyhow::Result<()> {
     let root = env::args()
         .nth(1)
@@ -30,4 +31,9 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(not(feature = "fs"))]
+fn main() {
+    eprintln!("The filesystem example requires the `fs` feature to be enabled.");
 }
