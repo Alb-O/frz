@@ -83,8 +83,8 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
             pending_files.push(FileRow::new(relative_display, tags_vec));
             indexed_files += 1;
 
-            if pending_files.len() >= BATCH_SIZE {
-                if dispatch_update(
+            if pending_files.len() >= BATCH_SIZE
+                && dispatch_update(
                     &tx,
                     &mut pending_files,
                     &mut pending_facets,
@@ -93,9 +93,8 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
                     false,
                 )
                 .is_err()
-                {
-                    return;
-                }
+            {
+                return;
             }
         }
 
@@ -124,7 +123,7 @@ fn dispatch_update(
         return Ok(());
     }
 
-    let files = pending_files.drain(..).collect();
+    let files = std::mem::take(pending_files);
     let facets = pending_facets
         .iter()
         .map(|(name, count)| FacetRow::new(name.clone(), *count))

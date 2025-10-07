@@ -147,10 +147,10 @@ fn render_progress(
     let input_row = area.top();
     let mut last_char_x: Option<u16> = None;
     for x in area.left()..area.right() {
-        if let Some(cell) = buffer.cell((x, input_row)) {
-            if !cell.symbol().trim().is_empty() {
-                last_char_x = Some(x);
-            }
+        if let Some(cell) = buffer.cell((x, input_row))
+            && !cell.symbol().trim().is_empty()
+        {
+            last_char_x = Some(x);
         }
     }
 

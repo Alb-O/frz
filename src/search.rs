@@ -436,11 +436,11 @@ where
         if self.heap.len() < self.limit {
             self.heap.push(entry);
             self.dirty = true;
-        } else if let Some(mut current_max) = self.heap.peek_mut() {
-            if entry < *current_max {
-                *current_max = entry;
-                self.dirty = true;
-            }
+        } else if let Some(mut current_max) = self.heap.peek_mut()
+            && entry < *current_max
+        {
+            *current_max = entry;
+            self.dirty = true;
         }
     }
 
