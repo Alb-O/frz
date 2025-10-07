@@ -1,6 +1,4 @@
-use riz::{
-    FacetRow, FileRow, SearchData, SearchMode, SearchSelection, Searcher, UiConfig,
-};
+use riz::{FacetRow, FileRow, SearchData, SearchMode, SearchSelection, Searcher, UiConfig};
 
 fn main() -> anyhow::Result<()> {
     // Build sample data

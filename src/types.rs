@@ -173,22 +173,12 @@ impl SearchMode {
     }
 }
 
+#[derive(Default)]
 pub struct SearchData {
     pub context_label: Option<String>,
     pub initial_query: String,
     pub facets: Vec<FacetRow>,
     pub files: Vec<FileRow>,
-}
-
-impl Default for SearchData {
-    fn default() -> Self {
-        Self {
-            context_label: None,
-            initial_query: String::new(),
-            facets: Vec::new(),
-            files: Vec::new(),
-        }
-    }
 }
 
 impl SearchData {
@@ -247,10 +237,10 @@ impl SearchData {
                 }
             }
 
-            if let Some(ext) = relative.extension().and_then(|ext| ext.to_str()) {
-                if !ext.is_empty() {
-                    tags.insert(format!("*.{ext}"));
-                }
+            if let Some(ext) = relative.extension().and_then(|ext| ext.to_str())
+                && !ext.is_empty()
+            {
+                tags.insert(format!("*.{ext}"));
             }
 
             let tags_vec: Vec<String> = tags.into_iter().collect();
