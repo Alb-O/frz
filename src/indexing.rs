@@ -1,6 +1,7 @@
 #[cfg(feature = "fs")]
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 #[cfg(not(feature = "fs"))]
 use std::sync::mpsc::Receiver;
 #[cfg(feature = "fs")]
@@ -15,7 +16,7 @@ use anyhow::bail;
 #[cfg(feature = "fs")]
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
 #[cfg(feature = "fs")]
-use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "fs")]
 use crate::types::tags_for_relative_path;
@@ -25,8 +26,8 @@ use crate::types::{FacetRow, FileRow, SearchData};
 #[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone)]
 pub(crate) struct IndexUpdate {
-    pub(crate) files: Vec<FileRow>,
-    pub(crate) facets: Vec<FacetRow>,
+    pub(crate) files: Arc<[FileRow]>,
+    pub(crate) facets: Arc<[FacetRow]>,
     pub(crate) progress: ProgressSnapshot,
 }
 
@@ -42,7 +43,11 @@ pub(crate) struct ProgressSnapshot {
 }
 
 #[cfg(feature = "fs")]
-const BATCH_SIZE: usize = 50;
+const MIN_BATCH_SIZE: usize = 32;
+#[cfg(feature = "fs")]
+const MAX_BATCH_SIZE: usize = 1024;
+#[cfg(feature = "fs")]
+const DISPATCH_INTERVAL: Duration = Duration::from_millis(120);
 
 #[cfg(feature = "fs")]
 pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Receiver<IndexUpdate>)> {
@@ -62,6 +67,7 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
             let mut pending_facets: BTreeMap<String, usize> = BTreeMap::new();
             let mut pending_files: Vec<FileRow> = Vec::new();
             let mut indexed_files: usize = 0;
+            let mut last_dispatch = Instant::now();
 
             while let Ok(file) = file_rx.recv() {
                 for tag in &file.tags {
@@ -72,8 +78,12 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
 
                 pending_files.push(file);
                 indexed_files += 1;
+                let batch_size = batch_size_for(indexed_files);
+                let should_flush = pending_files.len() >= batch_size
+                    || (!pending_files.is_empty() || !pending_facets.is_empty())
+                        && last_dispatch.elapsed() >= DISPATCH_INTERVAL;
 
-                if pending_files.len() >= BATCH_SIZE
+                if should_flush
                     && dispatch_update(
                         &update_tx,
                         &mut pending_files,
@@ -85,6 +95,10 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
                     .is_err()
                 {
                     return;
+                }
+
+                if should_flush {
+                    last_dispatch = Instant::now();
                 }
             }
 
@@ -161,12 +175,18 @@ fn dispatch_update(
         return Ok(());
     }
 
-    let files = std::mem::take(pending_files);
-    let facets = pending_facets
-        .iter()
-        .map(|(name, count)| FacetRow::new(name.clone(), *count))
-        .collect();
-    pending_facets.clear();
+    let files_vec = std::mem::take(pending_files);
+    let files: Arc<[FileRow]> = files_vec.into();
+    let facets: Arc<[FacetRow]> = if pending_facets.is_empty() {
+        Arc::default()
+    } else {
+        let collected: Vec<FacetRow> = pending_facets
+            .iter()
+            .map(|(name, count)| FacetRow::new(name.clone(), *count))
+            .collect();
+        pending_facets.clear();
+        collected.into()
+    };
 
     let progress = ProgressSnapshot {
         indexed_facets: facet_counts.len(),
@@ -184,21 +204,30 @@ fn dispatch_update(
 }
 
 #[cfg(feature = "fs")]
+fn batch_size_for(indexed_files: usize) -> usize {
+    if indexed_files < 1_024 {
+        MIN_BATCH_SIZE
+    } else if indexed_files < 16_384 {
+        256
+    } else {
+        MAX_BATCH_SIZE
+    }
+}
+
+#[cfg(feature = "fs")]
 pub(crate) fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
     if !update.files.is_empty() {
         data.files.extend(update.files.iter().cloned());
     }
 
     if !update.facets.is_empty() {
-        for facet in &update.facets {
-            if let Some(existing) = data
+        for facet in update.facets.iter() {
+            match data
                 .facets
-                .iter_mut()
-                .find(|existing| existing.name == facet.name)
+                .binary_search_by(|existing| existing.name.cmp(&facet.name))
             {
-                existing.count = facet.count;
-            } else {
-                data.facets.push(facet.clone());
+                Ok(index) => data.facets[index].count = facet.count,
+                Err(index) => data.facets.insert(index, facet.clone()),
             }
         }
     }

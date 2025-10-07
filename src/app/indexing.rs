@@ -13,6 +13,8 @@ use super::App;
 
 #[cfg(feature = "fs")]
 impl<'a> App<'a> {
+    const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
+
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
         self.index_progress = IndexProgress::with_unknown_totals();
@@ -27,11 +29,16 @@ impl<'a> App<'a> {
 
         let mut should_request = false;
         let mut keep_receiver = true;
+        let mut processed = 0usize;
         loop {
+            if processed >= Self::MAX_INDEX_UPDATES_PER_TICK {
+                break;
+            }
             match rx.try_recv() {
                 Ok(update) => {
                     self.notify_search_of_update(&update);
                     should_request |= self.apply_index_update(update);
+                    processed += 1;
                 }
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => {
