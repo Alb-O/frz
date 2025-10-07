@@ -43,6 +43,8 @@ pub struct App<'a> {
     pub(super) search_latest_query_id: Arc<AtomicU64>,
     pub(super) next_query_id: u64,
     pub(super) latest_query_id: Option<u64>,
+    pub(super) search_in_flight: bool,
+    pub(super) rerun_after_index_update: bool,
 }
 
 impl<'a> App<'a> {
@@ -77,6 +79,8 @@ impl<'a> App<'a> {
             search_latest_query_id,
             next_query_id: 0,
             latest_query_id: None,
+            search_in_flight: false,
+            rerun_after_index_update: false,
         };
         app.request_search();
         app.pump_search_results();

@@ -53,7 +53,7 @@ impl<'a> App<'a> {
         }
 
         if should_request {
-            self.request_search();
+            self.request_search_after_index_update();
         }
     }
 
