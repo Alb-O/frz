@@ -24,6 +24,7 @@ impl<'a> App<'a> {
                 }));
             }
             KeyCode::Tab => {
+                self.mark_query_dirty();
                 self.switch_mode();
             }
             KeyCode::Up => {
@@ -34,6 +35,7 @@ impl<'a> App<'a> {
             }
             _ => {
                 if self.search_input.input(key) {
+                    self.mark_query_dirty();
                     self.request_search();
                 }
             }

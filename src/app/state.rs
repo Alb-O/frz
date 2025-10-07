@@ -44,7 +44,9 @@ pub struct App<'a> {
     pub(super) next_query_id: u64,
     pub(super) latest_query_id: Option<u64>,
     pub(super) search_in_flight: bool,
-    pub(super) rerun_after_index_update: bool,
+    pub(super) input_revision: u64,
+    pub(super) pending_result_revision: u64,
+    pub(super) last_applied_revision: u64,
 }
 
 impl<'a> App<'a> {
@@ -80,7 +82,9 @@ impl<'a> App<'a> {
             next_query_id: 0,
             latest_query_id: None,
             search_in_flight: false,
-            rerun_after_index_update: false,
+            input_revision: 0,
+            pending_result_revision: 0,
+            last_applied_revision: 0,
         };
         app.request_search();
         app.pump_search_results();
@@ -95,6 +99,7 @@ impl<'a> App<'a> {
         if self.mode != mode {
             self.mode = mode;
             self.table_state.select(Some(0));
+            self.mark_query_dirty();
             self.request_search();
         }
     }
@@ -117,6 +122,10 @@ impl<'a> App<'a> {
             SearchMode::Facets => self.filtered_facets.len(),
             SearchMode::Files => self.filtered_files.len(),
         }
+    }
+
+    pub(crate) fn mark_query_dirty(&mut self) {
+        self.input_revision = self.input_revision.wrapping_add(1);
     }
 
     pub(crate) fn current_selection(&self) -> Option<SearchSelection> {

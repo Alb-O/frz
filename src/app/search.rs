@@ -11,16 +11,17 @@ use super::App;
 impl<'a> App<'a> {
     /// Send a search request for the current query text and mode.
     pub(crate) fn request_search(&mut self) {
-        self.rerun_after_index_update = false;
         self.issue_search();
     }
 
     /// Schedule a search refresh due to new index data while respecting the
     /// currently running query.
     pub(crate) fn request_search_after_index_update(&mut self) {
-        if self.search_in_flight {
-            self.rerun_after_index_update = true;
-        } else {
+        // When background indexing discovers new entries we keep the UI stable
+        // unless the user currently has a query edit that hasn't been
+        // processed yet. This lets indexing continue without the visible result
+        // list jumping around while the user is idle.
+        if !self.search_in_flight && self.input_revision != self.last_applied_revision {
             self.issue_search();
         }
     }
@@ -63,10 +64,7 @@ impl<'a> App<'a> {
 
         if result.complete {
             self.search_in_flight = false;
-            if self.rerun_after_index_update {
-                self.rerun_after_index_update = false;
-                self.issue_search();
-            }
+            self.last_applied_revision = self.pending_result_revision;
         }
     }
 
@@ -75,6 +73,7 @@ impl<'a> App<'a> {
         let id = self.next_query_id;
         self.latest_query_id = Some(id);
         self.search_in_flight = true;
+        self.pending_result_revision = self.input_revision;
         let query = self.search_input.text().to_string();
         let mode = self.mode;
         self.search_latest_query_id
