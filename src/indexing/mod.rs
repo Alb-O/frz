@@ -16,6 +16,8 @@ use anyhow::Result;
 use anyhow::bail;
 
 #[cfg(feature = "fs")]
+pub use filesystem::FilesystemOptions;
+#[cfg(feature = "fs")]
 pub(crate) use filesystem::spawn_filesystem_index;
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.

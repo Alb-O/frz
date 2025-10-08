@@ -8,7 +8,7 @@ use ratatui::layout::Constraint;
 
 use crate::app::App;
 #[cfg(feature = "fs")]
-use crate::indexing::{IndexUpdate, spawn_filesystem_index};
+use crate::indexing::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
 
@@ -50,8 +50,16 @@ impl Searcher {
     /// Create a searcher pre-populated with files from the filesystem rooted at `path`.
     #[cfg(feature = "fs")]
     pub fn filesystem(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        let root = path.as_ref().to_path_buf();
-        let (data, updates) = spawn_filesystem_index(root)?;
+        Self::filesystem_with_options(path.as_ref().to_path_buf(), FilesystemOptions::default())
+    }
+
+    #[cfg(feature = "fs")]
+    pub fn filesystem_with_options(
+        path: impl Into<std::path::PathBuf>,
+        options: FilesystemOptions,
+    ) -> Result<Self> {
+        let root = path.into();
+        let (data, updates) = spawn_filesystem_index(root, options)?;
         let mut searcher = Self::new(data);
         searcher.start_mode = Some(SearchMode::Files);
         searcher.index_updates = Some(updates);
@@ -83,6 +91,11 @@ impl Searcher {
 
     pub fn with_ui_config(mut self, config: UiConfig) -> Self {
         self.ui_config = Some(config);
+        self
+    }
+
+    pub fn with_initial_query(mut self, query: impl Into<String>) -> Self {
+        self.data.initial_query = query.into();
         self
     }
 

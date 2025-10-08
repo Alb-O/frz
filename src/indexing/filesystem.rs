@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -17,16 +17,65 @@ const MIN_BATCH_SIZE: usize = 32;
 const MAX_BATCH_SIZE: usize = 1_024;
 const DISPATCH_INTERVAL: Duration = Duration::from_millis(120);
 
-pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Receiver<IndexUpdate>)> {
+#[derive(Debug, Clone)]
+pub struct FilesystemOptions {
+    pub include_hidden: bool,
+    pub follow_symlinks: bool,
+    pub respect_ignore_files: bool,
+    pub git_ignore: bool,
+    pub git_global: bool,
+    pub git_exclude: bool,
+    pub threads: Option<usize>,
+    pub max_depth: Option<usize>,
+    pub allowed_extensions: Option<Vec<String>>,
+    pub context_label: Option<String>,
+}
+
+impl Default for FilesystemOptions {
+    fn default() -> Self {
+        Self {
+            include_hidden: true,
+            follow_symlinks: false,
+            respect_ignore_files: true,
+            git_ignore: true,
+            git_global: true,
+            git_exclude: true,
+            threads: None,
+            max_depth: None,
+            allowed_extensions: None,
+            context_label: None,
+        }
+    }
+}
+
+pub(crate) fn spawn_filesystem_index(
+    root: PathBuf,
+    mut options: FilesystemOptions,
+) -> Result<(SearchData, Receiver<IndexUpdate>)> {
     let (tx, rx) = mpsc::channel();
 
     let mut data = SearchData::new();
-    data.context_label = Some(root.display().to_string());
+    if options.context_label.is_none() {
+        options.context_label = Some(root.display().to_string());
+    }
+    data.context_label = options.context_label.clone();
 
     thread::spawn(move || {
         let (file_tx, file_rx) = mpsc::channel::<FileRow>();
         let walker_root = Arc::new(root);
-        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        let threads = options
+            .threads
+            .filter(|threads| *threads > 0)
+            .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |n| n.get()));
+        let extension_filter = options.allowed_extensions.as_ref().map(|extensions| {
+            Arc::new(
+                extensions
+                    .iter()
+                    .map(|ext| normalize_extension(ext))
+                    .filter(|ext| !ext.is_empty())
+                    .collect::<HashSet<_>>(),
+            )
+        });
         let update_tx = tx;
 
         let aggregator = thread::spawn(move || {
@@ -46,17 +95,20 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
         });
 
         WalkBuilder::new(walker_root.as_path())
-            .hidden(false)
-            .git_ignore(true)
-            .git_global(true)
-            .git_exclude(true)
-            .ignore(true)
+            .hidden(!options.include_hidden)
+            .follow_links(options.follow_symlinks)
+            .git_ignore(options.git_ignore)
+            .git_global(options.git_global)
+            .git_exclude(options.git_exclude)
+            .ignore(options.respect_ignore_files)
             .parents(true)
             .threads(threads)
+            .max_depth(options.max_depth)
             .build_parallel()
             .run(|| {
                 let sender = file_tx.clone();
                 let root = Arc::clone(&walker_root);
+                let extension_filter = extension_filter.clone();
                 Box::new(move |entry: Result<DirEntry, IgnoreError>| {
                     if let Ok(entry) = entry {
                         let Some(file_type) = entry.file_type() else {
@@ -68,6 +120,15 @@ pub(crate) fn spawn_filesystem_index(root: PathBuf) -> Result<(SearchData, Recei
 
                         let path = entry.path();
                         let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
+                        if let Some(filter) = extension_filter.as_ref() {
+                            let extension = relative
+                                .extension()
+                                .and_then(|ext| ext.to_str())
+                                .map(|ext| ext.to_ascii_lowercase());
+                            if extension.as_ref().map_or(true, |ext| !filter.contains(ext)) {
+                                return WalkState::Continue;
+                            }
+                        }
                         let tags = tags_for_relative_path(relative);
                         let relative_display = relative.to_string_lossy().replace("\\", "/");
                         let file = FileRow::new(relative_display, tags);
@@ -179,4 +240,8 @@ fn batch_size_for(indexed_files: usize) -> usize {
     } else {
         MAX_BATCH_SIZE
     }
+}
+
+fn normalize_extension(ext: &str) -> String {
+    ext.trim().trim_start_matches('.').to_ascii_lowercase()
 }

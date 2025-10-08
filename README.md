@@ -35,3 +35,41 @@ if let Some(file) = outcome.selected_file() {
 cargo run -p riz --example demo
 cargo run -p riz --example filesystem -- /path/to/project
 ```
+
+## Command-line application and configuration
+
+The crate now ships with a `riz` binary that provides a ready-to-use filesystem
+search experience. You can explore the available options with:
+
+```bash
+cargo run -- --help
+```
+
+Riz loads configuration from a layered set of sources:
+
+1. `~/.config/riz/config.toml` (or the platform-specific directory reported by
+   [`directories::ProjectDirs`](https://docs.rs/directories)).
+2. `$RIZ_CONFIG_DIR/config.toml` if the environment variable is set.
+3. `./.riz.toml` followed by `./riz.toml` in the current working directory.
+4. Any files passed via `--config <path>` (later files win).
+5. Environment variables prefixed with `RIZ_` using `__` as a separator
+   (for example `RIZ_FILESYSTEM__INCLUDE_HIDDEN=false`).
+6. Explicit command-line flags.
+
+A minimal configuration might look like this:
+
+```toml
+[filesystem]
+root = "~/projects/riz"
+include_hidden = false
+allowed_extensions = ["rs", "toml"]
+
+[ui]
+theme = "solarized"
+start_mode = "files"
+detail_panel_title = "Entry details"
+```
+
+You can inspect the resolved configuration before launching the TUI via
+`--print-config`, list available themes with `--list-themes`, or emit the final
+selection as pretty JSON using `--output json`.

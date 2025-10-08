@@ -11,6 +11,8 @@ pub mod types;
 pub mod utils;
 
 pub use app::run;
+#[cfg(feature = "fs")]
+pub use indexing::FilesystemOptions;
 pub use input::SearchInput;
 pub use searcher::Searcher;
 pub use theme::{LIGHT, SLATE, SOLARIZED, Theme};
