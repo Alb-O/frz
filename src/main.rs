@@ -269,23 +269,27 @@ struct CliArgs {
     )]
     config: Vec<PathBuf>,
     #[arg(
+        short = 'n',
         long = "no-config",
         help = "Skip loading default configuration files (default: disabled)"
     )]
     no_config: bool,
     #[arg(
+        short = 'r',
         long,
         value_name = "PATH",
         help = "Override the filesystem root to scan (default: current directory)"
     )]
     root: Option<PathBuf>,
     #[arg(
+        short = 't',
         long,
         value_name = "TITLE",
         help = "Set the input prompt title (default: derived from root or context label)"
     )]
     title: Option<String>,
     #[arg(
+        short = 'q',
         long,
         value_name = "QUERY",
         help = "Provide an initial search query (default: empty)"
@@ -298,12 +302,14 @@ struct CliArgs {
     )]
     theme: Option<String>,
     #[arg(
+        short = 'm',
         long = "start-mode",
         value_enum,
         help = "Choose the initial search mode (default: match the library heuristic)"
     )]
     start_mode: Option<ModeArg>,
     #[arg(
+        short = 'u',
         long = "ui-preset",
         value_enum,
         help = "Choose a preset for UI labels (default: default)"
@@ -384,12 +390,14 @@ struct CliArgs {
     )]
     file_headers: Option<Vec<String>>,
     #[arg(
+        short = 'H',
         long = "hidden",
         value_parser = BoolishValueParser::new(),
         help = "Include hidden files (default: enabled)"
     )]
     hidden: Option<bool>,
     #[arg(
+        short = 's',
         long = "follow-symlinks",
         value_parser = BoolishValueParser::new(),
         help = "Follow symbolic links while scanning (default: disabled)"
@@ -420,12 +428,14 @@ struct CliArgs {
     )]
     git_exclude: Option<bool>,
     #[arg(
+        short = 'j',
         long,
         value_name = "NUM",
         help = "Limit the number of indexing threads (default: automatic)"
     )]
     threads: Option<usize>,
     #[arg(
+        short = 'd',
         long = "max-depth",
         value_name = "NUM",
         help = "Limit directory traversal depth (default: unlimited)"
@@ -445,16 +455,18 @@ struct CliArgs {
     )]
     context_label: Option<String>,
     #[arg(
+        short = 'p',
         long = "print-config",
         help = "Print the resolved configuration before running (default: disabled)"
     )]
     print_config: bool,
     #[arg(
+        short = 'l',
         long = "list-themes",
         help = "List supported themes and exit (default: disabled)"
     )]
     list_themes: bool,
-    #[arg(long = "output", value_enum, default_value_t = OutputFormat::Plain, help = "Choose how to print the result")]
+    #[arg(short = 'o', long = "output", value_enum, default_value_t = OutputFormat::Plain, help = "Choose how to print the result")]
     output: OutputFormat,
 }
 
