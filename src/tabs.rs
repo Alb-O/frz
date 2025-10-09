@@ -8,20 +8,42 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-/// Render the input row with tabs at the right. This mirrors the behaviour
-/// previously implemented inside `app.rs`.
+/// Argument bundle for rendering the input area
+pub struct InputContext<'a> {
+    pub search_input: &'a SearchInput<'a>,
+    pub input_title: &'a Option<String>,
+    pub mode: SearchMode,
+    pub ui: &'a UiConfig,
+    pub area: Rect,
+    pub theme: &'a Theme,
+}
+
+/// Progress information for the prompt progress indicator
+pub struct ProgressState<'a> {
+    pub progress_text: &'a str,
+    pub progress_complete: bool,
+    pub throbber_state: &'a ThrobberState,
+}
+
+/// Render the input row with tabs at the right.
 pub fn render_input_with_tabs(
-    search_input: &SearchInput<'_>,
-    input_title: &Option<String>,
-    mode: SearchMode,
-    ui: &UiConfig,
     frame: &mut ratatui::Frame,
-    area: Rect,
-    theme: &Theme,
-    progress_text: &str,
-    progress_complete: bool,
-    throbber_state: &ThrobberState,
+    input: InputContext<'_>,
+    progress: ProgressState<'_>,
 ) {
+    let InputContext {
+        search_input,
+        input_title,
+        mode,
+        ui,
+        area,
+        theme,
+    } = input;
+    let ProgressState {
+        progress_text,
+        progress_complete,
+        throbber_state,
+    } = progress;
     // Calculate tabs width: " Tags " + " Files " + extra padding = about 16 chars
     let tabs_width = 16u16;
 

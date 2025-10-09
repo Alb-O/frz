@@ -27,18 +27,20 @@ impl<'a> App<'a> {
             .split(area);
 
         let (progress_text, progress_complete) = self.progress_status();
-        tabs::render_input_with_tabs(
-            &self.search_input,
-            &self.input_title,
-            self.mode,
-            &self.ui,
-            frame,
-            layout[0],
-            &self.theme,
-            &progress_text,
+        let input_ctx = tabs::InputContext {
+            search_input: &self.search_input,
+            input_title: &self.input_title,
+            mode: self.mode,
+            ui: &self.ui,
+            area: layout[0],
+            theme: &self.theme,
+        };
+        let progress_state = tabs::ProgressState {
+            progress_text: &progress_text,
             progress_complete,
-            &self.throbber_state,
-        );
+            throbber_state: &self.throbber_state,
+        };
+        tabs::render_input_with_tabs(frame, input_ctx, progress_state);
         self.render_results(frame, layout[1]);
 
         if self.filtered_len() == 0 {

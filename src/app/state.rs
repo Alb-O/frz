@@ -57,7 +57,8 @@ impl<'a> App<'a> {
         let context_label = data.context_label.clone();
         let index_progress = IndexProgress::from(&data);
         let (search_tx, search_rx, search_latest_query_id) = search::spawn(data.clone());
-        let app = Self {
+
+        Self {
             data,
             mode: SearchMode::Facets,
             search_input: SearchInput::new(initial_query),
@@ -85,8 +86,7 @@ impl<'a> App<'a> {
             input_revision: 0,
             pending_result_revision: 0,
             last_applied_revision: 0,
-        };
-        app
+        }
     }
 
     pub fn set_theme(&mut self, theme: Theme) {

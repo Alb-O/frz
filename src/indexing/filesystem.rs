@@ -84,10 +84,8 @@ pub(crate) fn spawn_filesystem_index(
             while let Ok(file) = file_rx.recv() {
                 batcher.record_file(file);
 
-                if batcher.should_flush() {
-                    if batcher.flush(&update_tx, false).is_err() {
-                        return;
-                    }
+                if batcher.should_flush() && batcher.flush(&update_tx, false).is_err() {
+                    return;
                 }
             }
 
@@ -125,7 +123,7 @@ pub(crate) fn spawn_filesystem_index(
                                 .extension()
                                 .and_then(|ext| ext.to_str())
                                 .map(|ext| ext.to_ascii_lowercase());
-                            if extension.as_ref().map_or(true, |ext| !filter.contains(ext)) {
+                            if extension.as_ref().is_none_or(|ext| !filter.contains(ext)) {
                                 return WalkState::Continue;
                             }
                         }

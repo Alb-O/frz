@@ -10,17 +10,17 @@ default = ["fs"]
 fs = ["ignore"]
 
 [dependencies]
-ratatui = "0.29.0"
+ratatui = "0.29"
 frizbee = { git = "https://github.com/saghen/frizbee.git", branch = "main" }
-anyhow = "1.0.100"
-tui-textarea = "0.7.0"
-ignore = { version = "0.4.22", optional = true }
-throbber-widgets-tui = "0.9.0"
-clap = { version = "4.5.8", features = ["derive", "env"] }
-config = "0.14.0"
-directories = "5.0.1"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+anyhow = "1"
+tui-textarea = "0.7"
+ignore = { version = "0.4", optional = true }
+throbber-widgets-tui = "0.9"
+clap = { version = "4", features = ["derive", "env"] }
+config = "0.15"
+directories = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [dev-dependencies]
 tempfile = "3"

@@ -64,15 +64,13 @@ fn dim_cli_annotations(mut arg: clap::Arg) -> clap::Arg {
         has_help = true;
     }
 
-    if !mentions_default {
-        if let Some(annotation) = render_default_value_annotation(&arg) {
-            arg = arg.hide_default_value(true);
-            if has_help {
-                styled_help.push_str(" ");
-            }
-            append_muted_annotation(&mut styled_help, &annotation);
-            has_help = true;
+    if !mentions_default && let Some(annotation) = render_default_value_annotation(&arg) {
+        arg = arg.hide_default_value(true);
+        if has_help {
+            styled_help.push_str(" ");
         }
+        append_muted_annotation(&mut styled_help, &annotation);
+        has_help = true;
     }
 
     // Append environment variable annotation (e.g. "[env: RIZ_CONFIG=]") when present
@@ -110,7 +108,7 @@ fn highlight_help_annotations(text: &str) -> Option<StyledStr> {
                 let start = cursor + rel_start;
                 if let Some(rel_end) = text[start..].find(terminator) {
                     let end = start + rel_end + 1;
-                    if best_match.map_or(true, |(current_start, _)| start < current_start) {
+                    if best_match.is_none_or(|(current_start, _)| start < current_start) {
                         best_match = Some((start, end));
                     }
                 }

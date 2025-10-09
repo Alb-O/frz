@@ -320,15 +320,7 @@ impl<'a> ScoreAggregator<'a> {
     }
 
     fn finish(&mut self) -> bool {
-        if self.dirty || !self.sent_any {
-            if !self.emit(true) {
-                return false;
-            }
-        } else if self.heap.is_empty() {
-            if !self.emit(true) {
-                return false;
-            }
-        } else if !self.emit(true) {
+        if !self.emit(true) {
             return false;
         }
         true

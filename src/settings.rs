@@ -1,8 +1,7 @@
-#![cfg(feature = "fs")]
-
 use std::collections::HashSet;
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
@@ -445,11 +444,11 @@ fn sanitize_headers(headers: Vec<String>) -> impl Iterator<Item = String> {
         .filter(|header| !header.is_empty())
 }
 
-fn default_title_for(root: &PathBuf) -> String {
+fn default_title_for(root: &Path) -> String {
     // Prefer showing the resolved path relative to $HOME (e.g. ~/projects/foo)
     // if applicable. Always return a cleaned path (no dot components) since
     // `root` is canonicalized in `resolve()`.
-    fn shorten(path: &PathBuf) -> String {
+    fn shorten(path: &Path) -> String {
         if let Some(home_os) = env::var_os("HOME") {
             let home = PathBuf::from(home_os);
             if let Ok(rel) = path.strip_prefix(&home) {
