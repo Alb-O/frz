@@ -301,6 +301,13 @@ impl RawConfig {
                 .context("failed to resolve current directory for root")?
                 .join(root);
         }
+        // Canonicalize the path to remove any dot components (../, ./) and
+        // resolve symlinks. We canonicalize before further checks so the
+        // stored `root` and any UI titles are based on the resolved path.
+        root = fs::canonicalize(&root).with_context(|| {
+            format!("failed to canonicalize filesystem root {}", root.display())
+        })?;
+
         let metadata = fs::metadata(&root)
             .with_context(|| format!("failed to inspect filesystem root {}", root.display()))?;
         ensure!(metadata.is_dir(), "filesystem root must be a directory");
@@ -439,12 +446,58 @@ fn sanitize_headers(headers: Vec<String>) -> impl Iterator<Item = String> {
 }
 
 fn default_title_for(root: &PathBuf) -> String {
-    root.file_name()
-        .and_then(|name| name.to_str().map(|value| value.to_string()))
-        .filter(|name| !name.is_empty())
-        .unwrap_or_else(|| root.display().to_string())
+    // Prefer showing the resolved path relative to $HOME (e.g. ~/projects/foo)
+    // if applicable. Always return a cleaned path (no dot components) since
+    // `root` is canonicalized in `resolve()`.
+    fn shorten(path: &PathBuf) -> String {
+        if let Some(home_os) = env::var_os("HOME") {
+            let home = PathBuf::from(home_os);
+            if let Ok(rel) = path.strip_prefix(&home) {
+                // If path == home -> show ~
+                if rel.components().next().is_none() {
+                    return "~".to_string();
+                }
+                let sep = std::path::MAIN_SEPARATOR;
+                return format!("~{}{}", sep, rel.display());
+            }
+        }
+        path.display().to_string()
+    }
+
+    shorten(root)
 }
 
 fn bool_to_word(value: bool) -> &'static str {
     if value { "yes" } else { "no" }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_shorten_home() {
+        // Ensure HOME is set for the test
+        let home = env::var("HOME").expect("HOME must be set for this test");
+        let mut path = PathBuf::from(home);
+        path.push("some_subdir");
+        let displayed = default_title_for(&path);
+        assert!(displayed.starts_with("~"));
+    }
+
+    #[test]
+    fn test_canonicalize_removes_dots() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().to_path_buf();
+        // Create a nested path and a ../ reference
+        let nested = base.join("a").join("b");
+        std::fs::create_dir_all(&nested).unwrap();
+        let dotted = nested.join("..").join("b");
+        // canonicalize as settings.resolve() would do
+        let canon = std::fs::canonicalize(&dotted).unwrap();
+        // canonical path should equal nested
+        assert_eq!(canon, nested.canonicalize().unwrap());
+    }
 }
