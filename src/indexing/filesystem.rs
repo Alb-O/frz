@@ -25,6 +25,7 @@ pub struct FilesystemOptions {
     pub git_ignore: bool,
     pub git_global: bool,
     pub git_exclude: bool,
+    pub global_ignores: Vec<String>,
     pub threads: Option<usize>,
     pub max_depth: Option<usize>,
     pub allowed_extensions: Option<Vec<String>>,
@@ -40,6 +41,7 @@ impl Default for FilesystemOptions {
             git_ignore: true,
             git_global: true,
             git_exclude: true,
+            global_ignores: vec![".git".to_string(), "node_modules".to_string()],
             threads: None,
             max_depth: None,
             allowed_extensions: None,
@@ -92,6 +94,8 @@ pub(crate) fn spawn_filesystem_index(
             let _ = batcher.flush(&update_tx, true);
         });
 
+        let global_ignores = options.global_ignores.clone();
+
         WalkBuilder::new(walker_root.as_path())
             .hidden(!options.include_hidden)
             .follow_links(options.follow_symlinks)
@@ -107,6 +111,7 @@ pub(crate) fn spawn_filesystem_index(
                 let sender = file_tx.clone();
                 let root = Arc::clone(&walker_root);
                 let extension_filter = extension_filter.clone();
+                let global_ignores = global_ignores.clone();
                 Box::new(move |entry: Result<DirEntry, IgnoreError>| {
                     if let Ok(entry) = entry {
                         let Some(file_type) = entry.file_type() else {
@@ -117,6 +122,15 @@ pub(crate) fn spawn_filesystem_index(
                         }
 
                         let path = entry.path();
+                        // Skip global ignore paths
+                        if path.components().any(|comp| {
+                            comp.as_os_str()
+                                .to_str()
+                                .map(|s| global_ignores.iter().any(|g| g == s))
+                                .unwrap_or(false)
+                        }) {
+                            return WalkState::Continue;
+                        }
                         let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
                         if let Some(filter) = extension_filter.as_ref() {
                             let extension = relative
