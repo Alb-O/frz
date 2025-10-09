@@ -33,6 +33,7 @@ struct FilesystemSection {
     threads: Option<usize>,
     max_depth: Option<usize>,
     allowed_extensions: Option<Vec<String>>,
+    global_ignores: Option<Vec<String>>,
     context_label: Option<String>,
 }
 
@@ -110,6 +111,12 @@ impl ResolvedConfig {
         }
         if let Some(label) = &self.filesystem.context_label {
             println!("  Context label: {label}");
+        }
+        if !self.filesystem.global_ignores.is_empty() {
+            println!(
+                "  Global ignores: {}",
+                self.filesystem.global_ignores.join(", ")
+            );
         }
         println!(
             "  UI theme: {}",
@@ -225,6 +232,9 @@ impl RawConfig {
         if let Some(value) = &cli.extensions {
             self.filesystem.allowed_extensions = Some(value.clone());
         }
+        if let Some(value) = &cli.global_ignores {
+            self.filesystem.global_ignores = Some(value.clone());
+        }
         if let Some(value) = cli.context_label.clone() {
             self.filesystem.context_label = Some(value);
         }
@@ -326,6 +336,9 @@ impl RawConfig {
             .map(sanitize_extensions)
             .filter(|exts| !exts.is_empty());
         filesystem.context_label = self.filesystem.context_label.clone();
+        if let Some(ignores) = self.filesystem.global_ignores.clone() {
+            filesystem.global_ignores = ignores;
+        }
 
         let mut ui = ui_from_preset(self.ui.preset.as_deref())?;
         if let Some(label) = self.ui.filter_label {

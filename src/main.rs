@@ -453,6 +453,13 @@ struct CliArgs {
     )]
     context_label: Option<String>,
     #[arg(
+        long = "global-ignores",
+        value_delimiter = ',',
+        value_name = "NAME",
+        help = "Comma-separated directory names to always ignore (default: .git,node_modules,target,.venv)"
+    )]
+    global_ignores: Option<Vec<String>>,
+    #[arg(
         short = 'p',
         long = "print-config",
         help = "Print the resolved configuration before running (default: disabled)"
