@@ -27,6 +27,8 @@ pub(crate) struct IndexUpdate {
     pub(crate) files: Arc<[FileRow]>,
     pub(crate) facets: Arc<[FacetRow]>,
     pub(crate) progress: ProgressSnapshot,
+    pub(crate) reset: bool,
+    pub(crate) cached_data: Option<SearchData>,
 }
 
 /// Snapshot of the indexing progress suitable for updating the UI tracker.
@@ -41,6 +43,11 @@ pub(crate) struct ProgressSnapshot {
 }
 
 pub(crate) fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
+    if update.reset {
+        data.files.clear();
+        data.facets.clear();
+    }
+
     if !update.files.is_empty() {
         data.files.extend(update.files.iter().cloned());
     }

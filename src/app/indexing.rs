@@ -8,6 +8,8 @@ use crate::indexing::IndexUpdate;
 use crate::indexing::merge_update;
 #[cfg(feature = "fs")]
 use crate::progress::IndexProgress;
+#[cfg(feature = "fs")]
+use crate::types::SearchData;
 
 use super::App;
 
@@ -17,9 +19,11 @@ impl<'a> App<'a> {
 
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
-        self.index_progress = IndexProgress::with_unknown_totals();
-        self.index_progress
-            .record_indexed(self.data.facets.len(), self.data.files.len());
+        if self.data.facets.is_empty() && self.data.files.is_empty() {
+            self.index_progress = IndexProgress::with_unknown_totals();
+        } else {
+            self.index_progress.refresh_from_data(&self.data);
+        }
     }
 
     pub(crate) fn pump_index_updates(&mut self) {
@@ -35,9 +39,10 @@ impl<'a> App<'a> {
                 break;
             }
             match rx.try_recv() {
-                Ok(update) => {
+                Ok(mut update) => {
+                    let cached_data = update.cached_data.take();
                     self.notify_search_of_update(&update);
-                    should_request |= self.apply_index_update(update);
+                    should_request |= self.apply_index_update(update, cached_data);
                     processed += 1;
                 }
                 Err(TryRecvError::Empty) => break,
@@ -57,11 +62,39 @@ impl<'a> App<'a> {
         }
     }
 
-    fn apply_index_update(&mut self, update: IndexUpdate) -> bool {
-        let changed = !update.files.is_empty() || !update.facets.is_empty();
-        if changed {
-            merge_update(&mut self.data, &update);
-            self.mark_query_dirty();
+    fn apply_index_update(&mut self, update: IndexUpdate, cached_data: Option<SearchData>) -> bool {
+        let mut changed = false;
+
+        match cached_data {
+            Some(data) => {
+                self.data = data;
+                self.filtered_facets.clear();
+                self.filtered_files.clear();
+                self.facet_scores.clear();
+                self.file_scores.clear();
+                self.table_state.select(None);
+                self.index_progress.refresh_from_data(&self.data);
+                self.mark_query_dirty();
+                changed = true;
+            }
+            None => {
+                if update.reset {
+                    self.index_progress = IndexProgress::with_unknown_totals();
+                    self.filtered_facets.clear();
+                    self.filtered_files.clear();
+                    self.facet_scores.clear();
+                    self.file_scores.clear();
+                    self.table_state.select(None);
+                }
+
+                let update_changed =
+                    update.reset || !update.files.is_empty() || !update.facets.is_empty();
+                if update_changed {
+                    merge_update(&mut self.data, &update);
+                    self.mark_query_dirty();
+                    changed = true;
+                }
+            }
         }
 
         let progress = update.progress;
@@ -123,10 +156,12 @@ mod tests {
                 total_files: Some(1),
                 complete: true,
             },
+            reset: false,
+            cached_data: None,
         };
 
         app.notify_search_of_update(&update);
-        let changed = app.apply_index_update(update);
+        let changed = app.apply_index_update(update, None);
         assert!(changed, "index update should report data changes");
         assert!(
             app.input_revision != app.last_applied_revision,

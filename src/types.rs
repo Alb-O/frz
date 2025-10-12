@@ -174,6 +174,7 @@ impl SearchMode {
         }
     }
 
+    #[must_use]
     pub fn count_label(self, ui: &UiConfig) -> &str {
         match self {
             SearchMode::Facets => ui.facets.count_label.as_str(),
@@ -182,7 +183,7 @@ impl SearchMode {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct SearchData {
     pub context_label: Option<String>,
     pub initial_query: String,
@@ -221,11 +222,17 @@ impl SearchData {
     }
 
     #[cfg(feature = "fs")]
+    /// Build a `SearchData` by walking the filesystem under `root`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the underlying filesystem walker or channel
+    /// operations fail while enumerating files.
     pub fn from_filesystem(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         let (tx, rx) = mpsc::channel();
         let walker_root = Arc::new(root.clone());
-        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        let threads = std::thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
 
         WalkBuilder::new(walker_root.as_path())
             .hidden(false)
@@ -251,7 +258,7 @@ impl SearchData {
                         let path = entry.path();
                         let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
                         let tags = tags_for_relative_path(relative);
-                        let relative_display = relative.to_string_lossy().replace("\\", "/");
+                        let relative_display = relative.to_string_lossy().replace('\\', "/");
                         let file = FileRow::new(relative_display, tags);
                         if sender.send(file).is_err() {
                             return WalkState::Quit;
@@ -290,6 +297,12 @@ impl SearchData {
     }
 
     #[cfg(not(feature = "fs"))]
+    /// Attempting to build filesystem-backed `SearchData` when the `fs`
+    /// feature is disabled will always fail.
+    ///
+    /// # Errors
+    ///
+    /// Always returns an error indicating the `fs` feature is disabled.
     pub fn from_filesystem(_root: impl AsRef<Path>) -> Result<Self> {
         bail!("filesystem support is disabled; enable the `fs` feature");
     }

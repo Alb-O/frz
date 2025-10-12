@@ -1,4 +1,6 @@
 pub mod app;
+#[cfg(feature = "fs")]
+pub mod app_dirs;
 mod indexing;
 pub mod input;
 pub mod progress;

@@ -10,6 +10,7 @@ const APPLICATION: &str = "frz";
 
 const CONFIG_DIR_ENV: &str = "FRZ_CONFIG_DIR";
 const DATA_DIR_ENV: &str = "FRZ_DATA_DIR";
+const CACHE_DIR_ENV: &str = "FRZ_CACHE_DIR";
 
 fn project_dirs() -> Result<ProjectDirs> {
     ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
@@ -39,4 +40,12 @@ pub fn get_data_dir() -> Result<PathBuf> {
     }
 
     Ok(project_dirs()?.data_local_dir().to_path_buf())
+}
+
+pub fn get_cache_dir() -> Result<PathBuf> {
+    if let Some(dir) = dir_from_env(CACHE_DIR_ENV) {
+        return Ok(dir);
+    }
+
+    Ok(project_dirs()?.cache_dir().to_path_buf())
 }

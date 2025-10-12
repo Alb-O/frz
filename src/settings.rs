@@ -11,7 +11,7 @@ use serde::Deserialize;
 use frz::{FilesystemOptions, PaneUiConfig, SearchMode, UiConfig};
 
 use super::CliArgs;
-use crate::app_dirs;
+use frz::app_dirs;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]

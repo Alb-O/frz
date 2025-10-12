@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
 #[cfg(feature = "fs")]
-mod app_dirs;
-#[cfg(feature = "fs")]
 mod settings;
+
+#[cfg(feature = "fs")]
+use frz::app_dirs;
 
 #[cfg(feature = "fs")]
 fn long_version() -> &'static str {

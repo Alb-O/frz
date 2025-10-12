@@ -5,6 +5,7 @@ use ratatui::widgets::{Cell, Row};
 use crate::types::{FacetRow, FileRow, highlight_cell};
 
 /// Create match indices for the provided needle and configuration.
+#[must_use]
 pub fn highlight_for_refs(needle: &str, config: Options, text: &str) -> Option<Vec<usize>> {
     if text.is_empty() || needle.is_empty() {
         return None;
@@ -12,6 +13,7 @@ pub fn highlight_for_refs(needle: &str, config: Options, text: &str) -> Option<V
     match_indices(needle, text, config).map(|m| m.indices)
 }
 
+#[must_use]
 pub fn build_facet_rows<'a>(
     filtered_facets: &'a [usize],
     facet_scores: &'a [u16],
@@ -35,6 +37,7 @@ pub fn build_facet_rows<'a>(
         .collect()
 }
 
+#[must_use]
 pub fn build_file_rows<'a>(
     filtered_files: &'a [usize],
     file_scores: &'a [u16],
