@@ -24,17 +24,17 @@ pub fn build_facet_rows<'a>(
     filtered_facets
         .iter()
         .enumerate()
-        .map(|(idx, &actual_index)| {
-            let facet = &facets[actual_index];
+        .filter_map(|(idx, &actual_index)| {
+            let facet = facets.get(actual_index)?;
             let score = facet_scores.get(idx).copied().unwrap_or_default();
             let highlight = highlight_state
                 .and_then(|(needle, config)| highlight_for_refs(needle, config, &facet.name));
             let name_width = column_widths.and_then(|widths| widths.first()).copied();
-            Row::new([
+            Some(Row::new([
                 highlight_cell(&facet.name, highlight, name_width, TruncationStyle::Right),
                 Cell::from(facet.count.to_string()),
                 Cell::from(score.to_string()),
-            ])
+            ]))
         })
         .collect()
 }
@@ -50,8 +50,8 @@ pub fn build_file_rows<'a>(
     filtered_files
         .iter()
         .enumerate()
-        .map(|(idx, &actual_index)| {
-            let entry = &files[actual_index];
+        .filter_map(|(idx, &actual_index)| {
+            let entry = files.get(actual_index)?;
             let score = file_scores.get(idx).copied().unwrap_or_default();
             let path_highlight = highlight_state
                 .and_then(|(needle, config)| highlight_for_refs(needle, config, &entry.path));
@@ -65,7 +65,7 @@ pub fn build_file_rows<'a>(
                     (path, tags)
                 })
                 .unwrap_or((None, None));
-            Row::new([
+            Some(Row::new([
                 highlight_cell(
                     &entry.path,
                     path_highlight,
@@ -79,7 +79,7 @@ pub fn build_file_rows<'a>(
                     TruncationStyle::Right,
                 ),
                 Cell::from(score.to_string()),
-            ])
+            ]))
         })
         .collect()
 }
