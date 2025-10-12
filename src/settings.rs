@@ -6,12 +6,12 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use config::{Config, ConfigError, File};
-use directories::ProjectDirs;
 use serde::Deserialize;
 
 use frz::{FilesystemOptions, PaneUiConfig, SearchMode, UiConfig};
 
 use super::CliArgs;
+use crate::app_dirs;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -184,12 +184,8 @@ fn build_config(cli: &CliArgs) -> Result<Config> {
 fn default_config_files() -> Vec<PathBuf> {
     let mut files = Vec::new();
 
-    if let Some(project_dirs) = ProjectDirs::from("rs", "Saghen", "frz") {
-        files.push(project_dirs.config_dir().join("config.toml"));
-    }
-
-    if let Some(dir) = env::var_os("FRZ_CONFIG_DIR") {
-        files.push(PathBuf::from(dir).join("config.toml"));
+    if let Ok(dir) = app_dirs::get_config_dir() {
+        files.push(dir.join("config.toml"));
     }
 
     if let Ok(current_dir) = env::current_dir() {

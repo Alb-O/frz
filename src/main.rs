@@ -1,7 +1,30 @@
 use std::path::PathBuf;
 
 #[cfg(feature = "fs")]
+mod app_dirs;
+#[cfg(feature = "fs")]
 mod settings;
+
+#[cfg(feature = "fs")]
+fn long_version() -> &'static str {
+    use std::fmt::Write;
+
+    let config_dir = match app_dirs::get_config_dir() {
+        Ok(path) => path.display().to_string(),
+        Err(err) => format!("unavailable ({err})"),
+    };
+    let data_dir = match app_dirs::get_data_dir() {
+        Ok(path) => path.display().to_string(),
+        Err(err) => format!("unavailable ({err})"),
+    };
+
+    let mut details = format!("frz {}", env!("CARGO_PKG_VERSION"));
+    let _ = writeln!(details);
+    let _ = writeln!(details, "config directory: {config_dir}");
+    let _ = writeln!(details, "data directory: {data_dir}");
+
+    Box::leak(details.into_boxed_str())
+}
 
 #[cfg(feature = "fs")]
 use anyhow::Result;
@@ -252,6 +275,7 @@ fn render_env_annotation(arg: &clap::Arg) -> Option<String> {
 #[command(
     name = "frz",
     version,
+    long_version = long_version(),
     about = "Interactive fuzzy finder for tabular data",
     color = ColorChoice::Auto,
     styles = cli_styles()
