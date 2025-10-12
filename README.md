@@ -1,3 +1,5 @@
+# -- UNDER CONSTRUCTION --
+
 # riz
 
 TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://github.com/Saghen)'s [Frizbee](https://github.com/Saghen/frizbee) crate for matching.
