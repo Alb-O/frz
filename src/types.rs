@@ -10,6 +10,8 @@ use std::mem;
 #[cfg(feature = "fs")]
 use std::path::Component;
 use std::path::Path;
+use unicode_truncate::UnicodeTruncateStr;
+use unicode_width::UnicodeWidthStr;
 
 #[cfg(feature = "fs")]
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
@@ -38,6 +40,7 @@ pub struct FileRow {
     pub tags: Vec<String>,
     pub display_tags: String,
     search_text: String,
+    truncate: TruncationStyle,
 }
 
 impl FileRow {
@@ -47,7 +50,33 @@ impl FileRow {
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
-        let path = path.into();
+        Self::from_parts(path.into(), tags, TruncationStyle::Right)
+    }
+
+    #[must_use]
+    pub fn filesystem<I, S>(path: impl Into<String>, tags: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        Self::from_parts(path.into(), tags, TruncationStyle::Left)
+    }
+
+    /// Return the search_text (path plus display tags) used by the UI matcher.
+    pub(crate) fn search_text(&self) -> &str {
+        &self.search_text
+    }
+
+    #[must_use]
+    pub fn truncation_style(&self) -> TruncationStyle {
+        self.truncate
+    }
+
+    fn from_parts<I, S>(path: String, tags: I, truncate: TruncationStyle) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
         let mut tags_sorted: Vec<String> = tags.into_iter().map(Into::into).collect();
         tags_sorted.sort();
         let display_tags = tags_sorted.join(", ");
@@ -61,13 +90,15 @@ impl FileRow {
             tags: tags_sorted,
             display_tags,
             search_text,
+            truncate,
         }
     }
+}
 
-    /// Return the search_text (path plus display tags) used by the UI matcher.
-    pub(crate) fn search_text(&self) -> &str {
-        &self.search_text
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TruncationStyle {
+    Left,
+    Right,
 }
 
 #[derive(Debug, Clone)]
@@ -259,7 +290,7 @@ impl SearchData {
                         let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
                         let tags = tags_for_relative_path(relative);
                         let relative_display = relative.to_string_lossy().replace('\\', "/");
-                        let file = FileRow::new(relative_display, tags);
+                        let file = FileRow::filesystem(relative_display, tags);
                         if sender.send(file).is_err() {
                             return WalkState::Quit;
                         }
@@ -363,9 +394,20 @@ impl SearchOutcome {
     }
 }
 
-pub(crate) fn highlight_cell(text: &str, indices: Option<Vec<usize>>) -> Cell<'_> {
+pub(crate) fn highlight_cell(
+    text: &str,
+    indices: Option<Vec<usize>>,
+    max_width: Option<u16>,
+    truncation: TruncationStyle,
+) -> Cell<'_> {
+    let (display_text, indices) = if let Some(width) = max_width.map(usize::from) {
+        truncate_with_highlight(text, indices, width, truncation)
+    } else {
+        (text.to_string(), indices)
+    };
+
     let Some(mut sorted_indices) = indices.filter(|indices| !indices.is_empty()) else {
-        return Cell::from(text.to_string());
+        return Cell::from(display_text);
     };
     sorted_indices.sort_unstable();
     let mut next = sorted_indices.into_iter().peekable();
@@ -377,7 +419,7 @@ pub(crate) fn highlight_cell(text: &str, indices: Option<Vec<usize>>) -> Cell<'_
         .fg(theme.highlight_fg)
         .add_modifier(Modifier::BOLD);
 
-    for (idx, ch) in text.chars().enumerate() {
+    for (idx, ch) in display_text.chars().enumerate() {
         let should_highlight = next.peek().copied() == Some(idx);
         if should_highlight {
             next.next();
@@ -406,4 +448,59 @@ pub(crate) fn highlight_cell(text: &str, indices: Option<Vec<usize>>) -> Cell<'_
     }
 
     Cell::from(Text::from(Line::from(spans)))
+}
+
+fn truncate_with_highlight(
+    text: &str,
+    indices: Option<Vec<usize>>,
+    max_width: usize,
+    truncation: TruncationStyle,
+) -> (String, Option<Vec<usize>>) {
+    if max_width == 0 {
+        return (String::new(), None);
+    }
+
+    let original_width = text.width();
+    if original_width <= max_width {
+        return (text.to_string(), indices);
+    }
+
+    let ellipsis = "…";
+    let ellipsis_width = ellipsis.width();
+    if max_width <= ellipsis_width {
+        return (ellipsis.to_string(), None);
+    }
+
+    let available = max_width - ellipsis_width;
+    match truncation {
+        TruncationStyle::Right => {
+            let (slice, _) = text.unicode_truncate(available);
+            let mut truncated = slice.to_string();
+            truncated.push_str(ellipsis);
+            let limit = slice.chars().count();
+            let indices = indices.and_then(|indices| {
+                let adjusted: Vec<usize> = indices.into_iter().filter(|&idx| idx < limit).collect();
+                (!adjusted.is_empty()).then_some(adjusted)
+            });
+            (truncated, indices)
+        }
+        TruncationStyle::Left => {
+            let (slice, _) = text.unicode_truncate_start(available);
+            let mut truncated = ellipsis.to_string();
+            truncated.push_str(slice);
+            let slice_len = slice.chars().count();
+            let total_chars = text.chars().count();
+            let trimmed = total_chars.saturating_sub(slice_len);
+            let indices = indices.and_then(|indices| {
+                let adjusted: Vec<usize> = indices
+                    .into_iter()
+                    .filter_map(|idx| idx.checked_sub(trimmed))
+                    .filter(|&idx| idx < slice_len)
+                    .map(|idx| idx + 1)
+                    .collect();
+                (!adjusted.is_empty()).then_some(adjusted)
+            });
+            (truncated, indices)
+        }
+    }
 }

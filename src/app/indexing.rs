@@ -147,7 +147,7 @@ mod tests {
 
         assert_eq!(app.filtered_len(), 0);
         let update = IndexUpdate {
-            files: vec![FileRow::new("src/lib.rs", ["alpha"])].into(),
+            files: vec![FileRow::filesystem("src/lib.rs", ["alpha"])].into(),
             facets: vec![FacetRow::new("alpha", 1)].into(),
             progress: ProgressSnapshot {
                 indexed_facets: 1,

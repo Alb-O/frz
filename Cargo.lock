@@ -490,6 +490,8 @@ dependencies = [
  "tempfile",
  "throbber-widgets-tui",
  "tui-textarea",
+ "unicode-truncate",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]

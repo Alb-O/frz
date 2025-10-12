@@ -82,34 +82,34 @@ pub(crate) fn spawn_filesystem_index(
     thread::spawn(move || {
         let mut reindex_delay = Duration::ZERO;
 
-        if let Some(handle) = cache_handle_for_thread.as_ref() {
-            if let Some(entry) = handle.load() {
-                reindex_delay = entry.reindex_delay();
+        if let Some(handle) = cache_handle_for_thread.as_ref()
+            && let Some(entry) = handle.load()
+        {
+            reindex_delay = entry.reindex_delay();
 
-                let mut data = entry.data;
-                if data.context_label.is_none() {
-                    data.context_label = context_label.clone();
-                }
+            let mut data = entry.data;
+            if data.context_label.is_none() {
+                data.context_label = context_label.clone();
+            }
 
-                let files: Arc<[FileRow]> = data.files.clone().into();
-                let facets: Arc<[FacetRow]> = data.facets.clone().into();
-                let progress = ProgressSnapshot {
-                    indexed_facets: facets.len(),
-                    indexed_files: files.len(),
-                    total_facets: Some(facets.len()),
-                    total_files: Some(files.len()),
-                    complete: false,
-                };
+            let files: Arc<[FileRow]> = data.files.clone().into();
+            let facets: Arc<[FacetRow]> = data.facets.clone().into();
+            let progress = ProgressSnapshot {
+                indexed_facets: facets.len(),
+                indexed_files: files.len(),
+                total_facets: Some(facets.len()),
+                total_files: Some(files.len()),
+                complete: false,
+            };
 
-                if !files.is_empty() || !facets.is_empty() {
-                    let _ = tx.send(IndexUpdate {
-                        files,
-                        facets,
-                        progress,
-                        reset: true,
-                        cached_data: Some(data),
-                    });
-                }
+            if !files.is_empty() || !facets.is_empty() {
+                let _ = tx.send(IndexUpdate {
+                    files,
+                    facets,
+                    progress,
+                    reset: true,
+                    cached_data: Some(data),
+                });
             }
         }
 
@@ -202,7 +202,7 @@ pub(crate) fn spawn_filesystem_index(
                         }
                         let tags = tags_for_relative_path(relative);
                         let relative_display = relative.to_string_lossy().replace('\\', "/");
-                        let file = FileRow::new(relative_display, tags);
+                        let file = FileRow::filesystem(relative_display, tags);
                         if sender.send(file).is_err() {
                             return WalkState::Quit;
                         }

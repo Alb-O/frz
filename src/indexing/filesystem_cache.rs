@@ -60,7 +60,7 @@ impl CacheHandle {
         data.files = payload
             .files
             .into_iter()
-            .map(|entry| FileRow::new(entry.path, entry.tags))
+            .map(|entry| FileRow::filesystem(entry.path, entry.tags))
             .collect();
         data.facets = payload
             .facets

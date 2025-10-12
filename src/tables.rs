@@ -1,9 +1,10 @@
 use frizbee::Options;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Cell, Paragraph, Row, Table};
+use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
+use unicode_width::UnicodeWidthStr;
 
 use crate::types::UiConfig;
 use crate::utils::{build_facet_rows, build_file_rows};
@@ -28,6 +29,9 @@ pub enum TablePane<'a> {
 
 /// Unified renderer for both kinds of tables. Accepts a `TablePane` which
 /// packages all pane-specific data.
+const HIGHLIGHT_SYMBOL: &str = "▶ ";
+const TABLE_COLUMN_SPACING: u16 = 1;
+
 pub fn render_table(
     frame: &mut Frame,
     area: ratatui::layout::Rect,
@@ -45,7 +49,8 @@ pub fn render_table(
             headers,
             widths,
         } => {
-            let rows = build_facet_rows(filtered, scores, facets, highlight_state);
+            let highlight_spacing = HighlightSpacing::WhenSelected;
+            let selection_width = selection_column_width(table_state, &highlight_spacing);
             let widths_owned = widths.cloned().unwrap_or_else(|| {
                 vec![
                     Constraint::Percentage(50),
@@ -53,6 +58,15 @@ pub fn render_table(
                     Constraint::Length(8),
                 ]
             });
+            let column_widths =
+                resolve_column_widths(area, &widths_owned, selection_width, TABLE_COLUMN_SPACING);
+            let rows = build_facet_rows(
+                filtered,
+                scores,
+                facets,
+                highlight_state,
+                Some(&column_widths),
+            );
             let header_cells = headers
                 .cloned()
                 .unwrap_or_else(|| vec!["Facet".into(), "Count".into(), "Score".into()])
@@ -66,9 +80,10 @@ pub fn render_table(
 
             let table = Table::new(rows, widths_owned)
                 .header(header)
-                .column_spacing(1)
+                .column_spacing(TABLE_COLUMN_SPACING)
+                .highlight_spacing(highlight_spacing)
                 .row_highlight_style(theme.row_highlight_style())
-                .highlight_symbol("▶ ");
+                .highlight_symbol(HIGHLIGHT_SYMBOL);
             frame.render_stateful_widget(table, area, table_state);
 
             // Draw a horizontal separator under the header to replace the
@@ -120,7 +135,8 @@ pub fn render_table(
             headers,
             widths,
         } => {
-            let rows = build_file_rows(filtered, scores, files, highlight_state);
+            let highlight_spacing = HighlightSpacing::WhenSelected;
+            let selection_width = selection_column_width(table_state, &highlight_spacing);
             let widths_owned = widths.cloned().unwrap_or_else(|| {
                 vec![
                     Constraint::Percentage(60),
@@ -128,6 +144,15 @@ pub fn render_table(
                     Constraint::Length(8),
                 ]
             });
+            let column_widths =
+                resolve_column_widths(area, &widths_owned, selection_width, TABLE_COLUMN_SPACING);
+            let rows = build_file_rows(
+                filtered,
+                scores,
+                files,
+                highlight_state,
+                Some(&column_widths),
+            );
             let header_cells = headers
                 .cloned()
                 .unwrap_or_else(|| vec!["Path".into(), "Tags".into(), "Score".into()])
@@ -141,9 +166,10 @@ pub fn render_table(
 
             let table = Table::new(rows, widths_owned)
                 .header(header)
-                .column_spacing(1)
+                .column_spacing(TABLE_COLUMN_SPACING)
+                .highlight_spacing(highlight_spacing)
                 .row_highlight_style(theme.row_highlight_style())
-                .highlight_symbol("▶ ");
+                .highlight_symbol(HIGHLIGHT_SYMBOL);
             frame.render_stateful_widget(table, area, table_state);
 
             let header_height = 1u16;
@@ -186,4 +212,46 @@ pub fn render_table(
             }
         }
     }
+}
+
+fn selection_column_width(state: &ratatui::widgets::TableState, spacing: &HighlightSpacing) -> u16 {
+    let has_selection = state.selected().is_some();
+    let should_add = match spacing {
+        HighlightSpacing::Always => true,
+        HighlightSpacing::WhenSelected => has_selection,
+        HighlightSpacing::Never => false,
+    };
+    if should_add {
+        UnicodeWidthStr::width(HIGHLIGHT_SYMBOL) as u16
+    } else {
+        0
+    }
+}
+
+fn resolve_column_widths(
+    area: Rect,
+    constraints: &[Constraint],
+    selection_width: u16,
+    column_spacing: u16,
+) -> Vec<u16> {
+    if constraints.is_empty() {
+        return Vec::new();
+    }
+
+    let layout_area = Rect {
+        x: 0,
+        y: 0,
+        width: area.width,
+        height: 1,
+    };
+    let [_, columns_area] =
+        Layout::horizontal([Constraint::Length(selection_width), Constraint::Fill(0)])
+            .areas(layout_area);
+
+    Layout::horizontal(constraints.to_vec())
+        .spacing(column_spacing)
+        .split(columns_area)
+        .iter()
+        .map(|rect| rect.width)
+        .collect()
 }
