@@ -1,4 +1,4 @@
-riz
+frz
 repo
 repos
 monorepo

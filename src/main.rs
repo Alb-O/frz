@@ -17,9 +17,9 @@ use clap::{
 use serde_json::json;
 
 #[cfg(feature = "fs")]
-use riz::types::{SearchOutcome, SearchSelection};
+use frz::types::{SearchOutcome, SearchSelection};
 #[cfg(feature = "fs")]
-use riz::{SearchMode, Searcher};
+use frz::{SearchMode, Searcher};
 
 #[cfg(feature = "fs")]
 use settings::ResolvedConfig;
@@ -73,7 +73,7 @@ fn dim_cli_annotations(mut arg: clap::Arg) -> clap::Arg {
         has_help = true;
     }
 
-    // Append environment variable annotation (e.g. "[env: RIZ_CONFIG=]") when present
+    // Append environment variable annotation (e.g. "[env: FRZ_CONFIG=]") when present
     if let Some(annotation) = render_env_annotation(&arg) {
         // Hide clap's built-in env hint so we can append our dimmed version
         arg = arg.hide_env(true);
@@ -250,7 +250,7 @@ fn render_env_annotation(arg: &clap::Arg) -> Option<String> {
 #[cfg(feature = "fs")]
 #[derive(Parser, Debug)]
 #[command(
-    name = "riz",
+    name = "frz",
     version,
     about = "Interactive fuzzy finder for tabular data",
     color = ColorChoice::Auto,
@@ -261,7 +261,7 @@ struct CliArgs {
         short,
         long = "config",
         value_name = "FILE",
-        env = "RIZ_CONFIG",
+        env = "FRZ_CONFIG",
         action = ArgAction::Append,
         help = "Additional configuration file to merge (default: none)"
     )]
@@ -522,7 +522,7 @@ fn main() -> Result<()> {
     let cli = parse_cli();
 
     if cli.list_themes {
-        for name in riz::theme::NAMES {
+        for name in frz::theme::NAMES {
             println!("{name}");
         }
         return Ok(());
@@ -631,5 +631,5 @@ fn print_json(outcome: &SearchOutcome) -> Result<()> {
 
 #[cfg(not(feature = "fs"))]
 fn main() {
-    eprintln!("The riz binary requires the 'fs' feature to be enabled.");
+    eprintln!("The frz binary requires the 'fs' feature to be enabled.");
 }

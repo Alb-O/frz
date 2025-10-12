@@ -1,7 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
-use riz::{SearchSelection, Searcher};
+use frz::{SearchSelection, Searcher};
 
 #[cfg(feature = "fs")]
 fn main() -> anyhow::Result<()> {

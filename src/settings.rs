@@ -9,7 +9,7 @@ use config::{Config, ConfigError, File};
 use directories::ProjectDirs;
 use serde::Deserialize;
 
-use riz::{FilesystemOptions, PaneUiConfig, SearchMode, UiConfig};
+use frz::{FilesystemOptions, PaneUiConfig, SearchMode, UiConfig};
 
 use super::CliArgs;
 
@@ -169,7 +169,7 @@ fn build_config(cli: &CliArgs) -> Result<Config> {
     }
 
     builder = builder.add_source(
-        config::Environment::with_prefix("RIZ")
+        config::Environment::with_prefix("frz")
             .separator("__")
             .try_parsing(true)
             .list_separator(","),
@@ -184,17 +184,17 @@ fn build_config(cli: &CliArgs) -> Result<Config> {
 fn default_config_files() -> Vec<PathBuf> {
     let mut files = Vec::new();
 
-    if let Some(project_dirs) = ProjectDirs::from("rs", "Saghen", "riz") {
+    if let Some(project_dirs) = ProjectDirs::from("rs", "Saghen", "frz") {
         files.push(project_dirs.config_dir().join("config.toml"));
     }
 
-    if let Some(dir) = env::var_os("RIZ_CONFIG_DIR") {
+    if let Some(dir) = env::var_os("FRZ_CONFIG_DIR") {
         files.push(PathBuf::from(dir).join("config.toml"));
     }
 
     if let Ok(current_dir) = env::current_dir() {
-        files.push(current_dir.join(".riz.toml"));
-        files.push(current_dir.join("riz.toml"));
+        files.push(current_dir.join(".frz.toml"));
+        files.push(current_dir.join("frz.toml"));
     }
 
     files

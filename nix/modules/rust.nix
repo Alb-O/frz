@@ -12,7 +12,7 @@
     , ...
     }:
     {
-      rust-project.crates."riz".crane.args = {
+      rust-project.crates."frz".crane.args = {
         buildInputs = lib.optionals pkgs.stdenv.isDarwin (
           with pkgs.darwin.apple_sdk.frameworks;
           [
@@ -23,7 +23,7 @@
       # Ensure the path for the top-level crate is set so default-crates logic
       # doesn't try to read an undefined path (this fixes errors when the crate
       # is referenced by the rust-flake module).
-      rust-project.crates."riz".path = ../../.;
-      packages.default = self'.packages.riz;
+      rust-project.crates."frz".path = ../../.;
+      packages.default = self'.packages.frz;
     };
 }
