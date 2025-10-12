@@ -111,7 +111,7 @@ impl IndexProgress {
             Some(0) => ProgressDisplay::Fixed(0),
             Some(total) if self.complete => ProgressDisplay::Fixed(total),
             Some(total) => ProgressDisplay::Ratio { indexed, total },
-            None => ProgressDisplay::Unknown { indexed },
+            None => ProgressDisplay::Fixed(indexed),
         }
     }
 
@@ -144,7 +144,6 @@ impl IndexProgress {
 enum ProgressDisplay {
     Fixed(usize),
     Ratio { indexed: usize, total: usize },
-    Unknown { indexed: usize },
 }
 
 impl fmt::Display for ProgressDisplay {
@@ -152,7 +151,6 @@ impl fmt::Display for ProgressDisplay {
         match self {
             Self::Fixed(value) => write!(f, "{}", value),
             Self::Ratio { indexed, total } => write!(f, "{}/{}", indexed, total),
-            Self::Unknown { indexed } => write!(f, "{}/?", indexed),
         }
     }
 }
@@ -230,7 +228,7 @@ mod tests {
         progress.record_indexed(5, 12);
 
         let (label, complete) = progress.status("Facets", "Files");
-        assert_eq!(label, "Indexed Facets: 5/? • Indexed Files: 12/?");
+        assert_eq!(label, "Indexed Facets: 5 • Indexed Files: 12");
         assert!(!complete);
 
         progress.set_totals(Some(5), Some(12));
