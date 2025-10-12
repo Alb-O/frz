@@ -1,12 +1,14 @@
-use frizbee::Config;
+use frizbee::Options;
 use frizbee::match_indices;
 use ratatui::widgets::{Cell, Row};
 
 use crate::types::{FacetRow, FileRow, highlight_cell};
 
-/// Create an Option containing references to the needle string and Config for highlighting.
-/// Accepts an owned pair elsewhere and the caller should invoke `.as_ref().map(|(s,c)| (s.as_str(), c))`.
-pub fn highlight_for_refs(needle: &str, config: &Config, text: &str) -> Option<Vec<usize>> {
+/// Create match indices for the provided needle and configuration.
+pub fn highlight_for_refs(needle: &str, config: Options, text: &str) -> Option<Vec<usize>> {
+    if text.is_empty() || needle.is_empty() {
+        return None;
+    }
     match_indices(needle, text, config).map(|m| m.indices)
 }
 
@@ -14,7 +16,7 @@ pub fn build_facet_rows<'a>(
     filtered_facets: &'a [usize],
     facet_scores: &'a [u16],
     facets: &'a [FacetRow],
-    highlight_state: Option<(&'a str, &'a Config)>,
+    highlight_state: Option<(&'a str, Options)>,
 ) -> Vec<Row<'a>> {
     filtered_facets
         .iter()
@@ -37,7 +39,7 @@ pub fn build_file_rows<'a>(
     filtered_files: &'a [usize],
     file_scores: &'a [u16],
     files: &'a [FileRow],
-    highlight_state: Option<(&'a str, &'a Config)>,
+    highlight_state: Option<(&'a str, Options)>,
 ) -> Vec<Row<'a>> {
     filtered_files
         .iter()

@@ -1,4 +1,4 @@
-use frizbee::Config;
+use frizbee::Options;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::Style;
@@ -33,7 +33,7 @@ pub fn render_table(
     area: ratatui::layout::Rect,
     table_state: &mut ratatui::widgets::TableState,
     _ui: &UiConfig,
-    highlight_state: Option<(&str, &Config)>,
+    highlight_state: Option<(&str, Options)>,
     pane: TablePane<'_>,
     theme: &crate::theme::Theme,
 ) {

@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use frizbee::{Config, match_list};
+use frizbee::{Options, match_list};
 
 #[cfg(feature = "fs")]
 use crate::indexing::{IndexUpdate, merge_update};
@@ -105,12 +105,12 @@ fn stream_facets(
             return true;
         }
         let haystacks: Vec<&str> = chunk.iter().map(|facet| facet.name.as_str()).collect();
-        let matches = match_list(trimmed, &haystacks, &config);
+        let matches = match_list(trimmed, &haystacks, config);
         for entry in matches {
             if entry.score == 0 {
                 continue;
             }
-            let index = offset + entry.index as usize;
+            let index = offset + entry.index_in_haystack as usize;
             aggregator.push(index, entry.score);
         }
         if should_abort(id, latest_query_id) {
@@ -149,12 +149,12 @@ fn stream_files(
             return true;
         }
         let haystacks: Vec<&str> = chunk.iter().map(|file| file.search_text()).collect();
-        let matches = match_list(trimmed, &haystacks, &config);
+        let matches = match_list(trimmed, &haystacks, config);
         for entry in matches {
             if entry.score == 0 {
                 continue;
             }
-            let index = offset + entry.index as usize;
+            let index = offset + entry.index_in_haystack as usize;
             aggregator.push(index, entry.score);
         }
         if should_abort(id, latest_query_id) {
@@ -500,10 +500,10 @@ where
     }
 }
 
-pub(crate) fn config_for_query(query: &str, dataset_len: usize) -> Config {
-    let mut config = Config {
+pub(crate) fn config_for_query(query: &str, dataset_len: usize) -> Options {
+    let mut config = Options {
         prefilter: false,
-        ..Config::default()
+        ..Options::default()
     };
 
     let length = query.chars().count();

@@ -9,7 +9,7 @@ use crate::tables::{self, TablePane};
 use crate::tabs;
 use crate::theme::Theme;
 use crate::types::SearchMode;
-use frizbee::Config;
+use frizbee::Options;
 
 use super::App;
 
@@ -69,7 +69,7 @@ impl<'a> App<'a> {
         let highlight_owned = self.highlight_for_query(self.data.facets.len());
         let highlight_state = highlight_owned
             .as_ref()
-            .map(|(text, config)| (text.as_str(), config));
+            .map(|(text, config)| (text.as_str(), *config));
         tables::render_table(
             frame,
             area,
@@ -91,7 +91,7 @@ impl<'a> App<'a> {
         let highlight_owned = self.highlight_for_query(self.data.files.len());
         let highlight_state = highlight_owned
             .as_ref()
-            .map(|(text, config)| (text.as_str(), config));
+            .map(|(text, config)| (text.as_str(), *config));
         tables::render_table(
             frame,
             area,
@@ -109,7 +109,7 @@ impl<'a> App<'a> {
         )
     }
 
-    fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Config)> {
+    fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {
         let query = self.search_input.text().trim();
         if query.is_empty() {
             return None;
