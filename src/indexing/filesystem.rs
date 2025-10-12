@@ -81,35 +81,50 @@ pub(crate) fn spawn_filesystem_index(
 
     thread::spawn(move || {
         let mut reindex_delay = Duration::ZERO;
+        let mut preview_complete = false;
+        let mut preview_file_count = None;
 
-        if let Some(handle) = cache_handle_for_thread.as_ref()
-            && let Some(entry) = handle.load()
-        {
-            reindex_delay = entry.reindex_delay();
+        if let Some(handle) = cache_handle_for_thread.as_ref() {
+            if let Some(mut preview) = handle.load_preview() {
+                reindex_delay = preview.reindex_delay();
+                let preview_is_complete = preview.is_complete();
+                preview_file_count = Some(preview.data.files.len());
 
-            let mut data = entry.data;
-            if data.context_label.is_none() {
-                data.context_label = context_label.clone();
+                if preview.data.context_label.is_none() {
+                    preview.data.context_label = context_label.clone();
+                }
+
+                let files: Arc<[FileRow]> = preview.data.files.clone().into();
+                let facets: Arc<[FacetRow]> = preview.data.facets.clone().into();
+                let progress = ProgressSnapshot {
+                    indexed_facets: facets.len(),
+                    indexed_files: files.len(),
+                    total_facets: preview_is_complete.then_some(facets.len()),
+                    total_files: preview_is_complete.then_some(files.len()),
+                    complete: preview_is_complete,
+                };
+
+                if !files.is_empty() || !facets.is_empty() {
+                    let _ = tx.send(IndexUpdate {
+                        files,
+                        facets,
+                        progress,
+                        reset: true,
+                        cached_data: Some(preview.data),
+                    });
+                }
+
+                preview_complete = preview_is_complete;
             }
 
-            let files: Arc<[FileRow]> = data.files.clone().into();
-            let facets: Arc<[FacetRow]> = data.facets.clone().into();
-            let progress = ProgressSnapshot {
-                indexed_facets: facets.len(),
-                indexed_files: files.len(),
-                total_facets: Some(facets.len()),
-                total_files: Some(files.len()),
-                complete: false,
-            };
+            if !preview_complete && let Some(mut entry) = handle.load() {
+                reindex_delay = entry.reindex_delay();
 
-            if !files.is_empty() || !facets.is_empty() {
-                let _ = tx.send(IndexUpdate {
-                    files,
-                    facets,
-                    progress,
-                    reset: true,
-                    cached_data: Some(data),
-                });
+                if entry.data.context_label.is_none() {
+                    entry.data.context_label = context_label.clone();
+                }
+
+                stream_cached_entry(entry, preview_file_count, &tx);
             }
         }
 
@@ -219,6 +234,78 @@ pub(crate) fn spawn_filesystem_index(
     });
 
     Ok((data, rx))
+}
+
+fn stream_cached_entry(
+    entry: cache::CachedEntry,
+    preview_len: Option<usize>,
+    tx: &Sender<IndexUpdate>,
+) {
+    let data = entry.data;
+    let total_files = data.files.len();
+    let total_facets = data.facets.len();
+
+    if total_files == 0 && total_facets == 0 {
+        return;
+    }
+
+    let start_index = preview_len.unwrap_or(0).min(total_files);
+    let facets: Arc<[FacetRow]> = data.facets.into();
+    let mut files = data.files;
+
+    if start_index > 0 {
+        files.drain(..start_index);
+    }
+
+    if files.is_empty() {
+        let progress = ProgressSnapshot {
+            indexed_facets: total_facets,
+            indexed_files: total_files,
+            total_facets: Some(total_facets),
+            total_files: Some(total_files),
+            complete: false,
+        };
+
+        let _ = tx.send(IndexUpdate {
+            files: Arc::from(Vec::<FileRow>::new()),
+            facets,
+            progress,
+            reset: preview_len.is_none(),
+            cached_data: None,
+        });
+        return;
+    }
+
+    let mut dispatched = start_index;
+    let mut first_batch = true;
+
+    while !files.is_empty() {
+        let chunk_len = files.len().min(MAX_BATCH_SIZE);
+        let chunk: Vec<FileRow> = files.drain(..chunk_len).collect();
+        dispatched += chunk_len;
+
+        let progress = ProgressSnapshot {
+            indexed_facets: total_facets,
+            indexed_files: dispatched,
+            total_facets: Some(total_facets),
+            total_files: Some(total_files),
+            complete: false,
+        };
+
+        let update = IndexUpdate {
+            files: chunk.into(),
+            facets: facets.clone(),
+            progress,
+            reset: preview_len.is_none() && first_batch,
+            cached_data: None,
+        };
+
+        if tx.send(update).is_err() {
+            break;
+        }
+
+        first_batch = false;
+    }
 }
 
 struct UpdateBatcher {

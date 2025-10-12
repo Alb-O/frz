@@ -17,6 +17,8 @@ use super::FilesystemOptions;
 pub(super) const CACHE_TTL: Duration = Duration::from_secs(60);
 const CACHE_VERSION: u32 = 1;
 const CACHE_NAMESPACE: &str = "filesystem";
+const CACHE_PREVIEW_LIMIT: usize = 512;
+const CACHE_PREVIEW_EXTENSION: &str = "preview.json";
 
 #[derive(Clone)]
 pub(super) struct CacheHandle {
@@ -27,6 +29,7 @@ pub(super) struct CacheHandle {
 pub(super) struct CachedEntry {
     pub data: SearchData,
     pub indexed_at: SystemTime,
+    pub complete: bool,
 }
 
 impl CachedEntry {
@@ -35,6 +38,10 @@ impl CachedEntry {
             Ok(age) => CACHE_TTL.saturating_sub(age),
             Err(_) => Duration::ZERO,
         }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.complete
     }
 }
 
@@ -48,27 +55,7 @@ impl CacheHandle {
     }
 
     pub fn load(&self) -> Option<CachedEntry> {
-        let bytes = fs::read(&self.path).ok()?;
-        let payload: CachePayload = serde_json::from_slice(&bytes).ok()?;
-        if payload.version != CACHE_VERSION || payload.fingerprint != self.fingerprint {
-            return None;
-        }
-
-        let indexed_at = UNIX_EPOCH + Duration::from_secs(payload.indexed_at);
-        let mut data = SearchData::new();
-        data.context_label = payload.context_label;
-        data.files = payload
-            .files
-            .into_iter()
-            .map(|entry| FileRow::filesystem(entry.path, entry.tags))
-            .collect();
-        data.facets = payload
-            .facets
-            .into_iter()
-            .map(|entry| FacetRow::new(entry.name, entry.count))
-            .collect();
-
-        Some(CachedEntry { data, indexed_at })
+        load_payload(&self.path, self.fingerprint)
     }
 
     pub fn writer(&self, context_label: Option<String>) -> Option<CacheWriter> {
@@ -78,6 +65,17 @@ impl CacheHandle {
             context_label,
         ))
     }
+
+    pub fn load_preview(&self) -> Option<CachedEntry> {
+        let preview_path = self.preview_path();
+        load_payload(&preview_path, self.fingerprint)
+    }
+
+    fn preview_path(&self) -> PathBuf {
+        let mut preview_path = self.path.clone();
+        preview_path.set_extension(CACHE_PREVIEW_EXTENSION);
+        preview_path
+    }
 }
 
 pub(super) struct CacheWriter {
@@ -86,16 +84,20 @@ pub(super) struct CacheWriter {
     context_label: Option<String>,
     files: Vec<CacheFileEntry>,
     facets: BTreeMap<String, usize>,
+    preview_path: PathBuf,
 }
 
 impl CacheWriter {
     fn new(path: PathBuf, fingerprint: u64, context_label: Option<String>) -> Self {
+        let mut preview_path = path.clone();
+        preview_path.set_extension(CACHE_PREVIEW_EXTENSION);
         Self {
             path,
             fingerprint,
             context_label,
             files: Vec::new(),
             facets: BTreeMap::new(),
+            preview_path,
         }
     }
 
@@ -117,42 +119,57 @@ impl CacheWriter {
                 .with_context(|| format!("failed to create cache directory: {}", dir.display()))?;
         }
 
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        let facets = self
+            .facets
+            .into_iter()
+            .map(|(name, count)| CacheFacetEntry { name, count })
+            .collect::<Vec<_>>();
+
+        let preview_files: Vec<CacheFileEntry> = self
+            .files
+            .iter()
+            .take(CACHE_PREVIEW_LIMIT)
+            .cloned()
+            .collect();
+        let mut preview_facets = BTreeMap::new();
+        for file in &preview_files {
+            for tag in &file.tags {
+                *preview_facets.entry(tag.clone()).or_insert(0) += 1;
+            }
+        }
+        let preview_facets = preview_facets
+            .into_iter()
+            .map(|(name, count)| CacheFacetEntry { name, count })
+            .collect::<Vec<_>>();
+        let preview_complete = preview_files.len() == self.files.len();
+
         let payload = CachePayload {
             version: CACHE_VERSION,
             fingerprint: self.fingerprint,
-            indexed_at: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-            context_label: self.context_label,
+            indexed_at: timestamp,
+            context_label: self.context_label.clone(),
+            complete: true,
             files: self.files,
-            facets: self
-                .facets
-                .into_iter()
-                .map(|(name, count)| CacheFacetEntry { name, count })
-                .collect(),
+            facets,
         };
 
-        let data = serde_json::to_vec(&payload).context("failed to serialize cache payload")?;
-        let tmp_path = self.path.with_extension("tmp");
-        {
-            let mut file = fs::File::create(&tmp_path)
-                .with_context(|| format!("failed to create cache file: {}", tmp_path.display()))?;
-            file.write_all(&data)
-                .with_context(|| format!("failed to write cache file: {}", tmp_path.display()))?;
-            file.sync_all().ok();
-        }
+        let preview_payload = CachePayload {
+            version: CACHE_VERSION,
+            fingerprint: self.fingerprint,
+            indexed_at: timestamp,
+            context_label: self.context_label,
+            complete: preview_complete,
+            files: preview_files,
+            facets: preview_facets,
+        };
 
-        let _ = fs::remove_file(&self.path);
-        fs::rename(&tmp_path, &self.path).with_context(|| {
-            format!(
-                "failed to move cache file from {} to {}",
-                tmp_path.display(),
-                self.path.display()
-            )
-        })?;
-
-        Ok(())
+        write_payload(&self.path, &payload)?;
+        write_payload(&self.preview_path, &preview_payload)
     }
 }
 
@@ -162,11 +179,13 @@ struct CachePayload {
     fingerprint: u64,
     indexed_at: u64,
     context_label: Option<String>,
+    #[serde(default)]
+    complete: bool,
     files: Vec<CacheFileEntry>,
     facets: Vec<CacheFacetEntry>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct CacheFileEntry {
     path: String,
     tags: Vec<String>,
@@ -176,6 +195,57 @@ struct CacheFileEntry {
 struct CacheFacetEntry {
     name: String,
     count: usize,
+}
+
+fn write_payload(path: &Path, payload: &CachePayload) -> Result<()> {
+    let data = serde_json::to_vec(payload).context("failed to serialize cache payload")?;
+    let tmp_path = path.with_extension("tmp");
+    {
+        let mut file = fs::File::create(&tmp_path)
+            .with_context(|| format!("failed to create cache file: {}", tmp_path.display()))?;
+        file.write_all(&data)
+            .with_context(|| format!("failed to write cache file: {}", tmp_path.display()))?;
+        file.sync_all().ok();
+    }
+
+    let _ = fs::remove_file(path);
+    fs::rename(&tmp_path, path).with_context(|| {
+        format!(
+            "failed to move cache file from {} to {}",
+            tmp_path.display(),
+            path.display()
+        )
+    })?;
+
+    Ok(())
+}
+
+fn load_payload(path: &Path, fingerprint: u64) -> Option<CachedEntry> {
+    let bytes = fs::read(path).ok()?;
+    let payload: CachePayload = serde_json::from_slice(&bytes).ok()?;
+    if payload.version != CACHE_VERSION || payload.fingerprint != fingerprint {
+        return None;
+    }
+
+    let indexed_at = UNIX_EPOCH + Duration::from_secs(payload.indexed_at);
+    let mut data = SearchData::new();
+    data.context_label = payload.context_label;
+    data.files = payload
+        .files
+        .into_iter()
+        .map(|entry| FileRow::filesystem(entry.path, entry.tags))
+        .collect();
+    data.facets = payload
+        .facets
+        .into_iter()
+        .map(|entry| FacetRow::new(entry.name, entry.count))
+        .collect();
+
+    Some(CachedEntry {
+        data,
+        indexed_at,
+        complete: payload.complete,
+    })
 }
 
 fn fingerprint_for(root: &Path, options: &FilesystemOptions) -> u64 {
