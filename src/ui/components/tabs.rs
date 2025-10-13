@@ -48,29 +48,11 @@ pub fn render_input_with_tabs(
     let tabs_width = 16u16;
 
     // Get prompt for calculating textarea width
-    let prompt = input_title
-        .as_deref()
-        .or(Some(ui.facets.mode_title.as_str()))
-        .unwrap_or("");
-    let prompt_width = if prompt.is_empty() {
-        0
-    } else {
-        prompt.len() as u16 + 3
-    }; // " > "
+    let prompt = determine_prompt_text(input_title, ui);
+    let prompt_width = calculate_prompt_width(prompt);
 
     // Split area: prompt (if any), textarea, tabs on right
-    let constraints = if prompt.is_empty() {
-        vec![
-            ratatui::layout::Constraint::Min(1),
-            ratatui::layout::Constraint::Length(tabs_width),
-        ]
-    } else {
-        vec![
-            ratatui::layout::Constraint::Length(prompt_width),
-            ratatui::layout::Constraint::Min(1),
-            ratatui::layout::Constraint::Length(tabs_width),
-        ]
-    };
+    let constraints = layout_constraints(!prompt.is_empty(), prompt_width, tabs_width);
 
     let horizontal = ratatui::layout::Layout::default()
         .direction(ratatui::layout::Direction::Horizontal)
@@ -99,13 +81,62 @@ pub fn render_input_with_tabs(
 
     // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
-    let selected = match mode {
-        SearchMode::Facets => 0,
-        SearchMode::Files => 1,
-    };
+    let selected = selected_tab_index(mode);
 
     // Add extra padding to rightmost tab to prevent cutoff
-    let tab_titles = vec![
+    let tab_titles = build_tab_titles(theme, selected);
+
+    let tabs = Tabs::new(tab_titles)
+        .select(selected)
+        .divider("")
+        .highlight_style(Style::default().bg(theme.header_bg));
+
+    frame.render_widget(tabs, tabs_area);
+}
+
+fn determine_prompt_text<'a>(input_title: &'a Option<String>, ui: &'a UiConfig) -> &'a str {
+    input_title
+        .as_deref()
+        .or(Some(ui.facets.mode_title.as_str()))
+        .unwrap_or("")
+}
+
+fn calculate_prompt_width(prompt: &str) -> u16 {
+    if prompt.is_empty() {
+        0
+    } else {
+        prompt.len() as u16 + 3
+    }
+}
+
+fn layout_constraints(
+    has_prompt: bool,
+    prompt_width: u16,
+    tabs_width: u16,
+) -> Vec<ratatui::layout::Constraint> {
+    if has_prompt {
+        vec![
+            ratatui::layout::Constraint::Length(prompt_width),
+            ratatui::layout::Constraint::Min(1),
+            ratatui::layout::Constraint::Length(tabs_width),
+        ]
+    } else {
+        vec![
+            ratatui::layout::Constraint::Min(1),
+            ratatui::layout::Constraint::Length(tabs_width),
+        ]
+    }
+}
+
+fn selected_tab_index(mode: SearchMode) -> usize {
+    match mode {
+        SearchMode::Facets => 0,
+        SearchMode::Files => 1,
+    }
+}
+
+fn build_tab_titles(theme: &Theme, selected: usize) -> Vec<Line<'static>> {
+    vec![
         Line::from(format!(" {} ", "Tags"))
             .fg(theme.header_fg)
             .bg(if selected == 0 {
@@ -120,14 +151,7 @@ pub fn render_input_with_tabs(
             } else {
                 theme.row_highlight_bg
             }),
-    ];
-
-    let tabs = Tabs::new(tab_titles)
-        .select(selected)
-        .divider("")
-        .highlight_style(Style::default().bg(theme.header_bg));
-
-    frame.render_widget(tabs, tabs_area);
+    ]
 }
 
 fn render_progress(
@@ -198,4 +222,86 @@ fn render_progress(
     }
 
     buffer.set_line(start_x, input_row, &line, max_width);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prompt_prefers_explicit_title() {
+        let mut ui = UiConfig::default();
+        ui.facets.mode_title = "Default".to_string();
+        let input_title = Some("Custom".to_string());
+
+        let prompt = determine_prompt_text(&input_title, &ui);
+
+        assert_eq!(prompt, "Custom");
+    }
+
+    #[test]
+    fn prompt_falls_back_to_ui_title() {
+        let ui = UiConfig::default();
+        let input_title = None;
+
+        let prompt = determine_prompt_text(&input_title, &ui);
+
+        assert_eq!(prompt, ui.facets.mode_title);
+    }
+
+    #[test]
+    fn prompt_width_accounts_for_separator() {
+        assert_eq!(calculate_prompt_width(""), 0);
+        assert_eq!(calculate_prompt_width("Prompt"), 9); // len + " > "
+    }
+
+    #[test]
+    fn layout_constraints_include_prompt_section() {
+        let constraints = layout_constraints(true, 5, 10);
+
+        assert_eq!(constraints.len(), 3);
+        assert!(matches!(
+            constraints[0],
+            ratatui::layout::Constraint::Length(5)
+        ));
+        assert!(matches!(
+            constraints[1],
+            ratatui::layout::Constraint::Min(1)
+        ));
+        assert!(matches!(
+            constraints[2],
+            ratatui::layout::Constraint::Length(10)
+        ));
+    }
+
+    #[test]
+    fn layout_constraints_without_prompt_are_compact() {
+        let constraints = layout_constraints(false, 5, 10);
+
+        assert_eq!(constraints.len(), 2);
+        assert!(matches!(
+            constraints[0],
+            ratatui::layout::Constraint::Min(1)
+        ));
+        assert!(matches!(
+            constraints[1],
+            ratatui::layout::Constraint::Length(10)
+        ));
+    }
+
+    #[test]
+    fn selected_tab_index_matches_mode() {
+        assert_eq!(selected_tab_index(SearchMode::Facets), 0);
+        assert_eq!(selected_tab_index(SearchMode::Files), 1);
+    }
+
+    #[test]
+    fn tab_titles_include_expected_labels() {
+        let theme = Theme::default();
+        let titles = build_tab_titles(&theme, 0);
+
+        assert_eq!(titles.len(), 2);
+        assert_eq!(titles[0].spans[0].content.as_ref().trim(), "Tags");
+        assert_eq!(titles[1].spans[0].content.as_ref().trim(), "Files");
+    }
 }
