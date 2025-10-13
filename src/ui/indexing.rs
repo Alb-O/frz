@@ -1,6 +1,9 @@
 use std::sync::mpsc::Receiver;
 
 #[cfg(feature = "fs")]
+use std::time::{Duration, Instant};
+
+#[cfg(feature = "fs")]
 use std::sync::mpsc::TryRecvError;
 
 use crate::indexing::IndexUpdate;
@@ -16,6 +19,7 @@ use super::components::progress::IndexProgress;
 #[cfg(feature = "fs")]
 impl<'a> App<'a> {
     const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
+    const MAX_INDEX_PROCESSING_TIME: Duration = Duration::from_millis(8);
 
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
@@ -34,8 +38,12 @@ impl<'a> App<'a> {
         let mut should_request = false;
         let mut keep_receiver = true;
         let mut processed = 0usize;
+        let start = Instant::now();
+
         loop {
-            if processed >= Self::MAX_INDEX_UPDATES_PER_TICK {
+            if processed >= Self::MAX_INDEX_UPDATES_PER_TICK
+                || start.elapsed() >= Self::MAX_INDEX_PROCESSING_TIME
+            {
                 break;
             }
             match rx.try_recv() {
