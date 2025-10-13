@@ -1,10 +1,9 @@
-{ inputs, ... }:
+{ ... }:
 {
   perSystem =
     { config
     , self'
     , pkgs
-    , lib
     , ...
     }:
     {

@@ -5,8 +5,7 @@
     inputs.rust-flake.flakeModules.nixpkgs
   ];
   perSystem =
-    { config
-    , self'
+    { self'
     , pkgs
     , lib
     , ...
