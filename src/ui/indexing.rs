@@ -7,11 +7,11 @@ use crate::indexing::IndexUpdate;
 #[cfg(feature = "fs")]
 use crate::indexing::merge_update;
 #[cfg(feature = "fs")]
-use crate::progress::IndexProgress;
-#[cfg(feature = "fs")]
 use crate::types::SearchData;
 
 use super::App;
+#[cfg(feature = "fs")]
+use super::components::progress::IndexProgress;
 
 #[cfg(feature = "fs")]
 impl<'a> App<'a> {

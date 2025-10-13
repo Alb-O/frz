@@ -1,3 +1,6 @@
+pub mod rows;
+
+use self::rows::{build_facet_rows, build_file_rows};
 use frizbee::Options;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -7,7 +10,6 @@ use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
 use unicode_width::UnicodeWidthStr;
 
 use crate::types::UiConfig;
-use crate::utils::{build_facet_rows, build_file_rows};
 
 /// Description of a table pane to render.
 pub enum TablePane<'a> {

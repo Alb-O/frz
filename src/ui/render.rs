@@ -5,13 +5,14 @@ use ratatui::{
 };
 
 use crate::search;
-use crate::tables::{self, TablePane};
-use crate::tabs;
 use crate::theme::Theme;
 use crate::types::SearchMode;
 use frizbee::Options;
 
 use super::App;
+use super::components::{
+    InputContext, ProgressState, TablePane, render_input_with_tabs, render_table,
+};
 
 impl<'a> App<'a> {
     pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -27,7 +28,7 @@ impl<'a> App<'a> {
             .split(area);
 
         let (progress_text, progress_complete) = self.progress_status();
-        let input_ctx = tabs::InputContext {
+        let input_ctx = InputContext {
             search_input: &self.search_input,
             input_title: &self.input_title,
             mode: self.mode,
@@ -35,12 +36,12 @@ impl<'a> App<'a> {
             area: layout[0],
             theme: &self.theme,
         };
-        let progress_state = tabs::ProgressState {
+        let progress_state = ProgressState {
             progress_text: &progress_text,
             progress_complete,
             throbber_state: &self.throbber_state,
         };
-        tabs::render_input_with_tabs(frame, input_ctx, progress_state);
+        render_input_with_tabs(frame, input_ctx, progress_state);
         self.render_results(frame, layout[1]);
 
         if self.filtered_len() == 0 {
@@ -70,7 +71,7 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
-        tables::render_table(
+        render_table(
             frame,
             area,
             &mut self.table_state,
@@ -92,7 +93,7 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
-        tables::render_table(
+        render_table(
             frame,
             area,
             &mut self.table_state,

@@ -6,6 +6,7 @@
 
 mod actions;
 mod builder;
+pub mod components;
 mod indexing;
 mod render;
 mod runtime;
