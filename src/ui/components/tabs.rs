@@ -80,6 +80,11 @@ pub fn render_input_with_tabs(
 
     // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
+    let tabs_inner = Rect {
+        x: tabs_area.x.saturating_add(1),
+        width: tabs_area.width.saturating_sub(1),
+        ..tabs_area
+    };
     let selected = selected_tab_index(mode);
 
     // Add extra padding to rightmost tab to prevent cutoff
@@ -88,9 +93,10 @@ pub fn render_input_with_tabs(
     let tabs = Tabs::new(tab_titles)
         .select(selected)
         .divider("")
+        .padding("", " ")
         .highlight_style(theme.tab_highlight_style());
 
-    frame.render_widget(tabs, tabs_area);
+    frame.render_widget(tabs, tabs_inner);
 }
 
 fn determine_prompt_text<'a>(input_title: &'a Option<String>, ui: &'a UiConfig) -> &'a str {
@@ -139,7 +145,7 @@ fn build_tab_titles(theme: &Theme, selected: usize) -> Vec<Line<'static>> {
     let inactive = theme.tab_inactive_style();
     vec![
         Line::from(format!(" {} ", "Tags")).style(if selected == 0 { active } else { inactive }),
-        Line::from(format!(" {} ", "Files ")).style(if selected == 1 { active } else { inactive }),
+        Line::from(format!(" {} ", "Files")).style(if selected == 1 { active } else { inactive }),
     ]
 }
 
