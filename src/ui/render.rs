@@ -42,14 +42,22 @@ impl<'a> App<'a> {
             throbber_state: &self.throbber_state,
         };
         render_input_with_tabs(frame, input_ctx, progress_state);
-        self.render_results(frame, layout[1]);
+        let results_area = layout[1];
+        self.render_results(frame, results_area);
 
         if self.filtered_len() == 0 {
-            let empty = Paragraph::new("No results")
-                .alignment(Alignment::Center)
-                .style(Theme::default().empty_style());
-            frame.render_widget(Clear, layout[1]);
-            frame.render_widget(empty, layout[1]);
+            let mut message_area = results_area;
+            const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
+            if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
+                message_area.y += HEADER_AND_DIVIDER_HEIGHT;
+                message_area.height -= HEADER_AND_DIVIDER_HEIGHT;
+
+                let empty = Paragraph::new("No results")
+                    .alignment(Alignment::Center)
+                    .style(Theme::default().empty_style());
+                frame.render_widget(Clear, message_area);
+                frame.render_widget(empty, message_area);
+            }
         }
     }
 
