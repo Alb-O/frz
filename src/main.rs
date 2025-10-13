@@ -8,7 +8,7 @@ use anyhow::Result;
 #[cfg(feature = "fs")]
 use cli::{OutputFormat, parse_cli, print_json, print_plain};
 #[cfg(feature = "fs")]
-use frz::{SearchMode, Searcher};
+use frz::{SearchMode, SearchUi};
 #[cfg(feature = "fs")]
 use settings::ResolvedConfig;
 
@@ -47,34 +47,34 @@ fn run_search(format: OutputFormat, settings: ResolvedConfig) -> Result<()> {
         file_headers,
     } = settings;
 
-    let mut searcher = Searcher::filesystem_with_options(root, filesystem)?;
+    let mut search_ui = SearchUi::filesystem_with_options(root, filesystem)?;
 
     if let Some(title) = input_title {
-        searcher = searcher.with_input_title(title);
+        search_ui = search_ui.with_input_title(title);
     }
 
-    searcher = searcher.with_ui_config(ui);
-    searcher = searcher.with_initial_query(initial_query);
+    search_ui = search_ui.with_ui_config(ui);
+    search_ui = search_ui.with_initial_query(initial_query);
 
     if let Some(theme) = theme {
-        searcher = searcher.with_theme_name(&theme);
+        search_ui = search_ui.with_theme_name(&theme);
     }
 
     if let Some(mode) = start_mode {
-        searcher = searcher.with_start_mode(mode);
+        search_ui = search_ui.with_start_mode(mode);
     }
 
     if let Some(headers) = facet_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        searcher = searcher.with_headers_for(SearchMode::Facets, refs);
+        search_ui = search_ui.with_headers_for(SearchMode::Facets, refs);
     }
 
     if let Some(headers) = file_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        searcher = searcher.with_headers_for(SearchMode::Files, refs);
+        search_ui = search_ui.with_headers_for(SearchMode::Files, refs);
     }
 
-    let outcome = searcher.run()?;
+    let outcome = search_ui.run()?;
 
     match format {
         OutputFormat::Plain => print_plain(&outcome),

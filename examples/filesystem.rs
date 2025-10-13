@@ -1,7 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
-use frz::{SearchSelection, Searcher};
+use frz::{SearchSelection, SearchUi};
 
 #[cfg(feature = "fs")]
 fn main() -> anyhow::Result<()> {
@@ -15,9 +15,9 @@ fn main() -> anyhow::Result<()> {
         .and_then(|name| name.to_str().map(|s| s.to_string()))
         .unwrap_or_else(|| root.to_string_lossy().into_owned());
 
-    let searcher = Searcher::filesystem(&root)?.with_input_title(title);
+    let search_ui = SearchUi::filesystem(&root)?.with_input_title(title);
 
-    let outcome = searcher.run()?;
+    let outcome = search_ui.run()?;
 
     if !outcome.accepted {
         println!("Search cancelled (query: '{}')", outcome.query);

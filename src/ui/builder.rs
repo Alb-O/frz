@@ -6,16 +6,16 @@ use anyhow::Result;
 use anyhow::bail;
 use ratatui::layout::Constraint;
 
-use crate::app::App;
+use super::App;
 #[cfg(feature = "fs")]
 use crate::indexing::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
 
-/// A small builder for configuring the TUI searcher.
+/// A small builder for configuring the interactive search UI.
 /// This presents an fzf-like API for setting prompts, column
 /// headings and column widths before running the interactive picker.
-pub struct Searcher {
+pub struct SearchUi {
     data: SearchData,
     input_title: Option<String>,
     facet_headers: Option<Vec<String>>,
@@ -29,8 +29,8 @@ pub struct Searcher {
     index_updates: Option<Receiver<IndexUpdate>>,
 }
 
-impl Searcher {
-    /// Create a new Searcher for the provided data.
+impl SearchUi {
+    /// Create a new search UI for the provided data.
     pub fn new(data: SearchData) -> Self {
         Self {
             data,
@@ -47,7 +47,7 @@ impl Searcher {
         }
     }
 
-    /// Create a searcher pre-populated with files from the filesystem rooted at `path`.
+    /// Create a search UI pre-populated with files from the filesystem rooted at `path`.
     #[cfg(feature = "fs")]
     pub fn filesystem(path: impl AsRef<std::path::Path>) -> Result<Self> {
         Self::filesystem_with_options(path.as_ref().to_path_buf(), FilesystemOptions::default())
@@ -60,10 +60,10 @@ impl Searcher {
     ) -> Result<Self> {
         let root = path.into();
         let (data, updates) = spawn_filesystem_index(root, options)?;
-        let mut searcher = Self::new(data);
-        searcher.start_mode = Some(SearchMode::Files);
-        searcher.index_updates = Some(updates);
-        Ok(searcher)
+        let mut ui = Self::new(data);
+        ui.start_mode = Some(SearchMode::Files);
+        ui.index_updates = Some(updates);
+        Ok(ui)
     }
 
     #[cfg(not(feature = "fs"))]
@@ -116,7 +116,7 @@ impl Searcher {
         self
     }
 
-    /// Run the interactive searcher with the configured options.
+    /// Run the interactive search UI with the configured options.
     #[cfg_attr(not(feature = "fs"), allow(unused_mut))]
     pub fn run(mut self) -> Result<SearchOutcome> {
         // Build an App and apply optional customizations, then run it.

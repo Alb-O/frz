@@ -8,17 +8,17 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 - Interactive TUI built on `ratatui`.
 - Uses `frizbee` fuzzy matching for typo-tolerant search.
 - Builder-style API to configure prompts, column headers and widths.
-- Ready-to-use filesystem scanner (`Searcher::filesystem`) that walks directories recursively.
+- Ready-to-use filesystem scanner (`SearchUi::filesystem`) that walks directories recursively.
 - Multi-threaded filesystem traversal powered by the [`ignore`](https://docs.rs/ignore) crate with built-in `.gitignore` support.
 - Rich outcome information including which entry was selected and the final query string.
 
 ## Quick example
 
 ```rust
-use frz::{SearchData, SearchMode, Searcher, UiConfig};
+use frz::{SearchData, SearchMode, SearchUi, UiConfig};
 
 let data = SearchData::from_filesystem(".")?;
-let outcome = Searcher::new(data)
+let outcome = SearchUi::new(data)
     .with_ui_config(UiConfig::tags_and_files())
     .with_start_mode(SearchMode::Files)
     .run()?;

@@ -1,4 +1,4 @@
-use frz::{FacetRow, FileRow, SearchData, SearchMode, SearchSelection, Searcher, UiConfig};
+use frz::{FacetRow, FileRow, SearchData, SearchMode, SearchSelection, SearchUi, UiConfig};
 
 fn main() -> anyhow::Result<()> {
     // Build sample data
@@ -14,12 +14,12 @@ fn main() -> anyhow::Result<()> {
         .with_facets(facets)
         .with_files(files);
 
-    // Minimal searcher configuration with prompt
-    let searcher = Searcher::new(data)
+    // Minimal search UI configuration with prompt
+    let search_ui = SearchUi::new(data)
         .with_ui_config(UiConfig::tags_and_files())
         .with_input_title("workspace-prototype")
         .with_start_mode(SearchMode::Facets);
-    let outcome = searcher.run()?;
+    let outcome = search_ui.run()?;
     println!("Accepted? {}", outcome.accepted);
     match outcome.selection {
         Some(SearchSelection::File(file)) => println!("Selected file: {}", file.path),
