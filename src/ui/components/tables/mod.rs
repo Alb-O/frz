@@ -200,7 +200,8 @@ fn render_header_separator(
         width: area.width,
         height: 1,
     };
-    let base_style = Style::new().bg(theme.header_bg);
+    let header_bg = theme.header_bg();
+    let base_style = Style::new().bg(header_bg);
     if width <= 2 {
         let line = " ".repeat(width);
         let para = Paragraph::new(line).style(base_style);
@@ -209,7 +210,7 @@ fn render_header_separator(
     }
 
     let middle = "─".repeat(width - 2);
-    let middle_style = Style::new().bg(theme.header_bg).fg(theme.header_fg);
+    let middle_style = Style::new().bg(header_bg).fg(theme.header_fg());
     let middle_span = Span::styled(middle, middle_style);
     let spans = vec![
         Span::styled(" ", base_style),

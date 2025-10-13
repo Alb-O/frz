@@ -3,7 +3,6 @@ use crate::theme::Theme;
 use crate::types::SearchMode;
 use crate::types::UiConfig;
 use ratatui::layout::Rect;
-use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
@@ -89,7 +88,7 @@ pub fn render_input_with_tabs(
     let tabs = Tabs::new(tab_titles)
         .select(selected)
         .divider("")
-        .highlight_style(Style::default().bg(theme.header_bg));
+        .highlight_style(theme.tab_highlight_style());
 
     frame.render_widget(tabs, tabs_area);
 }
@@ -136,21 +135,11 @@ fn selected_tab_index(mode: SearchMode) -> usize {
 }
 
 fn build_tab_titles(theme: &Theme, selected: usize) -> Vec<Line<'static>> {
+    let active = theme.header_style();
+    let inactive = theme.tab_inactive_style();
     vec![
-        Line::from(format!(" {} ", "Tags"))
-            .fg(theme.header_fg)
-            .bg(if selected == 0 {
-                theme.header_bg
-            } else {
-                theme.row_highlight_bg
-            }),
-        Line::from(format!(" {} ", "Files "))
-            .fg(theme.header_fg)
-            .bg(if selected == 1 {
-                theme.header_bg
-            } else {
-                theme.row_highlight_bg
-            }),
+        Line::from(format!(" {} ", "Tags")).style(if selected == 0 { active } else { inactive }),
+        Line::from(format!(" {} ", "Files ")).style(if selected == 1 { active } else { inactive }),
     ]
 }
 
@@ -303,5 +292,7 @@ mod tests {
         assert_eq!(titles.len(), 2);
         assert_eq!(titles[0].spans[0].content.as_ref().trim(), "Tags");
         assert_eq!(titles[1].spans[0].content.as_ref().trim(), "Files");
+        assert_eq!(titles[0].style, theme.header_style());
+        assert_eq!(titles[1].style, theme.tab_inactive_style());
     }
 }

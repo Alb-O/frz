@@ -1,6 +1,6 @@
 use std::mem;
 
-use ratatui::style::{Modifier, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;
 use unicode_truncate::UnicodeTruncateStr;
@@ -32,9 +32,7 @@ pub(crate) fn highlight_cell(
     let mut highlighted = false;
     let mut spans = Vec::new();
     let theme = Theme::default();
-    let highlight_style = Style::new()
-        .fg(theme.highlight_fg)
-        .add_modifier(Modifier::BOLD);
+    let highlight_style = theme.highlight_style();
 
     for (idx, ch) in display_text.chars().enumerate() {
         let should_highlight = next.peek().copied() == Some(idx);

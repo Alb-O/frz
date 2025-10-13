@@ -1,12 +1,16 @@
 use crate::theme::Theme;
-use ratatui::style::Color;
+use ratatui::style::{Color, Modifier, Style};
 
 pub const SOLARIZED: Theme = Theme {
-    header_fg: Color::Rgb(253, 246, 227),
-    header_bg: Color::Rgb(7, 54, 66),
-    row_highlight_bg: Color::Rgb(0, 43, 54),
-    row_highlight_fg: Color::Rgb(181, 137, 0),
-    prompt_fg: Color::Rgb(38, 139, 210),
-    empty_fg: Color::Rgb(88, 110, 117),
-    highlight_fg: Color::Rgb(181, 137, 0),
+    header: Style::new()
+        .fg(Color::Rgb(253, 246, 227))
+        .bg(Color::Rgb(7, 54, 66)),
+    row_highlight: Style::new()
+        .bg(Color::Rgb(0, 43, 54))
+        .fg(Color::Rgb(181, 137, 0)),
+    prompt: Style::new().fg(Color::Rgb(38, 139, 210)),
+    empty: Style::new().fg(Color::Rgb(88, 110, 117)),
+    highlight: Style::new()
+        .fg(Color::Rgb(181, 137, 0))
+        .add_modifier(Modifier::BOLD),
 };
