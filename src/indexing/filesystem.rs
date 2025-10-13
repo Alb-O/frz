@@ -362,7 +362,7 @@ impl UpdateBatcher {
         &mut self,
         tx: &Sender<IndexUpdate>,
         complete: bool,
-    ) -> Result<(), mpsc::SendError<IndexUpdate>> {
+    ) -> Result<(), Box<mpsc::SendError<IndexUpdate>>> {
         if !complete
             && !self.emit_reset
             && self.pending_files.is_empty()
@@ -404,7 +404,8 @@ impl UpdateBatcher {
             progress,
             reset,
             cached_data: None,
-        })?;
+        })
+        .map_err(Box::new)?;
 
         self.last_dispatch = Instant::now();
         Ok(())
@@ -413,7 +414,7 @@ impl UpdateBatcher {
     fn finalize(
         self,
         tx: &Sender<IndexUpdate>,
-    ) -> Result<Option<CacheWriter>, mpsc::SendError<IndexUpdate>> {
+    ) -> Result<Option<CacheWriter>, Box<mpsc::SendError<IndexUpdate>>> {
         let mut this = self;
         this.flush(tx, true)?;
         Ok(this.cache_writer)
