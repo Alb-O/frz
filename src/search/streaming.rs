@@ -24,12 +24,14 @@ pub(super) fn stream_facets(
 
     let config = config_for_query(trimmed, data.facets.len());
     let mut aggregator = ScoreAggregator::new(id, SearchMode::Facets, tx);
+    let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
     let mut offset = 0;
     for chunk in data.facets.chunks(MATCH_CHUNK_SIZE) {
         if should_abort(id, latest_query_id) {
             return true;
         }
-        let haystacks: Vec<&str> = chunk.iter().map(|facet| facet.name.as_str()).collect();
+        haystacks.clear();
+        haystacks.extend(chunk.iter().map(|facet| facet.name.as_str()));
         let matches = match_list(trimmed, &haystacks, config);
         for entry in matches {
             if entry.score == 0 {
@@ -69,12 +71,14 @@ pub(super) fn stream_files(
 
     let config = config_for_query(trimmed, data.files.len());
     let mut aggregator = ScoreAggregator::new(id, SearchMode::Files, tx);
+    let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
     let mut offset = 0;
     for chunk in data.files.chunks(MATCH_CHUNK_SIZE) {
         if should_abort(id, latest_query_id) {
             return true;
         }
-        let haystacks: Vec<&str> = chunk.iter().map(|file| file.search_text()).collect();
+        haystacks.clear();
+        haystacks.extend(chunk.iter().map(|file| file.search_text()));
         let matches = match_list(trimmed, &haystacks, config);
         for entry in matches {
             if entry.score == 0 {
@@ -111,7 +115,7 @@ fn stream_alphabetical_facets(
         });
 
     let mut processed = 0;
-    for (index, _) in data.facets.iter().enumerate() {
+    for index in 0..data.facets.len() {
         if should_abort(id, latest_query_id) {
             return true;
         }
@@ -146,7 +150,7 @@ fn stream_alphabetical_files(
         });
 
     let mut processed = 0;
-    for (index, _) in data.files.iter().enumerate() {
+    for index in 0..data.files.len() {
         if should_abort(id, latest_query_id) {
             return true;
         }

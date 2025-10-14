@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashSet};
+use std::ffi::OsString;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -178,7 +179,13 @@ pub(crate) fn spawn_filesystem_index(
             batcher.finalize(&update_tx).unwrap_or_default()
         });
 
-        let global_ignores = options.global_ignores.clone();
+        let global_ignores = Arc::new(
+            options
+                .global_ignores
+                .iter()
+                .map(|entry| OsString::from(entry.as_str()))
+                .collect::<HashSet<_>>(),
+        );
 
         WalkBuilder::new(walker_root.as_path())
             .hidden(!options.include_hidden)
@@ -195,7 +202,7 @@ pub(crate) fn spawn_filesystem_index(
                 let sender = file_tx.clone();
                 let root = Arc::clone(&walker_root);
                 let extension_filter = extension_filter.clone();
-                let global_ignores = global_ignores.clone();
+                let global_ignores = Arc::clone(&global_ignores);
                 Box::new(move |entry: Result<DirEntry, IgnoreError>| {
                     if let Ok(entry) = entry {
                         let Some(file_type) = entry.file_type() else {
@@ -207,12 +214,10 @@ pub(crate) fn spawn_filesystem_index(
 
                         let path = entry.path();
                         // Skip global ignore paths
-                        if path.components().any(|comp| {
-                            comp.as_os_str()
-                                .to_str()
-                                .map(|s| global_ignores.iter().any(|g| g == s))
-                                .unwrap_or(false)
-                        }) {
+                        if path
+                            .components()
+                            .any(|comp| global_ignores.contains(comp.as_os_str()))
+                        {
                             return WalkState::Continue;
                         }
                         let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
