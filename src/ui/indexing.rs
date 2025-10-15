@@ -76,10 +76,10 @@ impl<'a> App<'a> {
         match cached_data {
             Some(data) => {
                 self.data = data;
-                self.filtered_facets.clear();
-                self.filtered_files.clear();
-                self.facet_scores.clear();
-                self.file_scores.clear();
+                for state in self.tab_states.values_mut() {
+                    state.filtered.clear();
+                    state.scores.clear();
+                }
                 self.table_state.select(None);
                 self.index_progress.refresh_from_data(&self.data);
                 self.mark_query_dirty();
@@ -88,10 +88,10 @@ impl<'a> App<'a> {
             None => {
                 if update.reset {
                     self.index_progress = IndexProgress::with_unknown_totals();
-                    self.filtered_facets.clear();
-                    self.filtered_files.clear();
-                    self.facet_scores.clear();
-                    self.file_scores.clear();
+                    for state in self.tab_states.values_mut() {
+                        state.filtered.clear();
+                        state.scores.clear();
+                    }
                     self.table_state.select(None);
                 }
 

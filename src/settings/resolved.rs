@@ -68,10 +68,7 @@ impl ResolvedConfig {
         println!(
             "  Start mode: {}",
             self.start_mode
-                .map(|mode| match mode {
-                    SearchMode::Facets => "facets".to_string(),
-                    SearchMode::Files => "files".to_string(),
-                })
+                .map(|mode| mode.as_str().to_string())
                 .unwrap_or_else(|| "(auto)".to_string())
         );
         if let Some(title) = &self.input_title {

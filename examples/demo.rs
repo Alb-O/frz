@@ -18,12 +18,17 @@ fn main() -> anyhow::Result<()> {
     let search_ui = SearchUi::new(data)
         .with_ui_config(UiConfig::tags_and_files())
         .with_input_title("workspace-prototype")
-        .with_start_mode(SearchMode::Facets);
+        .with_start_mode(SearchMode::FACETS);
     let outcome = search_ui.run()?;
     println!("Accepted? {}", outcome.accepted);
     match outcome.selection {
         Some(SearchSelection::File(file)) => println!("Selected file: {}", file.path),
         Some(SearchSelection::Facet(facet)) => println!("Selected facet: {}", facet.name),
+        Some(SearchSelection::Plugin(plugin)) => println!(
+            "Selected plugin result: {} @ {}",
+            plugin.mode.as_str(),
+            plugin.index
+        ),
         None => println!("No selection"),
     }
     Ok(())

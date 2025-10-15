@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Clear, Paragraph},
 };
 
-use crate::search;
+use crate::systems::search;
 use crate::theme::Theme;
 use crate::types::SearchMode;
 use frizbee::Options;
@@ -13,6 +13,7 @@ use super::App;
 use super::components::{
     InputContext, ProgressState, TablePane, render_input_with_tabs, render_table,
 };
+use super::state::TabBuffers;
 
 impl<'a> App<'a> {
     pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -62,15 +63,24 @@ impl<'a> App<'a> {
     }
 
     fn progress_status(&mut self) -> (String, bool) {
-        let facet_label = self.ui.facets.count_label.as_str();
-        let file_label = self.ui.files.count_label.as_str();
+        let facet_label = self
+            .ui
+            .pane(SearchMode::FACETS)
+            .map(|pane| pane.count_label.as_str())
+            .unwrap_or("Facets");
+        let file_label = self
+            .ui
+            .pane(SearchMode::FILES)
+            .map(|pane| pane.count_label.as_str())
+            .unwrap_or("Files");
         self.index_progress.status(facet_label, file_label)
     }
 
     fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
-        match self.mode {
-            SearchMode::Facets => self.render_facets(frame, area),
-            SearchMode::Files => self.render_files(frame, area),
+        if self.mode == SearchMode::FACETS {
+            self.render_facets(frame, area);
+        } else if self.mode == SearchMode::FILES {
+            self.render_files(frame, area);
         }
     }
 
@@ -79,6 +89,10 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
+        let state = self
+            .tab_states
+            .entry(SearchMode::FACETS)
+            .or_insert_with(TabBuffers::default);
         render_table(
             frame,
             area,
@@ -86,11 +100,11 @@ impl<'a> App<'a> {
             &self.ui,
             highlight_state,
             TablePane::Facets {
-                filtered: &self.filtered_facets,
-                scores: &self.facet_scores,
+                filtered: &state.filtered,
+                scores: &state.scores,
                 facets: &self.data.facets,
-                headers: self.facet_headers.as_ref(),
-                widths: self.facet_widths.as_ref(),
+                headers: state.headers.as_ref(),
+                widths: state.widths.as_ref(),
             },
             &self.theme,
         )
@@ -101,6 +115,10 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
+        let state = self
+            .tab_states
+            .entry(SearchMode::FILES)
+            .or_insert_with(TabBuffers::default);
         render_table(
             frame,
             area,
@@ -108,11 +126,11 @@ impl<'a> App<'a> {
             &self.ui,
             highlight_state,
             TablePane::Files {
-                filtered: &self.filtered_files,
-                scores: &self.file_scores,
+                filtered: &state.filtered,
+                scores: &state.scores,
                 files: &self.data.files,
-                headers: self.file_headers.as_ref(),
-                widths: self.file_widths.as_ref(),
+                headers: state.headers.as_ref(),
+                widths: state.widths.as_ref(),
             },
             &self.theme,
         )

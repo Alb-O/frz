@@ -40,8 +40,8 @@ pub(super) fn apply_pane_config(target: &mut PaneUiConfig, pane: PaneSection) {
 /// Parse a start mode string into a strongly typed [`SearchMode`].
 pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
     match value.trim().to_ascii_lowercase().as_str() {
-        "facets" => Ok(SearchMode::Facets),
-        "files" => Ok(SearchMode::Files),
+        "facets" => Ok(SearchMode::FACETS),
+        "files" => Ok(SearchMode::FILES),
         other => bail!("unknown start mode '{other}'"),
     }
 }
@@ -56,13 +56,15 @@ mod tests {
         let default = UiConfig::default();
 
         assert_eq!(config.filter_label, default.filter_label);
-        assert_eq!(config.facets.mode_title, default.facets.mode_title);
+        let config_facets = config.pane(SearchMode::FACETS).unwrap();
+        let default_facets = default.pane(SearchMode::FACETS).unwrap();
+        assert_eq!(config_facets.mode_title, default_facets.mode_title);
     }
 
     #[test]
     fn parse_mode_supports_known_variants() {
-        assert!(matches!(parse_mode("facets").unwrap(), SearchMode::Facets));
-        assert!(matches!(parse_mode("FILES").unwrap(), SearchMode::Files));
+        assert_eq!(parse_mode("facets").unwrap(), SearchMode::FACETS);
+        assert_eq!(parse_mode("FILES").unwrap(), SearchMode::FILES);
         assert!(parse_mode("unknown").is_err());
     }
 

@@ -1,6 +1,8 @@
 #[cfg(feature = "fs")]
 use std::sync::mpsc::Receiver;
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 #[cfg(not(feature = "fs"))]
 use anyhow::bail;
@@ -9,6 +11,7 @@ use ratatui::layout::Constraint;
 use super::App;
 #[cfg(feature = "fs")]
 use crate::indexing::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
+use crate::plugins::SearchPluginRegistry;
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
 
@@ -18,13 +21,12 @@ use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
 pub struct SearchUi {
     data: SearchData,
     input_title: Option<String>,
-    facet_headers: Option<Vec<String>>,
-    file_headers: Option<Vec<String>>,
-    facet_widths: Option<Vec<Constraint>>,
-    file_widths: Option<Vec<Constraint>>,
+    headers: HashMap<SearchMode, Vec<String>>,
+    widths: HashMap<SearchMode, Vec<Constraint>>,
     ui_config: Option<UiConfig>,
     theme: Option<Theme>,
     start_mode: Option<SearchMode>,
+    plugins: SearchPluginRegistry,
     #[cfg(feature = "fs")]
     index_updates: Option<Receiver<IndexUpdate>>,
 }
@@ -35,13 +37,12 @@ impl SearchUi {
         Self {
             data,
             input_title: None,
-            facet_headers: None,
-            file_headers: None,
-            facet_widths: None,
-            file_widths: None,
+            headers: HashMap::new(),
+            widths: HashMap::new(),
             ui_config: None,
             theme: None,
             start_mode: None,
+            plugins: SearchPluginRegistry::default(),
             #[cfg(feature = "fs")]
             index_updates: None,
         }
@@ -61,7 +62,7 @@ impl SearchUi {
         let root = path.into();
         let (data, updates) = spawn_filesystem_index(root, options)?;
         let mut ui = Self::new(data);
-        ui.start_mode = Some(SearchMode::Files);
+        ui.start_mode = Some(SearchMode::FILES);
         ui.index_updates = Some(updates);
         Ok(ui)
     }
@@ -82,10 +83,7 @@ impl SearchUi {
     }
 
     pub fn with_widths_for(mut self, mode: SearchMode, widths: Vec<Constraint>) -> Self {
-        match mode {
-            SearchMode::Facets => self.facet_widths = Some(widths),
-            SearchMode::Files => self.file_widths = Some(widths),
-        }
+        self.widths.insert(mode, widths);
         self
     }
 
@@ -116,28 +114,38 @@ impl SearchUi {
         self
     }
 
+    /// Replace the plugin registry driving the search worker.
+    pub fn with_plugin_registry(mut self, plugins: SearchPluginRegistry) -> Self {
+        self.plugins = plugins;
+        self
+    }
+
+    /// Mutably configure the plugin registry.
+    pub fn configure_plugins<F>(mut self, configure: F) -> Self
+    where
+        F: FnOnce(&mut SearchPluginRegistry),
+    {
+        configure(&mut self.plugins);
+        self
+    }
+
     /// Run the interactive search UI with the configured options.
     #[cfg_attr(not(feature = "fs"), allow(unused_mut))]
     pub fn run(mut self) -> Result<SearchOutcome> {
         // Build an App and apply optional customizations, then run it.
-        let mut app = App::new(self.data);
+        let mut app = App::with_plugins(self.data, self.plugins);
         if let Some(title) = self.input_title {
             app.input_title = Some(title);
         }
-        if let Some(headers) = self.facet_headers {
-            app.facet_headers = Some(headers);
+        for (mode, headers) in self.headers {
+            app.set_headers_for(mode, headers);
         }
-        if let Some(headers) = self.file_headers {
-            app.file_headers = Some(headers);
-        }
-        if let Some(widths) = self.facet_widths {
-            app.facet_widths = Some(widths);
-        }
-        if let Some(widths) = self.file_widths {
-            app.file_widths = Some(widths);
+        for (mode, widths) in self.widths {
+            app.set_widths_for(mode, widths);
         }
         if let Some(ui) = self.ui_config {
             app.ui = ui;
+            app.ensure_tab_buffers();
         }
         if let Some(theme) = self.theme {
             app.set_theme(theme);
@@ -154,10 +162,7 @@ impl SearchUi {
     }
 
     fn with_headers(mut self, mode: SearchMode, headers: Vec<String>) -> Self {
-        match mode {
-            SearchMode::Facets => self.facet_headers = Some(headers),
-            SearchMode::Files => self.file_headers = Some(headers),
-        }
+        self.headers.insert(mode, headers);
         self
     }
 }

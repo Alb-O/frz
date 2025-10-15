@@ -1,29 +1,27 @@
-use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::sync::mpsc::Sender;
-
 use frizbee::match_list;
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use super::aggregator::ScoreAggregator;
 use super::alphabetical::AlphabeticalCollector;
-use super::commands::SearchResult;
+use super::commands::SearchStream;
 use super::{EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, config::config_for_query};
-use crate::types::{SearchData, SearchMode};
+use crate::types::SearchData;
 
 /// Streams facet matches for the given query back to the UI thread.
-pub(super) fn stream_facets(
+pub(crate) fn stream_facets(
     data: &SearchData,
     query: &str,
-    id: u64,
-    tx: &Sender<SearchResult>,
+    stream: SearchStream<'_>,
     latest_query_id: &AtomicU64,
 ) -> bool {
+    let id = stream.id();
     let trimmed = query.trim();
     if trimmed.is_empty() {
-        return stream_alphabetical_facets(data, id, tx, latest_query_id);
+        return stream_alphabetical_facets(data, stream, latest_query_id);
     }
 
     let config = config_for_query(trimmed, data.facets.len());
-    let mut aggregator = ScoreAggregator::new(id, SearchMode::Facets, tx);
+    let mut aggregator = ScoreAggregator::new(stream);
     let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
     let mut offset = 0;
     for chunk in data.facets.chunks(MATCH_CHUNK_SIZE) {
@@ -57,20 +55,20 @@ pub(super) fn stream_facets(
 }
 
 /// Streams file matches for the given query back to the UI thread.
-pub(super) fn stream_files(
+pub(crate) fn stream_files(
     data: &SearchData,
     query: &str,
-    id: u64,
-    tx: &Sender<SearchResult>,
+    stream: SearchStream<'_>,
     latest_query_id: &AtomicU64,
 ) -> bool {
+    let id = stream.id();
     let trimmed = query.trim();
     if trimmed.is_empty() {
-        return stream_alphabetical_files(data, id, tx, latest_query_id);
+        return stream_alphabetical_files(data, stream, latest_query_id);
     }
 
     let config = config_for_query(trimmed, data.files.len());
-    let mut aggregator = ScoreAggregator::new(id, SearchMode::Files, tx);
+    let mut aggregator = ScoreAggregator::new(stream);
     let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
     let mut offset = 0;
     for chunk in data.files.chunks(MATCH_CHUNK_SIZE) {
@@ -105,14 +103,13 @@ pub(super) fn stream_files(
 
 fn stream_alphabetical_facets(
     data: &SearchData,
-    id: u64,
-    tx: &Sender<SearchResult>,
+    stream: SearchStream<'_>,
     latest_query_id: &AtomicU64,
 ) -> bool {
-    let mut collector =
-        AlphabeticalCollector::new(id, SearchMode::Facets, tx, data.facets.len(), |index| {
-            data.facets[index].name.clone()
-        });
+    let id = stream.id();
+    let mut collector = AlphabeticalCollector::new(stream, data.facets.len(), |index| {
+        data.facets[index].name.clone()
+    });
 
     let mut processed = 0;
     for index in 0..data.facets.len() {
@@ -140,14 +137,13 @@ fn stream_alphabetical_facets(
 
 fn stream_alphabetical_files(
     data: &SearchData,
-    id: u64,
-    tx: &Sender<SearchResult>,
+    stream: SearchStream<'_>,
     latest_query_id: &AtomicU64,
 ) -> bool {
-    let mut collector =
-        AlphabeticalCollector::new(id, SearchMode::Files, tx, data.files.len(), |index| {
-            data.files[index].path.clone()
-        });
+    let id = stream.id();
+    let mut collector = AlphabeticalCollector::new(stream, data.files.len(), |index| {
+        data.files[index].path.clone()
+    });
 
     let mut processed = 0;
     for index in 0..data.files.len() {
@@ -180,7 +176,7 @@ fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{FacetRow, FileRow};
+    use crate::types::{FacetRow, FileRow, SearchMode};
 
     fn sample_data() -> SearchData {
         SearchData::default()
@@ -197,7 +193,8 @@ mod tests {
         let (tx, rx) = std::sync::mpsc::channel();
         let latest = AtomicU64::new(42);
 
-        assert!(stream_files(&data, "alpha", 41, &tx, &latest));
+        let stream = SearchStream::new(&tx, 41, SearchMode::FILES);
+        assert!(stream_files(&data, "alpha", stream, &latest));
         assert!(rx.try_recv().is_err());
     }
 }

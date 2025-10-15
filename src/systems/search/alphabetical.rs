@@ -1,10 +1,7 @@
+use super::MAX_RENDERED_RESULTS;
+use super::commands::SearchStream;
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::BinaryHeap;
-use std::sync::mpsc::Sender;
-
-use super::MAX_RENDERED_RESULTS;
-use super::commands::SearchResult;
-use crate::types::SearchMode;
 
 #[derive(Clone, Eq, PartialEq)]
 struct AlphabeticalEntry {
@@ -31,9 +28,7 @@ pub(super) struct AlphabeticalCollector<'a, F>
 where
     F: Fn(usize) -> String,
 {
-    id: u64,
-    mode: SearchMode,
-    tx: &'a Sender<SearchResult>,
+    stream: SearchStream<'a>,
     limit: usize,
     key_for_index: F,
     heap: BinaryHeap<AlphabeticalEntry>,
@@ -47,17 +42,9 @@ where
     F: Fn(usize) -> String,
 {
     /// Creates a collector that will emit at most [`MAX_RENDERED_RESULTS`] entries.
-    pub(super) fn new(
-        id: u64,
-        mode: SearchMode,
-        tx: &'a Sender<SearchResult>,
-        total: usize,
-        key_for_index: F,
-    ) -> Self {
+    pub(super) fn new(stream: SearchStream<'a>, total: usize, key_for_index: F) -> Self {
         Self {
-            id,
-            mode,
-            tx,
+            stream,
             limit: MAX_RENDERED_RESULTS.min(total),
             key_for_index,
             heap: BinaryHeap::new(),
@@ -109,16 +96,7 @@ where
 
     fn emit(&mut self, complete: bool) -> bool {
         if self.limit == 0 {
-            return self
-                .tx
-                .send(SearchResult {
-                    id: self.id,
-                    mode: self.mode,
-                    indices: Vec::new(),
-                    scores: Vec::new(),
-                    complete,
-                })
-                .is_ok();
+            return self.stream.send(Vec::new(), Vec::new(), complete);
         }
 
         self.scratch.clear();
@@ -132,19 +110,12 @@ where
         }
         let scores = vec![0; indices.len()];
 
-        match self.tx.send(SearchResult {
-            id: self.id,
-            mode: self.mode,
-            indices,
-            scores,
-            complete,
-        }) {
-            Ok(()) => {
-                self.sent_any = true;
-                self.dirty = false;
-                true
-            }
-            Err(_) => false,
+        if self.stream.send(indices, scores, complete) {
+            self.sent_any = true;
+            self.dirty = false;
+            true
+        } else {
+            false
         }
     }
 }
@@ -152,13 +123,14 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::SearchMode;
 
     #[test]
     fn keeps_smallest_entries() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut collector = AlphabeticalCollector::new(9, SearchMode::Files, &tx, 5, |idx| {
-            ["z", "b", "a", "y", "c"][idx].to_string()
-        });
+        let stream = SearchStream::new(&tx, 9, SearchMode::FILES);
+        let mut collector =
+            AlphabeticalCollector::new(stream, 5, |idx| ["z", "b", "a", "y", "c"][idx].to_string());
 
         for index in 0..5 {
             collector.insert(index);
@@ -173,8 +145,8 @@ mod tests {
     #[test]
     fn handles_empty_dataset() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut collector =
-            AlphabeticalCollector::new(3, SearchMode::Facets, &tx, 0, |_| "".into());
+        let stream = SearchStream::new(&tx, 3, SearchMode::FACETS);
+        let mut collector = AlphabeticalCollector::new(stream, 0, |_| "".into());
         assert!(collector.finish());
         let result = rx.try_recv().expect("empty collector should emit");
         assert!(result.indices.is_empty());

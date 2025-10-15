@@ -1,5 +1,5 @@
 {
-    "editor.formatOnSave": true,
+    "window.title": "${rootName}",
     "rust-analyzer.files.excludeDirs": [
         ".direnv"
     ],

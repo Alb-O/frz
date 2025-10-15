@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde_json::json;
 
 #[cfg(feature = "fs")]
-use frz::types::{SearchOutcome, SearchSelection};
+use frz::types::{PluginSelection, SearchOutcome, SearchSelection};
 
 #[cfg(feature = "fs")]
 /// Print a plain-text representation of the search outcome.
@@ -17,6 +17,11 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
     match &outcome.selection {
         Some(SearchSelection::File(file)) => println!("{}", file.path),
         Some(SearchSelection::Facet(facet)) => println!("Facet: {}", facet.name),
+        Some(SearchSelection::Plugin(plugin)) => println!(
+            "Plugin selection: {} @ {}",
+            plugin.mode.as_str(),
+            plugin.index
+        ),
         None => println!("No selection"),
     }
 }
@@ -35,6 +40,11 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
             "type": "facet",
             "name": facet.name,
             "count": facet.count,
+        }),
+        Some(SearchSelection::Plugin(PluginSelection { mode, index })) => json!({
+            "type": "plugin",
+            "mode": mode.as_str(),
+            "index": index,
         }),
         None => serde_json::Value::Null,
     };
@@ -58,7 +68,7 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 #[cfg(all(test, feature = "fs"))]
 mod tests {
     use super::*;
-    use frz::types::{FacetRow, FileRow};
+    use frz::types::{FacetRow, FileRow, SearchMode};
     use serde_json::Value;
 
     #[test]
@@ -89,5 +99,23 @@ mod tests {
         assert_eq!(value["selection"]["type"], "facet");
         assert_eq!(value["selection"]["name"], "Facet");
         assert_eq!(value["selection"]["count"], 3);
+    }
+
+    #[test]
+    fn json_format_includes_plugin_selection() {
+        let outcome = SearchOutcome {
+            accepted: true,
+            query: "test".into(),
+            selection: Some(SearchSelection::Plugin(PluginSelection {
+                mode: SearchMode::new("custom"),
+                index: 7,
+            })),
+        };
+
+        let json = format_outcome_json(&outcome).expect("json");
+        let value: Value = serde_json::from_str(&json).expect("parse");
+        assert_eq!(value["selection"]["type"], "plugin");
+        assert_eq!(value["selection"]["mode"], "custom");
+        assert_eq!(value["selection"]["index"], 7);
     }
 }

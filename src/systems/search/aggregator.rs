@@ -1,10 +1,7 @@
+use super::MAX_RENDERED_RESULTS;
+use super::commands::SearchStream;
 use std::cmp::{Ordering as CmpOrdering, Reverse};
 use std::collections::BinaryHeap;
-use std::sync::mpsc::Sender;
-
-use super::MAX_RENDERED_RESULTS;
-use super::commands::SearchResult;
-use crate::types::SearchMode;
 
 #[derive(Clone, Eq, PartialEq)]
 struct RankedMatch {
@@ -28,9 +25,7 @@ impl PartialOrd for RankedMatch {
 
 /// Maintains the highest scoring matches for a particular query.
 pub(super) struct ScoreAggregator<'a> {
-    id: u64,
-    mode: SearchMode,
-    tx: &'a Sender<SearchResult>,
+    stream: SearchStream<'a>,
     heap: BinaryHeap<Reverse<RankedMatch>>,
     scratch: Vec<RankedMatch>,
     dirty: bool,
@@ -39,11 +34,9 @@ pub(super) struct ScoreAggregator<'a> {
 
 impl<'a> ScoreAggregator<'a> {
     /// Creates a new aggregator that will stream results through `tx`.
-    pub(super) fn new(id: u64, mode: SearchMode, tx: &'a Sender<SearchResult>) -> Self {
+    pub(super) fn new(stream: SearchStream<'a>) -> Self {
         Self {
-            id,
-            mode,
-            tx,
+            stream,
             heap: BinaryHeap::new(),
             scratch: Vec::new(),
             dirty: false,
@@ -109,19 +102,12 @@ impl<'a> ScoreAggregator<'a> {
             scores.push(entry.score);
         }
 
-        match self.tx.send(SearchResult {
-            id: self.id,
-            mode: self.mode,
-            indices,
-            scores,
-            complete,
-        }) {
-            Ok(()) => {
-                self.sent_any = true;
-                self.dirty = false;
-                true
-            }
-            Err(_) => false,
+        if self.stream.send(indices, scores, complete) {
+            self.sent_any = true;
+            self.dirty = false;
+            true
+        } else {
+            false
         }
     }
 }
@@ -129,11 +115,13 @@ impl<'a> ScoreAggregator<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::SearchMode;
 
     #[test]
     fn aggregates_highest_scores() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut aggregator = ScoreAggregator::new(7, SearchMode::Files, &tx);
+        let stream = SearchStream::new(&tx, 7, SearchMode::FILES);
+        let mut aggregator = ScoreAggregator::new(stream);
 
         aggregator.push(0, 1);
         aggregator.push(1, 3);
@@ -151,7 +139,8 @@ mod tests {
     #[test]
     fn ignores_worse_matches_when_capacity_reached() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut aggregator = ScoreAggregator::new(5, SearchMode::Facets, &tx);
+        let stream = SearchStream::new(&tx, 5, SearchMode::FACETS);
+        let mut aggregator = ScoreAggregator::new(stream);
 
         for i in 0..super::MAX_RENDERED_RESULTS {
             aggregator.push(i, 100);
