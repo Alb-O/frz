@@ -21,7 +21,10 @@ impl<'a> App<'a> {
         // unless the user currently has a query edit that hasn't been
         // processed yet. This lets indexing continue without the visible result
         // list jumping around while the user is idle.
-        if !self.search_in_flight && self.input_revision != self.last_applied_revision {
+        if !self.search_in_flight
+            && self.input_revision != self.last_applied_revision
+            && self.input_revision == self.last_user_input_revision
+        {
             self.issue_search();
         }
     }

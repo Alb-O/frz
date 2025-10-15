@@ -47,6 +47,7 @@ pub struct App<'a> {
     pub(super) input_revision: u64,
     pub(super) pending_result_revision: u64,
     pub(super) last_applied_revision: u64,
+    pub(super) last_user_input_revision: u64,
 }
 
 impl<'a> App<'a> {
@@ -86,6 +87,7 @@ impl<'a> App<'a> {
             input_revision: 0,
             pending_result_revision: 0,
             last_applied_revision: 0,
+            last_user_input_revision: 0,
         }
     }
 
@@ -124,6 +126,11 @@ impl<'a> App<'a> {
 
     pub(crate) fn mark_query_dirty(&mut self) {
         self.input_revision = self.input_revision.wrapping_add(1);
+    }
+
+    pub(crate) fn mark_query_dirty_from_user_input(&mut self) {
+        self.mark_query_dirty();
+        self.last_user_input_revision = self.input_revision;
     }
 
     pub(crate) fn current_selection(&self) -> Option<SearchSelection> {

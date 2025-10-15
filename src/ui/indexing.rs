@@ -179,9 +179,19 @@ mod tests {
         app.request_search_after_index_update();
         wait_for_results(&mut app);
 
+        assert_eq!(
+            app.filtered_len(),
+            0,
+            "results should remain stable until the user edits the query"
+        );
+
+        app.mark_query_dirty_from_user_input();
+        app.request_search();
+        wait_for_results(&mut app);
+
         assert!(
             app.filtered_len() > 0,
-            "expected refreshed results after indexing"
+            "expected refreshed results after user input"
         );
     }
 }

@@ -35,7 +35,7 @@ impl<'a> App<'a> {
             }
             _ => {
                 if self.search_input.input(key) {
-                    self.mark_query_dirty();
+                    self.mark_query_dirty_from_user_input();
                     self.request_search();
                 }
             }
