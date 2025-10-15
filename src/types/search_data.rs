@@ -11,7 +11,7 @@ use std::path::{Component, Path};
 #[cfg(feature = "fs")]
 use std::sync::{Arc, mpsc};
 
-use super::{FacetRow, FileRow};
+use super::{FacetRow, FileRow, SearchMode};
 
 /// Data displayed in the search interface, including facets and files.
 #[derive(Debug, Default, Clone)]
@@ -157,6 +157,14 @@ pub struct SearchOutcome {
 pub enum SearchSelection {
     Facet(FacetRow),
     File(FileRow),
+    Plugin(PluginSelection),
+}
+
+/// Selection metadata returned by custom plugins.
+#[derive(Debug, Clone)]
+pub struct PluginSelection {
+    pub mode: SearchMode,
+    pub index: usize,
 }
 
 impl SearchOutcome {
@@ -174,6 +182,15 @@ impl SearchOutcome {
     pub fn selected_facet(&self) -> Option<&FacetRow> {
         match self.selection {
             Some(SearchSelection::Facet(ref facet)) => Some(facet),
+            _ => None,
+        }
+    }
+
+    /// Return metadata describing a plugin-provided selection.
+    #[must_use]
+    pub fn selected_plugin(&self) -> Option<&PluginSelection> {
+        match self.selection {
+            Some(SearchSelection::Plugin(ref plugin)) => Some(plugin),
             _ => None,
         }
     }

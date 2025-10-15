@@ -20,7 +20,7 @@ use frz::{SearchData, SearchMode, SearchUi, UiConfig};
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)
     .with_ui_config(UiConfig::tags_and_files())
-    .with_start_mode(SearchMode::Files)
+    .with_start_mode(SearchMode::FILES)
     .run()?;
 
 if let Some(file) = outcome.selected_file() {

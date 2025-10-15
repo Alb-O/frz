@@ -4,8 +4,7 @@ use std::sync::mpsc::TryRecvError;
 #[cfg(feature = "fs")]
 use crate::indexing::IndexUpdate;
 use crate::search::{SearchCommand, SearchResult};
-use crate::types::SearchMode;
-
+use super::state::TabBuffers;
 use super::App;
 
 impl<'a> App<'a> {
@@ -52,16 +51,13 @@ impl<'a> App<'a> {
             return;
         }
 
-        match result.mode {
-            SearchMode::Facets => {
-                self.filtered_facets = result.indices;
-                self.facet_scores = result.scores;
-            }
-            SearchMode::Files => {
-                self.filtered_files = result.indices;
-                self.file_scores = result.scores;
-            }
-        }
+        self.ensure_tab_buffers();
+        let entry = self
+            .tab_states
+            .entry(result.mode)
+            .or_insert_with(TabBuffers::default);
+        entry.filtered = result.indices;
+        entry.scores = result.scores;
 
         self.ensure_selection();
 

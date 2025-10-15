@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::{Receiver, Sender};
@@ -8,7 +9,7 @@ use throbber_widgets_tui::ThrobberState;
 use super::components::progress::IndexProgress;
 use crate::indexing::IndexUpdate;
 use crate::input::SearchInput;
-use crate::search::{self, SearchCommand, SearchResult};
+use crate::search::{self, SearchCommand, SearchPluginRegistry, SearchResult};
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchSelection, UiConfig};
 
@@ -23,19 +24,13 @@ pub struct App<'a> {
     pub mode: SearchMode,
     pub search_input: SearchInput<'a>,
     pub table_state: TableState,
-    pub filtered_facets: Vec<usize>,
-    pub filtered_files: Vec<usize>,
-    pub facet_scores: Vec<u16>,
-    pub file_scores: Vec<u16>,
     pub(crate) input_title: Option<String>,
-    pub(crate) facet_headers: Option<Vec<String>>,
-    pub(crate) file_headers: Option<Vec<String>>,
-    pub(crate) facet_widths: Option<Vec<ratatui::layout::Constraint>>,
-    pub(crate) file_widths: Option<Vec<ratatui::layout::Constraint>>,
     pub(crate) ui: UiConfig,
     pub theme: Theme,
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
+    pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
+    plugins: SearchPluginRegistry,
     #[cfg_attr(not(feature = "fs"), allow(dead_code))]
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search_tx: Sender<SearchCommand>,
@@ -50,33 +45,49 @@ pub struct App<'a> {
     pub(super) last_user_input_revision: u64,
 }
 
+#[derive(Default)]
+pub(crate) struct TabBuffers {
+    pub filtered: Vec<usize>,
+    pub scores: Vec<u16>,
+    pub headers: Option<Vec<String>>,
+    pub widths: Option<Vec<ratatui::layout::Constraint>>,
+}
+
 impl<'a> App<'a> {
     pub fn new(data: SearchData) -> Self {
+        Self::with_plugins(data, SearchPluginRegistry::default())
+    }
+
+    pub fn with_plugins(data: SearchData, plugins: SearchPluginRegistry) -> Self {
         let mut table_state = TableState::default();
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();
         let context_label = data.context_label.clone();
         let index_progress = IndexProgress::from(&data);
-        let (search_tx, search_rx, search_latest_query_id) = search::spawn(data.clone());
+        let worker_plugins = plugins.clone();
+        let (search_tx, search_rx, search_latest_query_id) =
+            search::spawn(data.clone(), worker_plugins);
+        let mut tab_states = HashMap::new();
+        for plugin in plugins.iter() {
+            tab_states.insert(plugin.mode(), TabBuffers::default());
+        }
+        let mut mode = SearchMode::FACETS;
+        if let Some(plugin) = plugins.iter().next() {
+            mode = plugin.mode();
+        }
 
         Self {
             data,
-            mode: SearchMode::Facets,
+            mode,
             search_input: SearchInput::new(initial_query),
             table_state,
-            filtered_facets: Vec::new(),
-            filtered_files: Vec::new(),
-            facet_scores: Vec::new(),
-            file_scores: Vec::new(),
             input_title: context_label,
-            facet_headers: None,
-            file_headers: None,
-            facet_widths: None,
-            file_widths: None,
             ui: UiConfig::default(),
             theme: Theme::default(),
             throbber_state: ThrobberState::default(),
             index_progress,
+            tab_states,
+            plugins,
             index_updates: None,
             search_tx,
             search_rx,
@@ -99,6 +110,7 @@ impl<'a> App<'a> {
         if self.mode != mode {
             self.mode = mode;
             self.table_state.select(Some(0));
+            self.ensure_tab_buffers();
             self.mark_query_dirty();
             self.request_search();
         }
@@ -118,10 +130,10 @@ impl<'a> App<'a> {
     }
 
     pub(crate) fn filtered_len(&self) -> usize {
-        match self.mode {
-            SearchMode::Facets => self.filtered_facets.len(),
-            SearchMode::Files => self.filtered_files.len(),
-        }
+        self.tab_states
+            .get(&self.mode)
+            .map(|state| state.filtered.len())
+            .unwrap_or(0)
     }
 
     pub(crate) fn mark_query_dirty(&mut self) {
@@ -135,24 +147,37 @@ impl<'a> App<'a> {
 
     pub(crate) fn current_selection(&self) -> Option<SearchSelection> {
         let selected = self.table_state.selected()?;
-        match self.mode {
-            SearchMode::Facets => {
-                let index = *self.filtered_facets.get(selected)?;
-                self.data
-                    .facets
-                    .get(index)
-                    .cloned()
-                    .map(SearchSelection::Facet)
-            }
-            SearchMode::Files => {
-                let index = *self.filtered_files.get(selected)?;
-                self.data
-                    .files
-                    .get(index)
-                    .cloned()
-                    .map(SearchSelection::File)
-            }
+        let state = self.tab_states.get(&self.mode)?;
+        let index = *state.filtered.get(selected)?;
+        let plugin = self.plugins.plugin(self.mode)?;
+        plugin.selection(&self.data, index)
+    }
+
+    pub(crate) fn ensure_tab_buffers(&mut self) {
+        for plugin in self.plugins.iter() {
+            self.tab_states
+                .entry(plugin.mode())
+                .or_insert_with(TabBuffers::default);
         }
+        for tab in self.ui.tabs() {
+            self.tab_states
+                .entry(tab.mode)
+                .or_insert_with(TabBuffers::default);
+        }
+    }
+
+    pub fn set_headers_for(&mut self, mode: SearchMode, headers: Vec<String>) {
+        self.tab_states
+            .entry(mode)
+            .or_insert_with(TabBuffers::default)
+            .headers = Some(headers);
+    }
+
+    pub fn set_widths_for(&mut self, mode: SearchMode, widths: Vec<ratatui::layout::Constraint>) {
+        self.tab_states
+            .entry(mode)
+            .or_insert_with(TabBuffers::default)
+            .widths = Some(widths);
     }
 }
 
@@ -195,9 +220,16 @@ mod tests {
         let data = sample_data();
         let mut app = App::new(data);
         prime_and_wait_for_results(&mut app);
-        assert!(
-            !app.filtered_facets.is_empty() || !app.filtered_files.is_empty(),
-            "expected initial search results to populate"
-        );
+        let facets_ready = app
+            .tab_states
+            .get(&SearchMode::FACETS)
+            .map(|state| !state.filtered.is_empty())
+            .unwrap_or(false);
+        let files_ready = app
+            .tab_states
+            .get(&SearchMode::FILES)
+            .map(|state| !state.filtered.is_empty())
+            .unwrap_or(false);
+        assert!(facets_ready || files_ready, "expected initial search results to populate");
     }
 }

@@ -43,11 +43,10 @@ pub fn render_input_with_tabs(
         progress_complete,
         throbber_state,
     } = progress;
-    // Calculate tabs width: " Tags " + " Files " + extra padding = about 16 chars
-    let tabs_width = 16u16;
+    let tabs_width = calculate_tabs_width(ui);
 
     // Get prompt for calculating textarea width
-    let prompt = determine_prompt_text(input_title, ui);
+    let prompt = determine_prompt_text(input_title, ui, mode);
     let prompt_width = calculate_prompt_width(prompt);
 
     // Split area: prompt (if any), textarea, tabs on right
@@ -85,10 +84,10 @@ pub fn render_input_with_tabs(
         width: tabs_area.width.saturating_sub(1),
         ..tabs_area
     };
-    let selected = selected_tab_index(mode);
+    let selected = selected_tab_index(mode, ui);
 
     // Add extra padding to rightmost tab to prevent cutoff
-    let tab_titles = build_tab_titles(theme, selected);
+    let tab_titles = build_tab_titles(theme, selected, ui);
 
     let tabs = Tabs::new(tab_titles)
         .select(selected)
@@ -99,10 +98,14 @@ pub fn render_input_with_tabs(
     frame.render_widget(tabs, tabs_inner);
 }
 
-fn determine_prompt_text<'a>(input_title: &'a Option<String>, ui: &'a UiConfig) -> &'a str {
+fn determine_prompt_text<'a>(
+    input_title: &'a Option<String>,
+    ui: &'a UiConfig,
+    mode: SearchMode,
+) -> &'a str {
     input_title
         .as_deref()
-        .or(Some(ui.facets.mode_title.as_str()))
+        .or_else(|| ui.pane(mode).map(|pane| pane.mode_title.as_str()))
         .unwrap_or("")
 }
 
@@ -133,20 +136,34 @@ fn layout_constraints(
     }
 }
 
-fn selected_tab_index(mode: SearchMode) -> usize {
-    match mode {
-        SearchMode::Facets => 0,
-        SearchMode::Files => 1,
-    }
+fn selected_tab_index(mode: SearchMode, ui: &UiConfig) -> usize {
+    ui.tabs()
+        .iter()
+        .position(|tab| tab.mode == mode)
+        .unwrap_or(0)
 }
 
-fn build_tab_titles(theme: &Theme, selected: usize) -> Vec<Line<'static>> {
+fn build_tab_titles(theme: &Theme, selected: usize, ui: &UiConfig) -> Vec<Line<'static>> {
     let active = theme.header_style();
     let inactive = theme.tab_inactive_style();
-    vec![
-        Line::from(format!(" {} ", "Tags")).style(if selected == 0 { active } else { inactive }),
-        Line::from(format!(" {} ", "Files")).style(if selected == 1 { active } else { inactive }),
-    ]
+    ui.tabs()
+        .iter()
+        .enumerate()
+        .map(|(index, tab)| {
+            let label = format!(" {} ", tab.tab_label);
+            let style = if index == selected { active } else { inactive };
+            Line::from(label).style(style)
+        })
+        .collect()
+}
+
+fn calculate_tabs_width(ui: &UiConfig) -> u16 {
+    let mut width = 0u16;
+    for tab in ui.tabs() {
+        let label_len = tab.tab_label.chars().count() as u16;
+        width = width.saturating_add(label_len.saturating_add(3));
+    }
+    width.max(12)
 }
 
 fn render_progress(
@@ -226,10 +243,12 @@ mod tests {
     #[test]
     fn prompt_prefers_explicit_title() {
         let mut ui = UiConfig::default();
-        ui.facets.mode_title = "Default".to_string();
+        if let Some(pane) = ui.pane_mut(SearchMode::FACETS) {
+            pane.mode_title = "Default".to_string();
+        }
         let input_title = Some("Custom".to_string());
 
-        let prompt = determine_prompt_text(&input_title, &ui);
+        let prompt = determine_prompt_text(&input_title, &ui, SearchMode::FACETS);
 
         assert_eq!(prompt, "Custom");
     }
@@ -239,9 +258,10 @@ mod tests {
         let ui = UiConfig::default();
         let input_title = None;
 
-        let prompt = determine_prompt_text(&input_title, &ui);
+        let prompt = determine_prompt_text(&input_title, &ui, SearchMode::FACETS);
 
-        assert_eq!(prompt, ui.facets.mode_title);
+        let expected = ui.pane(SearchMode::FACETS).unwrap().mode_title.clone();
+        assert_eq!(prompt, expected);
     }
 
     #[test]
@@ -286,14 +306,16 @@ mod tests {
 
     #[test]
     fn selected_tab_index_matches_mode() {
-        assert_eq!(selected_tab_index(SearchMode::Facets), 0);
-        assert_eq!(selected_tab_index(SearchMode::Files), 1);
+        let ui = UiConfig::default();
+        assert_eq!(selected_tab_index(SearchMode::FACETS, &ui), 0);
+        assert_eq!(selected_tab_index(SearchMode::FILES, &ui), 1);
     }
 
     #[test]
     fn tab_titles_include_expected_labels() {
         let theme = Theme::default();
-        let titles = build_tab_titles(&theme, 0);
+        let ui = UiConfig::default();
+        let titles = build_tab_titles(&theme, 0, &ui);
 
         assert_eq!(titles.len(), 2);
         assert_eq!(titles[0].spans[0].content.as_ref().trim(), "Tags");

@@ -17,8 +17,9 @@ pub use indexing::FilesystemOptions;
 pub use input::SearchInput;
 pub use theme::{LIGHT, SLATE, SOLARIZED, Theme};
 pub use types::{
-    FacetRow, FileRow, PaneUiConfig, SearchData, SearchMode, SearchOutcome, SearchSelection,
-    UiConfig,
+    FacetRow, FileRow, PaneUiConfig, PluginSelection, SearchData, SearchMode, SearchOutcome,
+    SearchSelection, TabUiConfig, UiConfig,
 };
+pub use search::{SearchPlugin, SearchPluginRegistry, SearchStream};
 pub use ui::SearchUi;
 pub use ui::run;

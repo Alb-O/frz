@@ -2,11 +2,14 @@ mod aggregator;
 mod alphabetical;
 mod commands;
 mod config;
+mod plugins;
 mod streaming;
 mod worker;
 
 pub(crate) use commands::{SearchCommand, SearchResult};
 pub(crate) use config::config_for_query;
+pub use commands::SearchStream;
+pub use plugins::{SearchPlugin, SearchPluginRegistry};
 pub(crate) use worker::spawn;
 
 pub(crate) const PREFILTER_ENABLE_THRESHOLD: usize = 1_000;

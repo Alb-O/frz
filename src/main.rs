@@ -66,12 +66,12 @@ fn run_search(format: OutputFormat, settings: ResolvedConfig) -> Result<()> {
 
     if let Some(headers) = facet_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        search_ui = search_ui.with_headers_for(SearchMode::Facets, refs);
+        search_ui = search_ui.with_headers_for(SearchMode::FACETS, refs);
     }
 
     if let Some(headers) = file_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        search_ui = search_ui.with_headers_for(SearchMode::Files, refs);
+        search_ui = search_ui.with_headers_for(SearchMode::FILES, refs);
     }
 
     let outcome = search_ui.run()?;

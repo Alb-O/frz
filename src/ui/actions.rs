@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
-use crate::types::{SearchMode, SearchOutcome};
+use crate::types::SearchOutcome;
 
 use super::App;
 
@@ -44,12 +44,17 @@ impl<'a> App<'a> {
     }
 
     fn switch_mode(&mut self) {
-        self.mode = match self.mode {
-            SearchMode::Facets => SearchMode::Files,
-            SearchMode::Files => SearchMode::Facets,
-        };
-        self.table_state.select(Some(0));
-        self.request_search();
+        let tabs = self.ui.tabs();
+        if tabs.is_empty() {
+            return;
+        }
+        let current = tabs
+            .iter()
+            .position(|tab| tab.mode == self.mode)
+            .unwrap_or(0);
+        let next = (current + 1) % tabs.len();
+        let next_mode = tabs[next].mode;
+        self.set_mode(next_mode);
     }
 
     fn move_selection_up(&mut self) {
