@@ -1,7 +1,9 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
 use crate::types::{SearchData, SearchOutcome};
@@ -22,27 +24,62 @@ impl<'a> App<'a> {
 
         self.hydrate_initial_results();
 
-        let result = loop {
+        let (event_tx, event_rx) = mpsc::channel();
+        let event_loop_running = Arc::new(AtomicBool::new(true));
+        let event_loop_flag = Arc::clone(&event_loop_running);
+
+        let event_thread = thread::spawn(move || -> Result<()> {
+            while event_loop_flag.load(Ordering::Relaxed) {
+                if event::poll(Duration::from_millis(50))? {
+                    let event = event::read()?;
+                    if event_tx.send(event).is_err() {
+                        break;
+                    }
+                }
+            }
+            Ok(())
+        });
+
+        let result: Result<SearchOutcome> = 'event_loop: loop {
             self.pump_index_updates();
             self.pump_search_results();
             self.throbber_state.calc_next();
             terminal.draw(|frame| self.draw(frame))?;
 
-            if event::poll(Duration::from_millis(50))? {
-                match event::read()? {
-                    Event::Key(key) if key.kind == KeyEventKind::Press => {
+            let mut maybe_outcome = None;
+            loop {
+                match event_rx.try_recv() {
+                    Ok(Event::Key(key)) if key.kind == KeyEventKind::Press => {
                         if let Some(outcome) = self.handle_key(key)? {
-                            break outcome;
+                            maybe_outcome = Some(outcome);
+                            break;
                         }
                     }
-                    Event::Resize(_, _) => {}
-                    _ => {}
+                    Ok(Event::Resize(_, _)) => {}
+                    Ok(_) => {}
+                    Err(mpsc::TryRecvError::Empty) => break,
+                    Err(mpsc::TryRecvError::Disconnected) => {
+                        break 'event_loop Err(anyhow!("input event channel disconnected"));
+                    }
                 }
             }
+
+            if let Some(outcome) = maybe_outcome {
+                break Ok(outcome);
+            }
+
+            thread::sleep(Duration::from_millis(16));
         };
 
         ratatui::restore();
-        Ok(result)
+
+        event_loop_running.store(false, Ordering::Relaxed);
+        match event_thread.join() {
+            Ok(join_result) => join_result?,
+            Err(err) => std::panic::resume_unwind(err),
+        }
+
+        result
     }
 
     fn hydrate_initial_results(&mut self) {
