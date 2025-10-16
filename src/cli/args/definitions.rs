@@ -1,66 +1,12 @@
-#[cfg(feature = "fs")]
-use std::fmt::Write;
-#[cfg(feature = "fs")]
 use std::path::PathBuf;
 
-#[cfg(feature = "fs")]
-use clap::{
-    ArgAction, ColorChoice, Command, CommandFactory, FromArgMatches, Parser, ValueEnum,
-    builder::{
-        BoolishValueParser, Styles,
-        styling::{AnsiColor, Effects},
-    },
-};
-#[cfg(feature = "fs")]
-use frz::app_dirs;
+use clap::builder::BoolishValueParser;
+use clap::{ArgAction, ColorChoice, Parser};
 
-#[cfg(feature = "fs")]
-use super::annotations::dim_cli_annotations;
+use super::options::{ModeArg, OutputFormat, UiPresetArg};
+use super::styles::{cli_styles, long_version};
 
-#[cfg(feature = "fs")]
-/// Produce the full version banner including config and data directories.
-fn long_version() -> &'static str {
-    let config_dir = match app_dirs::get_config_dir() {
-        Ok(path) => path.display().to_string(),
-        Err(err) => format!("unavailable ({err})"),
-    };
-    let data_dir = match app_dirs::get_data_dir() {
-        Ok(path) => path.display().to_string(),
-        Err(err) => format!("unavailable ({err})"),
-    };
-
-    let mut details = format!("frz {}", env!("CARGO_PKG_VERSION"));
-    let _ = writeln!(details);
-    let _ = writeln!(details, "config directory: {config_dir}");
-    let _ = writeln!(details, "data directory: {data_dir}");
-
-    Box::leak(details.into_boxed_str())
-}
-
-#[cfg(feature = "fs")]
-/// Create the clap styles used for custom colour output.
-fn cli_styles() -> Styles {
-    Styles::styled()
-        .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
-        .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
-        .literal(AnsiColor::Cyan.on_default())
-        .placeholder(AnsiColor::Yellow.on_default())
-}
-
-#[cfg(feature = "fs")]
-/// Parse command line arguments into the strongly typed [`CliArgs`] structure.
-pub(crate) fn parse_cli() -> CliArgs {
-    let mut matches = tinted_cli_command().get_matches();
-    CliArgs::from_arg_matches_mut(&mut matches).unwrap_or_else(|err| err.exit())
-}
-
-#[cfg(feature = "fs")]
-/// Apply styling customisation to the generated clap command.
-fn tinted_cli_command() -> Command {
-    CliArgs::command().mut_args(dim_cli_annotations)
-}
-
-#[cfg(feature = "fs")]
+/// Command-line arguments accepted by the `frz` binary.
 #[derive(Parser, Debug)]
 #[command(
     name = "frz",
@@ -70,7 +16,6 @@ fn tinted_cli_command() -> Command {
     color = ColorChoice::Auto,
     styles = cli_styles()
 )]
-/// Command-line arguments accepted by the `frz` binary.
 pub(crate) struct CliArgs {
     #[arg(
         short,
@@ -286,72 +231,12 @@ pub(crate) struct CliArgs {
         help = "List supported themes and exit (default: disabled)"
     )]
     pub(crate) list_themes: bool,
-    #[arg(short = 'o', long = "output", value_enum, default_value_t = OutputFormat::Plain, help = "Choose how to print the result")]
+    #[arg(
+        short = 'o',
+        long = "output",
+        value_enum,
+        default_value_t = OutputFormat::Plain,
+        help = "Choose how to print the result"
+    )]
     pub(crate) output: OutputFormat,
-}
-
-#[cfg(feature = "fs")]
-#[derive(Copy, Clone, Debug, ValueEnum)]
-/// Search modes accepted via the command line.
-pub(crate) enum ModeArg {
-    Facets,
-    Files,
-}
-
-#[cfg(feature = "fs")]
-impl ModeArg {
-    /// Return the string representation consumed by configuration loading.
-    pub(crate) fn as_str(self) -> &'static str {
-        match self {
-            ModeArg::Facets => "facets",
-            ModeArg::Files => "files",
-        }
-    }
-}
-
-#[cfg(feature = "fs")]
-#[derive(Copy, Clone, Debug, ValueEnum)]
-/// Predefined UI presets selectable from the CLI.
-pub(crate) enum UiPresetArg {
-    Default,
-    #[clap(name = "tags-and-files")]
-    TagsAndFiles,
-}
-
-#[cfg(feature = "fs")]
-impl UiPresetArg {
-    /// Return the preset identifier consumed by configuration loading.
-    pub(crate) fn as_str(self) -> &'static str {
-        match self {
-            UiPresetArg::Default => "default",
-            UiPresetArg::TagsAndFiles => "tags-and-files",
-        }
-    }
-}
-
-#[cfg(feature = "fs")]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, ValueEnum)]
-/// Output formats supported by the CLI utility.
-pub(crate) enum OutputFormat {
-    Plain,
-    Json,
-}
-
-#[cfg(all(test, feature = "fs"))]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn command_supports_custom_styles() {
-        let command = tinted_cli_command();
-        assert!(command.get_about().is_some());
-    }
-
-    #[test]
-    fn parse_cli_accepts_default_arguments() {
-        let command = CliArgs::command();
-        let mut matches = command.get_matches_from(vec!["frz"]);
-        let parsed = CliArgs::from_arg_matches_mut(&mut matches).expect("parses");
-        assert_eq!(parsed.output, OutputFormat::Plain);
-    }
 }
