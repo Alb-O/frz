@@ -8,7 +8,7 @@ use crate::plugins::SearchPluginRegistry;
 use crate::types::SearchData;
 
 #[cfg(feature = "fs")]
-use crate::indexing::merge_update;
+use crate::systems::filesystem::merge_update;
 
 /// Launches the background search worker thread and returns communication channels.
 #[cfg_attr(not(feature = "fs"), allow(unused_mut))]

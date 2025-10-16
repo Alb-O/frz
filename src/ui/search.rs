@@ -3,7 +3,7 @@ use std::sync::mpsc::TryRecvError;
 
 use super::App;
 #[cfg(feature = "fs")]
-use crate::indexing::IndexUpdate;
+use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::{SearchCommand, SearchResult};
 
 impl<'a> App<'a> {

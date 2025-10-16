@@ -6,9 +6,9 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "fs")]
 use std::sync::mpsc::TryRecvError;
 
-use crate::indexing::IndexUpdate;
+use crate::systems::filesystem::IndexUpdate;
 #[cfg(feature = "fs")]
-use crate::indexing::merge_update;
+use crate::systems::filesystem::merge_update;
 #[cfg(feature = "fs")]
 use crate::types::SearchData;
 
@@ -131,7 +131,7 @@ impl<'a> App<'a> {
 #[cfg(all(test, feature = "fs"))]
 mod tests {
     use super::*;
-    use crate::indexing::ProgressSnapshot;
+    use crate::systems::filesystem::ProgressSnapshot;
     use crate::types::{FacetRow, FileRow, SearchData};
     use std::time::{Duration, Instant};
 

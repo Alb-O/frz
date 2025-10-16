@@ -18,31 +18,34 @@ use anyhow::bail;
 #[cfg(feature = "fs")]
 pub use filesystem::FilesystemOptions;
 #[cfg(feature = "fs")]
-pub(crate) use filesystem::spawn_filesystem_index;
+pub use filesystem::spawn_filesystem_index;
+
+#[cfg(feature = "fs")]
+pub mod plugin;
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
 #[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone)]
-pub(crate) struct IndexUpdate {
-    pub(crate) files: Arc<[FileRow]>,
-    pub(crate) facets: Arc<[FacetRow]>,
-    pub(crate) progress: ProgressSnapshot,
-    pub(crate) reset: bool,
-    pub(crate) cached_data: Option<SearchData>,
+pub struct IndexUpdate {
+    pub files: Arc<[FileRow]>,
+    pub facets: Arc<[FacetRow]>,
+    pub progress: ProgressSnapshot,
+    pub reset: bool,
+    pub cached_data: Option<SearchData>,
 }
 
 /// Snapshot of the indexing progress suitable for updating the UI tracker.
 #[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct ProgressSnapshot {
-    pub(crate) indexed_facets: usize,
-    pub(crate) indexed_files: usize,
-    pub(crate) total_facets: Option<usize>,
-    pub(crate) total_files: Option<usize>,
-    pub(crate) complete: bool,
+pub struct ProgressSnapshot {
+    pub indexed_facets: usize,
+    pub indexed_files: usize,
+    pub total_facets: Option<usize>,
+    pub total_files: Option<usize>,
+    pub complete: bool,
 }
 
-pub(crate) fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
+pub fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
     if update.reset {
         data.files.clear();
         data.facets.clear();
@@ -66,8 +69,6 @@ pub(crate) fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
 }
 
 #[cfg(not(feature = "fs"))]
-pub(crate) fn spawn_filesystem_index(
-    _root: PathBuf,
-) -> Result<(SearchData, Receiver<IndexUpdate>)> {
+pub fn spawn_filesystem_index(_root: PathBuf) -> Result<(SearchData, Receiver<IndexUpdate>)> {
     bail!("filesystem support is disabled; enable the `fs` feature");
 }

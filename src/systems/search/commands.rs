@@ -3,7 +3,7 @@ use std::sync::mpsc::Sender;
 use crate::types::SearchMode;
 
 #[cfg(feature = "fs")]
-use crate::indexing::IndexUpdate;
+use crate::systems::filesystem::IndexUpdate;
 
 /// Commands understood by the background search worker.
 #[derive(Debug)]

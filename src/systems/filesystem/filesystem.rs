@@ -72,7 +72,7 @@ impl Default for FilesystemOptions {
     }
 }
 
-pub(crate) fn spawn_filesystem_index(
+pub fn spawn_filesystem_index(
     root: PathBuf,
     mut options: FilesystemOptions,
 ) -> Result<(SearchData, Receiver<IndexUpdate>)> {

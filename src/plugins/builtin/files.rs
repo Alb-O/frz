@@ -1,7 +1,9 @@
 use std::sync::atomic::AtomicU64;
 
-use crate::plugins::SearchPlugin;
-use crate::systems::search::{SearchStream, stream_files};
+use crate::plugins::{
+    SearchPlugin,
+    systems::search::{SearchStream, stream_files},
+};
 use crate::types::{SearchData, SearchMode, SearchSelection};
 
 pub(crate) struct FileSearchPlugin;
