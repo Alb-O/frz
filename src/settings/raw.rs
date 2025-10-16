@@ -214,17 +214,16 @@ impl RawConfig {
         if let Some(detail) = self.ui.detail_panel_title {
             ui.detail_panel_title = detail;
         }
-        if let Some(pane) = self.ui.facets {
-            if let Some(target) = ui.pane_mut(SearchMode::FACETS) {
-                apply_pane_config(target, pane);
-            }
+        if let Some(pane) = self.ui.facets
+            && let Some(target) = ui.pane_mut(SearchMode::FACETS)
+        {
+            apply_pane_config(target, pane);
         }
-        if let Some(pane) = self.ui.files {
-            if let Some(target) = ui.pane_mut(SearchMode::FILES) {
-                apply_pane_config(target, pane);
-            }
+        if let Some(pane) = self.ui.files
+            && let Some(target) = ui.pane_mut(SearchMode::FILES)
+        {
+            apply_pane_config(target, pane);
         }
-
         let default_title = filesystem
             .context_label
             .clone()

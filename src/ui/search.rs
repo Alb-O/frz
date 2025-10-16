@@ -2,7 +2,6 @@ use std::sync::atomic::Ordering as AtomicOrdering;
 use std::sync::mpsc::TryRecvError;
 
 use super::App;
-use super::state::TabBuffers;
 #[cfg(feature = "fs")]
 use crate::indexing::IndexUpdate;
 use crate::systems::search::{SearchCommand, SearchResult};
@@ -52,10 +51,7 @@ impl<'a> App<'a> {
         }
 
         self.ensure_tab_buffers();
-        let entry = self
-            .tab_states
-            .entry(result.mode)
-            .or_insert_with(TabBuffers::default);
+        let entry = self.tab_states.entry(result.mode).or_default();
         entry.filtered = result.indices;
         entry.scores = result.scores;
 

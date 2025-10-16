@@ -13,7 +13,6 @@ use super::App;
 use super::components::{
     InputContext, ProgressState, TablePane, render_input_with_tabs, render_table,
 };
-use super::state::TabBuffers;
 
 impl<'a> App<'a> {
     pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -89,10 +88,7 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
-        let state = self
-            .tab_states
-            .entry(SearchMode::FACETS)
-            .or_insert_with(TabBuffers::default);
+        let state = self.tab_states.entry(SearchMode::FACETS).or_default();
         render_table(
             frame,
             area,
@@ -115,10 +111,7 @@ impl<'a> App<'a> {
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
-        let state = self
-            .tab_states
-            .entry(SearchMode::FILES)
-            .or_insert_with(TabBuffers::default);
+        let state = self.tab_states.entry(SearchMode::FILES).or_default();
         render_table(
             frame,
             area,

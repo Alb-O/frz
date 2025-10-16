@@ -156,29 +156,19 @@ impl<'a> App<'a> {
 
     pub(crate) fn ensure_tab_buffers(&mut self) {
         for plugin in self.plugins.iter() {
-            self.tab_states
-                .entry(plugin.mode())
-                .or_insert_with(TabBuffers::default);
+            self.tab_states.entry(plugin.mode()).or_default();
         }
         for tab in self.ui.tabs() {
-            self.tab_states
-                .entry(tab.mode)
-                .or_insert_with(TabBuffers::default);
+            self.tab_states.entry(tab.mode).or_default();
         }
     }
 
     pub fn set_headers_for(&mut self, mode: SearchMode, headers: Vec<String>) {
-        self.tab_states
-            .entry(mode)
-            .or_insert_with(TabBuffers::default)
-            .headers = Some(headers);
+        self.tab_states.entry(mode).or_default().headers = Some(headers);
     }
 
     pub fn set_widths_for(&mut self, mode: SearchMode, widths: Vec<ratatui::layout::Constraint>) {
-        self.tab_states
-            .entry(mode)
-            .or_insert_with(TabBuffers::default)
-            .widths = Some(widths);
+        self.tab_states.entry(mode).or_default().widths = Some(widths);
     }
 }
 
