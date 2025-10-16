@@ -1,4 +1,9 @@
-use crate::plugins::{PluginQueryContext, PluginSelectionContext, systems::search::SearchStream};
+use crate::plugins::{
+    PluginQueryContext,
+    PluginSelectionContext,
+    descriptors::{SearchPluginDescriptor, SearchPluginDataset},
+    systems::search::SearchStream,
+};
 use crate::types::{SearchMode, SearchSelection};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -12,8 +17,13 @@ use std::sync::Arc;
 /// [`crate::plugins::systems::filesystem`], which provides helpers for spawning
 /// the index worker and merging updates into [`SearchData`].
 pub trait SearchPlugin: Send + Sync {
+    /// Static descriptor advertising plugin metadata.
+    fn descriptor(&self) -> &'static SearchPluginDescriptor;
+
     /// Identifier describing which tab this plugin services.
-    fn mode(&self) -> SearchMode;
+    fn mode(&self) -> SearchMode {
+        SearchMode::from_descriptor(self.descriptor())
+    }
 
     /// Execute a query against the shared [`SearchData`](crate::types::SearchData) and
     /// stream results.
@@ -32,11 +42,41 @@ pub trait SearchPlugin: Send + Sync {
     ) -> Option<SearchSelection>;
 }
 
+/// Metadata and implementation pair stored by the registry.
+#[derive(Clone)]
+pub struct RegisteredPlugin {
+    descriptor: &'static SearchPluginDescriptor,
+    plugin: Arc<dyn SearchPlugin>,
+}
+
+impl RegisteredPlugin {
+    pub fn new(descriptor: &'static SearchPluginDescriptor, plugin: Arc<dyn SearchPlugin>) -> Self {
+        Self { descriptor, plugin }
+    }
+
+    pub fn mode(&self) -> SearchMode {
+        SearchMode::from_descriptor(self.descriptor)
+    }
+
+    pub fn descriptor(&self) -> &'static SearchPluginDescriptor {
+        self.descriptor
+    }
+
+    pub fn dataset(&self) -> &'static dyn SearchPluginDataset {
+        self.descriptor.dataset
+    }
+
+    pub fn plugin(&self) -> Arc<dyn SearchPlugin> {
+        Arc::clone(&self.plugin)
+    }
+}
+
 /// Registry of all search plugins contributing to the current UI.
 #[derive(Clone)]
 pub struct SearchPluginRegistry {
-    plugins: Vec<Arc<dyn SearchPlugin>>,
+    plugins: Vec<RegisteredPlugin>,
     index: HashMap<SearchMode, usize>,
+    id_index: HashMap<&'static str, usize>,
 }
 
 impl SearchPluginRegistry {
@@ -46,6 +86,7 @@ impl SearchPluginRegistry {
         Self {
             plugins: Vec::new(),
             index: HashMap::new(),
+            id_index: HashMap::new(),
         }
     }
 
@@ -62,27 +103,49 @@ impl SearchPluginRegistry {
     where
         P: SearchPlugin + 'static,
     {
-        let mode = plugin.mode();
+        let descriptor = plugin.descriptor();
+        let mode = SearchMode::from_descriptor(descriptor);
         let plugin = Arc::new(plugin) as Arc<dyn SearchPlugin>;
-        if let Some(position) = self.index.get(&mode).copied() {
-            self.plugins[position] = plugin;
+        let entry = RegisteredPlugin::new(descriptor, plugin);
+        let position = if let Some(position) = self.index.get(&mode).copied() {
+            if let Some(existing) = self.plugins.get(position) {
+                self.id_index.remove(existing.descriptor.id);
+            }
+            self.plugins[position] = entry;
+            position
         } else {
             let position = self.plugins.len();
             self.index.insert(mode, position);
-            self.plugins.push(plugin);
-        }
+            self.plugins.push(entry);
+            position
+        };
+        self.id_index.insert(descriptor.id, position);
     }
 
     /// Lookup a plugin servicing the requested mode.
     pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn SearchPlugin>> {
         self.index
             .get(&mode)
-            .and_then(|position| self.plugins.get(*position).cloned())
+            .and_then(|position| self.plugins.get(*position))
+            .map(|entry| entry.plugin())
     }
 
     /// Iterate over all registered plugins.
-    pub fn iter(&self) -> impl Iterator<Item = &Arc<dyn SearchPlugin>> {
+    pub fn iter(&self) -> impl Iterator<Item = &RegisteredPlugin> {
         self.plugins.iter()
+    }
+
+    /// Iterate over registered plugin descriptors.
+    pub fn descriptors(&self) -> impl Iterator<Item = &'static SearchPluginDescriptor> + '_ {
+        self.plugins.iter().map(|entry| entry.descriptor)
+    }
+
+    /// Attempt to resolve a mode identifier to a registered plugin.
+    pub fn mode_by_id(&self, id: &str) -> Option<SearchMode> {
+        self.id_index
+            .get(id)
+            .and_then(|position| self.plugins.get(*position))
+            .map(|entry| entry.mode())
     }
 }
 

@@ -1,27 +1,50 @@
 use std::collections::HashMap;
 
+use crate::plugins::descriptors::{SearchPluginDescriptor, SearchPluginUiDefinition};
+
 /// Identifies a single tab contributed to the search UI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 pub struct SearchMode {
-    id: &'static str,
+    descriptor: &'static SearchPluginDescriptor,
+}
+
+impl std::fmt::Debug for SearchMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("SearchMode").field(&self.id()).finish()
+    }
+}
+
+impl PartialEq for SearchMode {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self.descriptor, other.descriptor)
+    }
+}
+
+impl Eq for SearchMode {}
+
+impl std::hash::Hash for SearchMode {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::hash::Hash::hash(&(self.descriptor as *const SearchPluginDescriptor), state);
+    }
 }
 
 impl SearchMode {
-    /// Built-in tab that exposes available facets.
-    pub const FACETS: Self = Self::new("facets");
-    /// Built-in tab that displays matched files.
-    pub const FILES: Self = Self::new("files");
-
-    /// Create a new search mode identifier.
+    /// Create a search mode identifier backed by a plugin descriptor.
     #[must_use]
-    pub const fn new(id: &'static str) -> Self {
-        Self { id }
+    pub const fn from_descriptor(descriptor: &'static SearchPluginDescriptor) -> Self {
+        Self { descriptor }
     }
 
     /// Return the identifier for this mode.
     #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        self.id
+    pub const fn id(self) -> &'static str {
+        self.descriptor.id
+    }
+
+    /// Access the plugin descriptor backing this mode.
+    #[must_use]
+    pub const fn descriptor(self) -> &'static SearchPluginDescriptor {
+        self.descriptor
     }
 
     /// Return the active pane title for the current mode.
@@ -108,7 +131,7 @@ pub struct UiConfig {
     pub filter_label: String,
     pub detail_panel_title: String,
     tabs: Vec<TabUiConfig>,
-    index: HashMap<&'static str, usize>,
+    index: HashMap<SearchMode, usize>,
 }
 
 impl Default for UiConfig {
@@ -119,28 +142,9 @@ impl Default for UiConfig {
             tabs: Vec::new(),
             index: HashMap::new(),
         };
-
-        config.register_tab(TabUiConfig::new(
-            SearchMode::FACETS,
-            "Tags",
-            PaneUiConfig::new(
-                "Facet search",
-                "Type to filter facets. Press Tab to view files.",
-                "Matching facets",
-                "Facets",
-            ),
-        ));
-        config.register_tab(TabUiConfig::new(
-            SearchMode::FILES,
-            "Files",
-            PaneUiConfig::new(
-                "File search",
-                "Type to filter files. Press Tab to view facets.",
-                "Matching files",
-                "Files",
-            ),
-        ));
-
+        for descriptor in crate::plugins::builtin::descriptors() {
+            config.register_plugin(descriptor);
+        }
         config
     }
 }
@@ -156,8 +160,9 @@ impl UiConfig {
             index: HashMap::new(),
         };
 
+        let facets = crate::plugins::builtin::facets::mode();
         config.register_tab(TabUiConfig::new(
-            SearchMode::FACETS,
+            facets,
             "Tags",
             PaneUiConfig::new(
                 "Tag search",
@@ -167,8 +172,9 @@ impl UiConfig {
             ),
         ));
 
+        let files = crate::plugins::builtin::files::mode();
         config.register_tab(TabUiConfig::new(
-            SearchMode::FILES,
+            files,
             "Files",
             PaneUiConfig::new(
                 "File search",
@@ -183,14 +189,31 @@ impl UiConfig {
 
     /// Register a new tab definition with this configuration.
     pub fn register_tab(&mut self, tab: TabUiConfig) {
-        let id = tab.mode.as_str();
-        if let Some(position) = self.index.get(id).copied() {
+        let mode = tab.mode;
+        if let Some(position) = self.index.get(&mode).copied() {
             self.tabs[position] = tab;
         } else {
             let idx = self.tabs.len();
-            self.index.insert(id, idx);
+            self.index.insert(mode, idx);
             self.tabs.push(tab);
         }
+    }
+
+    /// Register the default UI provided by a plugin descriptor.
+    pub fn register_plugin(&mut self, descriptor: &'static SearchPluginDescriptor) {
+        let mode = SearchMode::from_descriptor(descriptor);
+        let SearchPluginUiDefinition {
+            tab_label,
+            mode_title,
+            hint,
+            table_title,
+            count_label,
+        } = descriptor.ui;
+        self.register_tab(TabUiConfig::new(
+            mode,
+            tab_label,
+            PaneUiConfig::new(mode_title, hint, table_title, count_label),
+        ));
     }
 
     /// Return all registered tabs in the order they were added.
@@ -203,7 +226,7 @@ impl UiConfig {
     #[must_use]
     pub fn tab(&self, mode: SearchMode) -> Option<&TabUiConfig> {
         self.index
-            .get(mode.as_str())
+            .get(&mode)
             .and_then(|position| self.tabs.get(*position))
     }
 
@@ -215,7 +238,7 @@ impl UiConfig {
 
     /// Mutably lookup pane metadata for the provided mode.
     pub fn pane_mut(&mut self, mode: SearchMode) -> Option<&mut PaneUiConfig> {
-        let position = self.index.get(mode.as_str()).copied()?;
+        let position = self.index.get(&mode).copied()?;
         self.tabs.get_mut(position).map(|tab| &mut tab.pane)
     }
 
@@ -224,18 +247,28 @@ impl UiConfig {
     pub fn tab_label(&self, mode: SearchMode) -> Option<&str> {
         self.tab(mode).map(|tab| tab.tab_label.as_str())
     }
+
+    /// Resolve a registered mode identifier to its [`SearchMode`].
+    #[must_use]
+    pub fn mode_by_id(&self, id: &str) -> Option<SearchMode> {
+        self.tabs
+            .iter()
+            .find(|tab| tab.mode.id() == id)
+            .map(|tab| tab.mode)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::plugins::builtin::{facets, files};
 
     #[test]
     fn search_mode_uses_correct_pane() {
         let ui = UiConfig::default();
-        assert_eq!(SearchMode::FACETS.title(&ui), "Facet search");
+        assert_eq!(facets::mode().title(&ui), "Facet search");
         assert_eq!(
-            SearchMode::FILES.hint(&ui),
+            files::mode().hint(&ui),
             "Type to filter files. Press Tab to view facets."
         );
     }

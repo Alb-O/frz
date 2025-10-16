@@ -15,12 +15,13 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 ## Quick example
 
 ```rust
-use frz::{SearchData, SearchMode, SearchUi, UiConfig};
+use frz::{SearchData, SearchUi, UiConfig};
+use frz::plugins::builtin::files;
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)
     .with_ui_config(UiConfig::tags_and_files())
-    .with_start_mode(SearchMode::FILES)
+    .with_start_mode(files::mode())
     .run()?;
 
 if let Some(file) = outcome.selected_file() {
@@ -81,6 +82,13 @@ selection as pretty JSON using `--output json`.
 Plugins can register new tabs by implementing
 [`SearchPlugin`](https://docs.rs/frz/latest/frz/trait.SearchPlugin.html) and
 adding them to a [`SearchPluginRegistry`](https://docs.rs/frz/latest/frz/struct.SearchPluginRegistry.html).
+Each plugin exposes a [`SearchPluginDescriptor`](https://docs.rs/frz/latest/frz/plugins/descriptors/struct.SearchPluginDescriptor.html)
+that advertises UI copy, table layout metadata, and an associated
+[`SearchPluginDataset`](https://docs.rs/frz/latest/frz/plugins/descriptors/trait.SearchPluginDataset.html)
+implementation. The dataset abstraction lets plugins describe how to render
+their tables, report aggregate counts, and contribute progress information,
+enabling the registry to treat every plugin uniformly regardless of how many
+are registered.
 Reusable background capabilities live under the `plugins::systems` module. The
 search worker can be accessed through
 [`plugins::systems::search`](https://docs.rs/frz/latest/frz/plugins/systems/search/),

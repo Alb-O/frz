@@ -1,9 +1,10 @@
 pub mod builtin;
 mod context;
+pub mod descriptors;
 mod registry;
 
 pub use context::{PluginQueryContext, PluginSelectionContext};
-pub use registry::{SearchPlugin, SearchPluginRegistry};
+pub use registry::{RegisteredPlugin, SearchPlugin, SearchPluginRegistry};
 
 /// Re-exported systems that plugins can leverage.
 pub mod systems {

@@ -29,7 +29,7 @@ fn main() -> anyhow::Result<()> {
         Some(SearchSelection::Facet(facet)) => println!("Facet: {}", facet.name),
         Some(SearchSelection::Plugin(plugin)) => println!(
             "Plugin selection: {} @ {}",
-            plugin.mode.as_str(),
+            plugin.mode.id(),
             plugin.index
         ),
         None => println!("No selection"),

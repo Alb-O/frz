@@ -68,7 +68,7 @@ impl ResolvedConfig {
         println!(
             "  Start mode: {}",
             self.start_mode
-                .map(|mode| mode.as_str().to_string())
+                .map(|mode| mode.id().to_string())
                 .unwrap_or_else(|| "(auto)".to_string())
         );
         if let Some(title) = &self.input_title {

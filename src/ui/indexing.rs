@@ -26,7 +26,8 @@ impl<'a> App<'a> {
         if self.data.facets.is_empty() && self.data.files.is_empty() {
             self.index_progress = IndexProgress::with_unknown_totals();
         } else {
-            self.index_progress.refresh_from_data(&self.data);
+            self.index_progress
+                .refresh_from_data(&self.data, self.dataset_totals());
         }
     }
 
@@ -81,7 +82,8 @@ impl<'a> App<'a> {
                     state.scores.clear();
                 }
                 self.table_state.select(None);
-                self.index_progress.refresh_from_data(&self.data);
+                self.index_progress
+                    .refresh_from_data(&self.data, self.dataset_totals());
                 self.mark_query_dirty();
                 changed = true;
             }
@@ -106,10 +108,16 @@ impl<'a> App<'a> {
         }
 
         let progress = update.progress;
-        self.index_progress
-            .record_indexed(progress.indexed_facets, progress.indexed_files);
-        self.index_progress
-            .set_totals(progress.total_facets, progress.total_files);
+        let facets_key = crate::plugins::builtin::facets::descriptor().id;
+        let files_key = crate::plugins::builtin::files::descriptor().id;
+        self.index_progress.record_indexed(&[
+            (facets_key, progress.indexed_facets),
+            (files_key, progress.indexed_files),
+        ]);
+        self.index_progress.set_totals(&[
+            (facets_key, progress.total_facets),
+            (files_key, progress.total_files),
+        ]);
         if progress.complete {
             self.index_progress.mark_complete();
         }
