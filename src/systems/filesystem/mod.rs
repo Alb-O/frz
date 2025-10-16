@@ -1,5 +1,5 @@
 #[cfg(feature = "fs")]
-mod filesystem;
+mod fs;
 
 use std::sync::Arc;
 
@@ -16,9 +16,9 @@ use anyhow::Result;
 use anyhow::bail;
 
 #[cfg(feature = "fs")]
-pub use filesystem::FilesystemOptions;
+pub use fs::FilesystemOptions;
 #[cfg(feature = "fs")]
-pub use filesystem::spawn_filesystem_index;
+pub use fs::spawn_filesystem_index;
 
 #[cfg(feature = "fs")]
 pub mod plugin;

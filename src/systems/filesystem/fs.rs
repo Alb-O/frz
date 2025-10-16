@@ -14,7 +14,7 @@ use crate::types::{FacetRow, FileRow, SearchData};
 
 use super::{IndexUpdate, ProgressSnapshot};
 
-#[path = "filesystem_cache.rs"]
+#[path = "cache.rs"]
 mod cache;
 use cache::CacheHandle;
 use cache::CacheWriter;

@@ -1,9 +1,7 @@
+use crate::plugins::{PluginQueryContext, PluginSelectionContext, systems::search::SearchStream};
+use crate::types::{SearchMode, SearchSelection};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
-
-use crate::plugins::systems::search::SearchStream;
-use crate::types::{SearchData, SearchMode, SearchSelection};
 
 /// A pluggable search component that can provide results for a tab.
 ///
@@ -17,17 +15,21 @@ pub trait SearchPlugin: Send + Sync {
     /// Identifier describing which tab this plugin services.
     fn mode(&self) -> SearchMode;
 
-    /// Execute a query against the shared [`SearchData`] and stream results.
+    /// Execute a query against the shared [`SearchData`](crate::types::SearchData) and
+    /// stream results.
     fn stream(
         &self,
-        data: &SearchData,
         query: &str,
         stream: SearchStream<'_>,
-        latest_query_id: &AtomicU64,
+        context: PluginQueryContext<'_>,
     ) -> bool;
 
     /// Convert a filtered index into a [`SearchSelection`] for the caller.
-    fn selection(&self, data: &SearchData, index: usize) -> Option<SearchSelection>;
+    fn selection(
+        &self,
+        context: PluginSelectionContext<'_>,
+        index: usize,
+    ) -> Option<SearchSelection>;
 }
 
 /// Registry of all search plugins contributing to the current UI.
