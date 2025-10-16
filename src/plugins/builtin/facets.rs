@@ -1,10 +1,10 @@
-use std::sync::atomic::AtomicU64;
-
 use crate::plugins::{
+    PluginQueryContext,
+    PluginSelectionContext,
     SearchPlugin,
     systems::search::{SearchStream, stream_facets},
 };
-use crate::types::{SearchData, SearchMode, SearchSelection};
+use crate::types::{SearchMode, SearchSelection};
 
 pub(crate) struct FacetSearchPlugin;
 
@@ -15,15 +15,23 @@ impl SearchPlugin for FacetSearchPlugin {
 
     fn stream(
         &self,
-        data: &SearchData,
         query: &str,
         stream: SearchStream<'_>,
-        latest_query_id: &AtomicU64,
+        context: PluginQueryContext<'_>,
     ) -> bool {
-        stream_facets(data, query, stream, latest_query_id)
+        stream_facets(context.data(), query, stream, context.latest_query_id())
     }
 
-    fn selection(&self, data: &SearchData, index: usize) -> Option<SearchSelection> {
-        data.facets.get(index).cloned().map(SearchSelection::Facet)
+    fn selection(
+        &self,
+        context: PluginSelectionContext<'_>,
+        index: usize,
+    ) -> Option<SearchSelection> {
+        context
+            .data()
+            .facets
+            .get(index)
+            .cloned()
+            .map(SearchSelection::Facet)
     }
 }

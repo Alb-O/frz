@@ -4,7 +4,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult, SearchStream};
-use crate::plugins::SearchPluginRegistry;
+use crate::plugins::{PluginQueryContext, SearchPluginRegistry};
 use crate::types::SearchData;
 
 #[cfg(feature = "fs")]
@@ -55,7 +55,8 @@ fn handle_command(
         SearchCommand::Query { id, query, mode } => {
             if let Some(plugin) = plugins.plugin(mode) {
                 let stream = SearchStream::new(result_tx, id, mode);
-                plugin.stream(data, &query, stream, latest_query_id.as_ref())
+                let context = PluginQueryContext::new(data, latest_query_id.as_ref());
+                plugin.stream(&query, stream, context)
             } else {
                 true
             }

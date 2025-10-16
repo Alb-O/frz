@@ -8,7 +8,7 @@ use throbber_widgets_tui::ThrobberState;
 
 use super::components::progress::IndexProgress;
 use crate::input::SearchInput;
-use crate::plugins::SearchPluginRegistry;
+use crate::plugins::{PluginSelectionContext, SearchPluginRegistry};
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::{self, SearchCommand, SearchResult};
 use crate::theme::Theme;
@@ -151,7 +151,8 @@ impl<'a> App<'a> {
         let state = self.tab_states.get(&self.mode)?;
         let index = *state.filtered.get(selected)?;
         let plugin = self.plugins.plugin(self.mode)?;
-        plugin.selection(&self.data, index)
+        let context = PluginSelectionContext::new(&self.data);
+        plugin.selection(context, index)
     }
 
     pub(crate) fn ensure_tab_buffers(&mut self) {
