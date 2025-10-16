@@ -68,8 +68,11 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 #[cfg(all(test, feature = "fs"))]
 mod tests {
     use super::*;
-    use frz::types::{FacetRow, FileRow, SearchMode};
+    use frz::plugins::{SearchPluginBehavior, SearchPluginDefinition, SearchPluginUi};
+    use frz::types::{FacetRow, FileRow, SearchData};
+    use frz::ui::App;
     use serde_json::Value;
+    use ratatui::layout::Rect;
 
     #[test]
     fn json_format_includes_file_selection() {
@@ -103,11 +106,20 @@ mod tests {
 
     #[test]
     fn json_format_includes_plugin_selection() {
+        fn noop_render(_app: &mut App<'_>, _frame: &mut ratatui::Frame<'_>, _area: Rect) {}
+        fn dataset_len(_data: &SearchData) -> usize {
+            0
+        }
+        static CUSTOM_DEFINITION: SearchPluginDefinition = SearchPluginDefinition::new(
+            "custom",
+            SearchPluginUi::new("Custom", "Custom", "", "", ""),
+            SearchPluginBehavior::new(dataset_len, noop_render),
+        );
         let outcome = SearchOutcome {
             accepted: true,
             query: "test".into(),
             selection: Some(SearchSelection::Plugin(PluginSelection {
-                mode: SearchMode::new("custom"),
+                mode: CUSTOM_DEFINITION.mode(),
                 index: 7,
             })),
         };

@@ -1,8 +1,12 @@
+mod definition;
 pub mod builtin;
 mod context;
 mod registry;
 
 pub use context::{PluginQueryContext, PluginSelectionContext};
+pub use definition::{
+    SearchMode, SearchPluginBehavior, SearchPluginDefinition, SearchPluginUi,
+};
 pub use registry::{SearchPlugin, SearchPluginRegistry};
 
 /// Re-exported systems that plugins can leverage.

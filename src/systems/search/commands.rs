@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use crate::types::SearchMode;
+use crate::plugins::SearchMode;
 
 #[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;

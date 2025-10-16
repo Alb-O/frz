@@ -1,5 +1,8 @@
-use crate::plugins::{PluginQueryContext, PluginSelectionContext, systems::search::SearchStream};
-use crate::types::{SearchMode, SearchSelection};
+use crate::plugins::{
+    PluginQueryContext, PluginSelectionContext, SearchMode, SearchPluginDefinition,
+    systems::search::SearchStream,
+};
+use crate::types::SearchSelection;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -12,8 +15,13 @@ use std::sync::Arc;
 /// [`crate::plugins::systems::filesystem`], which provides helpers for spawning
 /// the index worker and merging updates into [`SearchData`].
 pub trait SearchPlugin: Send + Sync {
+    /// Return the static definition describing this plugin's mode and behavior.
+    fn definition(&self) -> &'static SearchPluginDefinition;
+
     /// Identifier describing which tab this plugin services.
-    fn mode(&self) -> SearchMode;
+    fn mode(&self) -> SearchMode {
+        self.definition().mode()
+    }
 
     /// Execute a query against the shared [`SearchData`](crate::types::SearchData) and
     /// stream results.
@@ -36,6 +44,7 @@ pub trait SearchPlugin: Send + Sync {
 #[derive(Clone)]
 pub struct SearchPluginRegistry {
     plugins: Vec<Arc<dyn SearchPlugin>>,
+    definitions: Vec<&'static SearchPluginDefinition>,
     index: HashMap<SearchMode, usize>,
 }
 
@@ -45,6 +54,7 @@ impl SearchPluginRegistry {
     pub fn empty() -> Self {
         Self {
             plugins: Vec::new(),
+            definitions: Vec::new(),
             index: HashMap::new(),
         }
     }
@@ -63,13 +73,16 @@ impl SearchPluginRegistry {
         P: SearchPlugin + 'static,
     {
         let mode = plugin.mode();
+        let definition = plugin.definition();
         let plugin = Arc::new(plugin) as Arc<dyn SearchPlugin>;
         if let Some(position) = self.index.get(&mode).copied() {
             self.plugins[position] = plugin;
+            self.definitions[position] = definition;
         } else {
             let position = self.plugins.len();
             self.index.insert(mode, position);
             self.plugins.push(plugin);
+            self.definitions.push(definition);
         }
     }
 
@@ -83,6 +96,18 @@ impl SearchPluginRegistry {
     /// Iterate over all registered plugins.
     pub fn iter(&self) -> impl Iterator<Item = &Arc<dyn SearchPlugin>> {
         self.plugins.iter()
+    }
+
+    /// Iterate over plugin definitions in registration order.
+    pub fn definitions(&self) -> impl Iterator<Item = &'static SearchPluginDefinition> + '_ {
+        self.definitions.iter().copied()
+    }
+
+    /// Retrieve the definition for a given mode.
+    pub fn definition(&self, mode: SearchMode) -> Option<&'static SearchPluginDefinition> {
+        self.index
+            .get(&mode)
+            .and_then(|position| self.definitions.get(*position).copied())
     }
 }
 

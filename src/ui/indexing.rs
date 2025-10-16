@@ -23,10 +23,12 @@ impl<'a> App<'a> {
 
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
+        let modes = self.plugin_modes();
         if self.data.facets.is_empty() && self.data.files.is_empty() {
-            self.index_progress = IndexProgress::with_unknown_totals();
+            self.index_progress = IndexProgress::for_modes(modes);
         } else {
-            self.index_progress.refresh_from_data(&self.data);
+            self.index_progress
+                .refresh_from_data(&self.data, modes);
         }
     }
 
@@ -81,13 +83,15 @@ impl<'a> App<'a> {
                     state.scores.clear();
                 }
                 self.table_state.select(None);
-                self.index_progress.refresh_from_data(&self.data);
+                let modes = self.plugin_modes();
+                self.index_progress.refresh_from_data(&self.data, modes);
                 self.mark_query_dirty();
                 changed = true;
             }
             None => {
                 if update.reset {
-                    self.index_progress = IndexProgress::with_unknown_totals();
+                    let modes = self.plugin_modes();
+                    self.index_progress = IndexProgress::for_modes(modes);
                     for state in self.tab_states.values_mut() {
                         state.filtered.clear();
                         state.scores.clear();

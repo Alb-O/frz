@@ -11,7 +11,8 @@ use std::path::{Component, Path};
 #[cfg(feature = "fs")]
 use std::sync::{Arc, mpsc};
 
-use super::{FacetRow, FileRow, SearchMode};
+use super::{FacetRow, FileRow};
+use crate::plugins::SearchMode;
 
 /// Data displayed in the search interface, including facets and files.
 #[derive(Debug, Default, Clone)]

@@ -115,12 +115,12 @@ impl<'a> ScoreAggregator<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SearchMode;
+    use crate::plugins::builtin::{FACETS_MODE, FILES_MODE};
 
     #[test]
     fn aggregates_highest_scores() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let stream = SearchStream::new(&tx, 7, SearchMode::FILES);
+        let stream = SearchStream::new(&tx, 7, FILES_MODE);
         let mut aggregator = ScoreAggregator::new(stream);
 
         aggregator.push(0, 1);
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn ignores_worse_matches_when_capacity_reached() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let stream = SearchStream::new(&tx, 5, SearchMode::FACETS);
+        let stream = SearchStream::new(&tx, 5, FACETS_MODE);
         let mut aggregator = ScoreAggregator::new(stream);
 
         for i in 0..super::MAX_RENDERED_RESULTS {

@@ -15,12 +15,12 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 ## Quick example
 
 ```rust
-use frz::{SearchData, SearchMode, SearchUi, UiConfig};
+use frz::{SearchData, SearchMode, SearchUi};
+use frz::plugins::builtin::FILES_MODE;
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)
-    .with_ui_config(UiConfig::tags_and_files())
-    .with_start_mode(SearchMode::FILES)
+    .with_start_mode(FILES_MODE)
     .run()?;
 
 if let Some(file) = outcome.selected_file() {

@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 
-use frz::{FilesystemOptions, SearchMode};
+use frz::plugins::builtin::{FACETS_MODE, FILES_MODE};
+use frz::FilesystemOptions;
 
 use crate::cli::CliArgs;
 
@@ -215,12 +216,12 @@ impl RawConfig {
             ui.detail_panel_title = detail;
         }
         if let Some(pane) = self.ui.facets
-            && let Some(target) = ui.pane_mut(SearchMode::FACETS)
+            && let Some(target) = ui.pane_mut(FACETS_MODE)
         {
             apply_pane_config(target, pane);
         }
         if let Some(pane) = self.ui.files
-            && let Some(target) = ui.pane_mut(SearchMode::FILES)
+            && let Some(target) = ui.pane_mut(FILES_MODE)
         {
             apply_pane_config(target, pane);
         }

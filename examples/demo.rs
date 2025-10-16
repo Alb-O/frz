@@ -1,4 +1,5 @@
-use frz::{FacetRow, FileRow, SearchData, SearchMode, SearchSelection, SearchUi, UiConfig};
+use frz::{FacetRow, FileRow, SearchData, SearchSelection, SearchUi};
+use frz::plugins::builtin::FACETS_MODE;
 
 fn main() -> anyhow::Result<()> {
     // Build sample data
@@ -16,9 +17,8 @@ fn main() -> anyhow::Result<()> {
 
     // Minimal search UI configuration with prompt
     let search_ui = SearchUi::new(data)
-        .with_ui_config(UiConfig::tags_and_files())
         .with_input_title("workspace-prototype")
-        .with_start_mode(SearchMode::FACETS);
+        .with_start_mode(FACETS_MODE);
     let outcome = search_ui.run()?;
     println!("Accepted? {}", outcome.accepted);
     match outcome.selection {

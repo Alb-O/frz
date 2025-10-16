@@ -8,11 +8,13 @@ use throbber_widgets_tui::ThrobberState;
 
 use super::components::progress::IndexProgress;
 use crate::input::SearchInput;
-use crate::plugins::{PluginSelectionContext, SearchPluginRegistry};
+use crate::plugins::{
+    PluginSelectionContext, SearchMode, SearchPluginRegistry, builtin::FACETS_MODE,
+};
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::{self, SearchCommand, SearchResult};
 use crate::theme::Theme;
-use crate::types::{SearchData, SearchMode, SearchSelection, UiConfig};
+use crate::types::{SearchData, SearchSelection, UiConfig};
 
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
@@ -64,18 +66,22 @@ impl<'a> App<'a> {
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();
         let context_label = data.context_label.clone();
-        let index_progress = IndexProgress::from(&data);
+        let index_progress = IndexProgress::from_plugins(
+            &data,
+            plugins.definitions().map(|definition| definition.mode()),
+        );
         let worker_plugins = plugins.clone();
         let (search_tx, search_rx, search_latest_query_id) =
             search::spawn(data.clone(), worker_plugins);
         let mut tab_states = HashMap::new();
-        for plugin in plugins.iter() {
-            tab_states.insert(plugin.mode(), TabBuffers::default());
+        for definition in plugins.definitions() {
+            tab_states.insert(definition.mode(), TabBuffers::default());
         }
-        let mut mode = SearchMode::FACETS;
-        if let Some(plugin) = plugins.iter().next() {
-            mode = plugin.mode();
-        }
+        let mode = plugins
+            .definitions()
+            .next()
+            .map(|definition| definition.mode())
+            .unwrap_or(FACETS_MODE);
 
         Self {
             data,
@@ -83,7 +89,7 @@ impl<'a> App<'a> {
             search_input: SearchInput::new(initial_query),
             table_state,
             input_title: context_label,
-            ui: UiConfig::default(),
+            ui: UiConfig::for_definitions(plugins.definitions()),
             theme: Theme::default(),
             throbber_state: ThrobberState::default(),
             index_progress,
@@ -164,6 +170,17 @@ impl<'a> App<'a> {
         }
     }
 
+    pub(crate) fn plugin_modes(&self) -> Vec<SearchMode> {
+        self.plugins.definitions().map(|definition| definition.mode()).collect()
+    }
+
+    pub(crate) fn plugin_definition(
+        &self,
+        mode: SearchMode,
+    ) -> Option<&'static crate::plugins::SearchPluginDefinition> {
+        self.plugins.definition(mode)
+    }
+
     pub fn set_headers_for(&mut self, mode: SearchMode, headers: Vec<String>) {
         self.tab_states.entry(mode).or_default().headers = Some(headers);
     }
@@ -178,6 +195,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
+    use crate::plugins::builtin::FILES_MODE;
     use crate::types::{FacetRow, FileRow};
 
     fn sample_data() -> SearchData {
@@ -214,12 +232,12 @@ mod tests {
         prime_and_wait_for_results(&mut app);
         let facets_ready = app
             .tab_states
-            .get(&SearchMode::FACETS)
+            .get(&FACETS_MODE)
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         let files_ready = app
             .tab_states
-            .get(&SearchMode::FILES)
+            .get(&FILES_MODE)
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         assert!(

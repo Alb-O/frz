@@ -9,11 +9,12 @@ use anyhow::bail;
 use ratatui::layout::Constraint;
 
 use super::App;
-use crate::plugins::SearchPluginRegistry;
+use crate::plugins::{SearchMode, SearchPluginRegistry};
 #[cfg(feature = "fs")]
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 use crate::theme::Theme;
-use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
+use crate::types::{SearchData, SearchOutcome, UiConfig};
+use crate::plugins::builtin::FILES_MODE;
 
 /// A small builder for configuring the interactive search UI.
 /// This presents an fzf-like API for setting prompts, column
@@ -62,7 +63,7 @@ impl SearchUi {
         let root = path.into();
         let (data, updates) = spawn_filesystem_index(root, options)?;
         let mut ui = Self::new(data);
-        ui.start_mode = Some(SearchMode::FILES);
+        ui.start_mode = Some(FILES_MODE);
         ui.index_updates = Some(updates);
         Ok(ui)
     }

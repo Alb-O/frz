@@ -176,7 +176,7 @@ fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{FacetRow, FileRow, SearchMode};
+    use crate::types::{FacetRow, FileRow};
 
     fn sample_data() -> SearchData {
         SearchData::default()
@@ -193,7 +193,7 @@ mod tests {
         let (tx, rx) = std::sync::mpsc::channel();
         let latest = AtomicU64::new(42);
 
-        let stream = SearchStream::new(&tx, 41, SearchMode::FILES);
+        let stream = SearchStream::new(&tx, 41, crate::plugins::builtin::FILES_MODE);
         assert!(stream_files(&data, "alpha", stream, &latest));
         assert!(rx.try_recv().is_err());
     }

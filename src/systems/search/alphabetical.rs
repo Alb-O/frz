@@ -123,12 +123,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SearchMode;
+    use crate::plugins::builtin::{FACETS_MODE, FILES_MODE};
 
     #[test]
     fn keeps_smallest_entries() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let stream = SearchStream::new(&tx, 9, SearchMode::FILES);
+        let stream = SearchStream::new(&tx, 9, FILES_MODE);
         let mut collector =
             AlphabeticalCollector::new(stream, 5, |idx| ["z", "b", "a", "y", "c"][idx].to_string());
 
@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn handles_empty_dataset() {
         let (tx, rx) = std::sync::mpsc::channel();
-        let stream = SearchStream::new(&tx, 3, SearchMode::FACETS);
+        let stream = SearchStream::new(&tx, 3, FACETS_MODE);
         let mut collector = AlphabeticalCollector::new(stream, 0, |_| "".into());
         assert!(collector.finish());
         let result = rx.try_recv().expect("empty collector should emit");

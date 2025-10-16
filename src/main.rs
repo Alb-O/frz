@@ -8,7 +8,9 @@ use anyhow::Result;
 #[cfg(feature = "fs")]
 use cli::{OutputFormat, parse_cli, print_json, print_plain};
 #[cfg(feature = "fs")]
-use frz::{SearchMode, SearchUi};
+use frz::SearchUi;
+#[cfg(feature = "fs")]
+use frz::plugins::builtin::{FACETS_MODE, FILES_MODE};
 #[cfg(feature = "fs")]
 use settings::ResolvedConfig;
 
@@ -66,12 +68,12 @@ fn run_search(format: OutputFormat, settings: ResolvedConfig) -> Result<()> {
 
     if let Some(headers) = facet_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        search_ui = search_ui.with_headers_for(SearchMode::FACETS, refs);
+        search_ui = search_ui.with_headers_for(FACETS_MODE, refs);
     }
 
     if let Some(headers) = file_headers {
         let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-        search_ui = search_ui.with_headers_for(SearchMode::FILES, refs);
+        search_ui = search_ui.with_headers_for(FILES_MODE, refs);
     }
 
     let outcome = search_ui.run()?;
