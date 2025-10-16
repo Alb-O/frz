@@ -148,7 +148,7 @@ mod tests {
 
     fn wait_for_results(app: &mut App) {
         let deadline = Instant::now() + Duration::from_secs(1);
-        while app.search_in_flight && Instant::now() < deadline {
+        while app.search.is_in_flight() && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(10));
             app.pump_search_results();
         }
@@ -183,7 +183,7 @@ mod tests {
         let changed = app.apply_index_update(update, None);
         assert!(changed, "index update should report data changes");
         assert!(
-            app.input_revision != app.last_applied_revision,
+            app.search.has_unapplied_input(),
             "data changes should mark the query dirty"
         );
 

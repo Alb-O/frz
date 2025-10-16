@@ -83,15 +83,15 @@ impl<'a> App<'a> {
     }
 
     fn hydrate_initial_results(&mut self) {
-        if self.latest_query_id.is_none() {
+        if !self.search.has_issued_query() {
             self.mark_query_dirty();
             self.request_search();
         }
 
         let deadline = Instant::now() + Duration::from_millis(250);
-        while self.search_in_flight && Instant::now() < deadline {
+        while self.search.is_in_flight() && Instant::now() < deadline {
             self.pump_search_results();
-            if self.search_in_flight {
+            if self.search.is_in_flight() {
                 thread::sleep(Duration::from_millis(10));
             }
         }

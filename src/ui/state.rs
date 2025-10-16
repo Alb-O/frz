@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::Receiver;
 
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
@@ -13,15 +11,19 @@ use crate::input::SearchInput;
 use crate::systems::filesystem::IndexUpdate;
 #[cfg(not(feature = "fs"))]
 type IndexUpdate = ();
-use crate::systems::search::{self, SearchCommand, SearchResult};
+use crate::systems::search;
 use frz_plugin_api::{
     PluginSelectionContext, SearchData, SearchMode, SearchPluginRegistry, SearchSelection,
 };
 pub use frz_tui::theme::Theme;
 
+mod search_runtime;
+
+use search_runtime::SearchRuntime;
+
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
-        let _ = self.search_tx.send(SearchCommand::Shutdown);
+        self.search.shutdown();
     }
 }
 
@@ -39,16 +41,7 @@ pub struct App<'a> {
     plugins: SearchPluginRegistry,
     #[cfg_attr(not(feature = "fs"), allow(dead_code))]
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
-    pub(super) search_tx: Sender<SearchCommand>,
-    pub(super) search_rx: Receiver<SearchResult>,
-    pub(super) search_latest_query_id: Arc<AtomicU64>,
-    pub(super) next_query_id: u64,
-    pub(super) latest_query_id: Option<u64>,
-    pub(super) search_in_flight: bool,
-    pub(super) input_revision: u64,
-    pub(super) pending_result_revision: u64,
-    pub(super) last_applied_revision: u64,
-    pub(super) last_user_input_revision: u64,
+    pub(super) search: SearchRuntime,
 }
 
 #[derive(Default)]
@@ -75,6 +68,7 @@ impl<'a> App<'a> {
         let worker_plugins = plugins.clone();
         let (search_tx, search_rx, search_latest_query_id) =
             search::spawn(data.clone(), worker_plugins);
+        let search = SearchRuntime::new(search_tx, search_rx, search_latest_query_id);
         let mut tab_states = HashMap::new();
         for plugin in plugins.iter() {
             let mode = plugin.mode();
@@ -113,16 +107,7 @@ impl<'a> App<'a> {
             tab_states,
             plugins,
             index_updates: None,
-            search_tx,
-            search_rx,
-            search_latest_query_id,
-            next_query_id: 0,
-            latest_query_id: None,
-            search_in_flight: false,
-            input_revision: 0,
-            pending_result_revision: 0,
-            last_applied_revision: 0,
-            last_user_input_revision: 0,
+            search,
         }
     }
 
@@ -161,12 +146,11 @@ impl<'a> App<'a> {
     }
 
     pub(crate) fn mark_query_dirty(&mut self) {
-        self.input_revision = self.input_revision.wrapping_add(1);
+        self.search.mark_query_dirty();
     }
 
     pub(crate) fn mark_query_dirty_from_user_input(&mut self) {
-        self.mark_query_dirty();
-        self.last_user_input_revision = self.input_revision;
+        self.search.mark_query_dirty_from_user_input();
     }
 
     pub(crate) fn current_selection(&self) -> Option<SearchSelection> {
@@ -233,7 +217,7 @@ mod tests {
         app.request_search();
 
         let deadline = Instant::now() + Duration::from_secs(1);
-        while app.search_in_flight && Instant::now() < deadline {
+        while app.search.is_in_flight() && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(10));
             app.pump_search_results();
         }
