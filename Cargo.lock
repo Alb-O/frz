@@ -493,7 +493,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "throbber-widgets-tui",
- "tui-textarea",
  "unicode-width 0.2.0",
 ]
 
@@ -537,6 +536,8 @@ dependencies = [
  "frizbee",
  "frz-plugin-api",
  "ratatui",
+ "throbber-widgets-tui",
+ "tui-textarea",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
 ]

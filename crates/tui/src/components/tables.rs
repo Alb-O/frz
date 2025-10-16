@@ -1,5 +1,6 @@
+pub use crate::tables::rows::*;
+use crate::theme::Theme;
 use frizbee::Options;
-pub use frz_tui::tables::rows::*;
 use ratatui::{
     Frame,
     layout::{Constraint, Rect},
@@ -32,7 +33,7 @@ pub fn render_table(
     area: Rect,
     table_state: &mut ratatui::widgets::TableState,
     dataset: &'static dyn SearchPluginDataset,
-    theme: &frz_tui::theme::Theme,
+    theme: &Theme,
     context: TableRenderContext<'_>,
 ) {
     let highlight_spacing = HighlightSpacing::WhenSelected;
@@ -63,7 +64,7 @@ fn render_configured_table(
     area: Rect,
     table_state: &mut ratatui::widgets::TableState,
     highlight_spacing: HighlightSpacing,
-    theme: &frz_tui::theme::Theme,
+    theme: &Theme,
     descriptor: TableDescriptor<'_>,
 ) {
     let header_cells = descriptor
@@ -87,12 +88,7 @@ fn render_configured_table(
     render_header_separator(frame, area, theme, 1);
 }
 
-fn render_header_separator(
-    frame: &mut Frame,
-    area: Rect,
-    theme: &frz_tui::theme::Theme,
-    header_height: u16,
-) {
+fn render_header_separator(frame: &mut Frame, area: Rect, theme: &Theme, header_height: u16) {
     if header_height >= area.height {
         return;
     }

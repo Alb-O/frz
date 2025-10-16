@@ -1,23 +1,30 @@
 use crate::input::SearchInput;
-use crate::ui::UiConfig;
+use crate::theme::Theme;
 use frz_plugin_api::SearchMode;
-pub use frz_tui::theme::Theme;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-/// Argument bundle for rendering the input area
+/// Render metadata for a tab header.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TabItem<'a> {
+    pub mode: SearchMode,
+    pub label: &'a str,
+}
+
+/// Argument bundle for rendering the input area.
 pub struct InputContext<'a> {
     pub search_input: &'a SearchInput<'a>,
-    pub input_title: &'a Option<String>,
+    pub input_title: Option<&'a str>,
+    pub pane_title: Option<&'a str>,
     pub mode: SearchMode,
-    pub ui: &'a UiConfig,
+    pub tabs: &'a [TabItem<'a>],
     pub area: Rect,
     pub theme: &'a Theme,
 }
 
-/// Progress information for the prompt progress indicator
+/// Progress information for the prompt progress indicator.
 pub struct ProgressState<'a> {
     pub progress_text: &'a str,
     pub progress_complete: bool,
@@ -33,8 +40,9 @@ pub fn render_input_with_tabs(
     let InputContext {
         search_input,
         input_title,
+        pane_title,
         mode,
-        ui,
+        tabs,
         area,
         theme,
     } = input;
@@ -43,13 +51,11 @@ pub fn render_input_with_tabs(
         progress_complete,
         throbber_state,
     } = progress;
-    let tabs_width = calculate_tabs_width(ui);
 
-    // Get prompt for calculating textarea width
-    let prompt = determine_prompt_text(input_title, ui, mode);
+    let prompt = input_title.or(pane_title).unwrap_or("");
+    let tabs_width = calculate_tabs_width(tabs);
     let prompt_width = calculate_prompt_width(prompt);
 
-    // Split area: prompt (if any), textarea, tabs on right
     let constraints = layout_constraints(!prompt.is_empty(), prompt_width, tabs_width);
 
     let horizontal = ratatui::layout::Layout::default()
@@ -57,7 +63,6 @@ pub fn render_input_with_tabs(
         .constraints(constraints)
         .split(area);
 
-    // Render prompt if present
     if !prompt.is_empty() {
         let prompt_text = format!("{} > ", prompt);
         let prompt_widget =
@@ -77,17 +82,15 @@ pub fn render_input_with_tabs(
         theme,
     );
 
-    // Render tabs on the right (last section)
     let tabs_area = horizontal[horizontal.len() - 1];
     let tabs_inner = Rect {
         x: tabs_area.x.saturating_add(1),
         width: tabs_area.width.saturating_sub(1),
         ..tabs_area
     };
-    let selected = selected_tab_index(mode, ui);
+    let selected = selected_tab_index(mode, tabs);
 
-    // Add extra padding to rightmost tab to prevent cutoff
-    let tab_titles = build_tab_titles(theme, selected, ui);
+    let tab_titles = build_tab_titles(theme, selected, tabs);
 
     let tabs = Tabs::new(tab_titles)
         .select(selected)
@@ -96,17 +99,6 @@ pub fn render_input_with_tabs(
         .highlight_style(theme.tab_highlight_style());
 
     frame.render_widget(tabs, tabs_inner);
-}
-
-fn determine_prompt_text<'a>(
-    input_title: &'a Option<String>,
-    ui: &'a UiConfig,
-    mode: SearchMode,
-) -> &'a str {
-    input_title
-        .as_deref()
-        .or_else(|| ui.pane(mode).map(|pane| pane.mode_title.as_str()))
-        .unwrap_or("")
 }
 
 fn calculate_prompt_width(prompt: &str) -> u16 {
@@ -136,31 +128,27 @@ fn layout_constraints(
     }
 }
 
-fn selected_tab_index(mode: SearchMode, ui: &UiConfig) -> usize {
-    ui.tabs()
-        .iter()
-        .position(|tab| tab.mode == mode)
-        .unwrap_or(0)
+fn selected_tab_index(mode: SearchMode, tabs: &[TabItem<'_>]) -> usize {
+    tabs.iter().position(|tab| tab.mode == mode).unwrap_or(0)
 }
 
-fn build_tab_titles(theme: &Theme, selected: usize, ui: &UiConfig) -> Vec<Line<'static>> {
+fn build_tab_titles(theme: &Theme, selected: usize, tabs: &[TabItem<'_>]) -> Vec<Line<'static>> {
     let active = theme.header_style();
     let inactive = theme.tab_inactive_style();
-    ui.tabs()
-        .iter()
+    tabs.iter()
         .enumerate()
         .map(|(index, tab)| {
-            let label = format!(" {} ", tab.tab_label);
+            let label = format!(" {} ", tab.label);
             let style = if index == selected { active } else { inactive };
             Line::from(label).style(style)
         })
         .collect()
 }
 
-fn calculate_tabs_width(ui: &UiConfig) -> u16 {
+fn calculate_tabs_width(tabs: &[TabItem<'_>]) -> u16 {
     let mut width = 0u16;
-    for tab in ui.tabs() {
-        let label_len = tab.tab_label.chars().count() as u16;
+    for tab in tabs {
+        let label_len = tab.label.chars().count() as u16;
         width = width.saturating_add(label_len.saturating_add(3));
     }
     width.max(12)
@@ -213,7 +201,7 @@ fn render_progress(
     }
 
     if let Some(last_x) = last_char_x {
-        let min_start = last_x.saturating_add(3); // 1 column for the last char + 2 columns padding
+        let min_start = last_x.saturating_add(3);
         if min_start > start_x {
             start_x = min_start;
         }
@@ -239,36 +227,76 @@ fn render_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::builtin::{facets, files};
+    use frz_plugin_api::{
+        SearchData, SearchMode,
+        descriptors::{
+            SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
+            TableDescriptor,
+        },
+    };
 
-    #[test]
-    fn prompt_prefers_explicit_title() {
-        let mut ui = UiConfig::default();
-        if let Some(pane) = ui.pane_mut(facets::mode()) {
-            pane.mode_title = "Default".to_string();
+    struct DummyDataset;
+
+    impl SearchPluginDataset for DummyDataset {
+        fn key(&self) -> &'static str {
+            "dummy"
         }
-        let input_title = Some("Custom".to_string());
 
-        let prompt = determine_prompt_text(&input_title, &ui, facets::mode());
+        fn total_count(&self, _data: &SearchData) -> usize {
+            0
+        }
 
-        assert_eq!(prompt, "Custom");
+        fn build_table<'a>(&self, _context: TableContext<'a>) -> TableDescriptor<'a> {
+            TableDescriptor::new(Vec::new(), Vec::new(), Vec::new())
+        }
     }
 
-    #[test]
-    fn prompt_falls_back_to_ui_title() {
-        let ui = UiConfig::default();
-        let input_title = None;
+    static DATASET: DummyDataset = DummyDataset;
 
-        let prompt = determine_prompt_text(&input_title, &ui, facets::mode());
+    static TAG_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+        id: "facets",
+        ui: SearchPluginUiDefinition {
+            tab_label: "Tags",
+            mode_title: "Tag search",
+            hint: "",
+            table_title: "",
+            count_label: "",
+        },
+        dataset: &DATASET,
+    };
 
-        let expected = ui.pane(facets::mode()).unwrap().mode_title.clone();
-        assert_eq!(prompt, expected);
+    static FILE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+        id: "files",
+        ui: SearchPluginUiDefinition {
+            tab_label: "Files",
+            mode_title: "File search",
+            hint: "",
+            table_title: "",
+            count_label: "",
+        },
+        dataset: &DATASET,
+    };
+
+    static OTHER_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+        id: "other",
+        ui: SearchPluginUiDefinition {
+            tab_label: "Other",
+            mode_title: "Other search",
+            hint: "",
+            table_title: "",
+            count_label: "",
+        },
+        dataset: &DATASET,
+    };
+
+    fn mode(descriptor: &'static SearchPluginDescriptor) -> SearchMode {
+        SearchMode::from_descriptor(descriptor)
     }
 
     #[test]
     fn prompt_width_accounts_for_separator() {
         assert_eq!(calculate_prompt_width(""), 0);
-        assert_eq!(calculate_prompt_width("Prompt"), 9); // len + " > "
+        assert_eq!(calculate_prompt_width("Prompt"), 9);
     }
 
     #[test]
@@ -307,21 +335,56 @@ mod tests {
 
     #[test]
     fn selected_tab_index_matches_mode() {
-        let ui = UiConfig::default();
-        assert_eq!(selected_tab_index(facets::mode(), &ui), 0);
-        assert_eq!(selected_tab_index(files::mode(), &ui), 1);
+        let tabs = vec![
+            TabItem {
+                mode: mode(&TAG_DESCRIPTOR),
+                label: TAG_DESCRIPTOR.ui.tab_label,
+            },
+            TabItem {
+                mode: mode(&FILE_DESCRIPTOR),
+                label: FILE_DESCRIPTOR.ui.tab_label,
+            },
+        ];
+        assert_eq!(selected_tab_index(mode(&TAG_DESCRIPTOR), &tabs), 0);
+        assert_eq!(selected_tab_index(mode(&FILE_DESCRIPTOR), &tabs), 1);
+        let other = SearchMode::from_descriptor(&OTHER_DESCRIPTOR);
+        assert_eq!(selected_tab_index(other, &tabs), 0);
     }
 
     #[test]
     fn tab_titles_include_expected_labels() {
         let theme = Theme::default();
-        let ui = UiConfig::default();
-        let titles = build_tab_titles(&theme, 0, &ui);
+        let tabs = vec![
+            TabItem {
+                mode: mode(&TAG_DESCRIPTOR),
+                label: TAG_DESCRIPTOR.ui.tab_label,
+            },
+            TabItem {
+                mode: mode(&FILE_DESCRIPTOR),
+                label: FILE_DESCRIPTOR.ui.tab_label,
+            },
+        ];
+        let titles = build_tab_titles(&theme, 0, &tabs);
 
         assert_eq!(titles.len(), 2);
         assert_eq!(titles[0].spans[0].content.as_ref().trim(), "Tags");
         assert_eq!(titles[1].spans[0].content.as_ref().trim(), "Files");
         assert_eq!(titles[0].style, theme.header_style());
         assert_eq!(titles[1].style, theme.tab_inactive_style());
+    }
+
+    #[test]
+    fn tabs_width_accounts_for_padding() {
+        let tabs = vec![
+            TabItem {
+                mode: mode(&TAG_DESCRIPTOR),
+                label: TAG_DESCRIPTOR.ui.tab_label,
+            },
+            TabItem {
+                mode: mode(&FILE_DESCRIPTOR),
+                label: FILE_DESCRIPTOR.ui.tab_label,
+            },
+        ];
+        assert!(calculate_tabs_width(&tabs) >= 12);
     }
 }

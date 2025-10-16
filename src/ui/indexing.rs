@@ -5,7 +5,7 @@ use crate::systems::filesystem::{IndexUpdate, merge_update};
 use frz_plugin_api::SearchData;
 
 use super::App;
-use super::components::progress::IndexProgress;
+use frz_tui::components::IndexProgress;
 
 impl<'a> App<'a> {
     const MAX_INDEX_UPDATES_PER_TICK: usize = 32;

@@ -6,12 +6,12 @@ use ratatui::{
 
 use crate::systems::search;
 use frizbee::Options;
+use frz_tui::components::{
+    InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
+};
 pub use frz_tui::theme::Theme;
 
 use super::App;
-use super::components::{
-    InputContext, ProgressState, TableRenderContext, render_input_with_tabs, render_table,
-};
 
 impl<'a> App<'a> {
     pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -27,11 +27,21 @@ impl<'a> App<'a> {
             .split(area);
 
         let (progress_text, progress_complete) = self.progress_status();
+        let tabs = self
+            .ui
+            .tabs()
+            .iter()
+            .map(|tab| TabItem {
+                mode: tab.mode,
+                label: tab.tab_label.as_str(),
+            })
+            .collect::<Vec<_>>();
         let input_ctx = InputContext {
             search_input: &self.search_input,
-            input_title: &self.input_title,
+            input_title: self.input_title.as_deref(),
+            pane_title: self.ui.pane(self.mode).map(|pane| pane.mode_title.as_str()),
             mode: self.mode,
-            ui: &self.ui,
+            tabs: &tabs,
             area: layout[0],
             theme: &self.theme,
         };

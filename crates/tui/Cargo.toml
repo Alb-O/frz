@@ -12,3 +12,5 @@ ratatui = "0.29"
 unicode-truncate = "2.0"
 unicode-width = "0.2"
 frz-plugin-api = { path = "../plugin-api" }
+tui-textarea = "0.7"
+throbber-widgets-tui = "0.9"

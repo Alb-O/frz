@@ -4,14 +4,14 @@ use std::sync::mpsc::Receiver;
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
-use super::components::progress::IndexProgress;
 use super::config::UiConfig;
-use crate::input::SearchInput;
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search;
 use frz_plugin_api::{
     PluginSelectionContext, SearchData, SearchMode, SearchPluginRegistry, SearchSelection,
 };
+use frz_tui::components::IndexProgress;
+use frz_tui::input::SearchInput;
 pub use frz_tui::theme::Theme;
 
 mod search_runtime;

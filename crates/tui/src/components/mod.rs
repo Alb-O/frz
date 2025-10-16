@@ -6,4 +6,4 @@ pub mod tabs;
 
 pub use progress::IndexProgress;
 pub use tables::{TableRenderContext, render_table};
-pub use tabs::{InputContext, ProgressState, render_input_with_tabs};
+pub use tabs::{InputContext, ProgressState, TabItem, render_input_with_tabs};
