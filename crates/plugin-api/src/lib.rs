@@ -11,11 +11,11 @@ pub use descriptors::{
 };
 pub use registry::{RegisteredPlugin, SearchPlugin, SearchPluginRegistry};
 pub use search::{
-    MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, SearchResult, SearchStream, stream_facets,
-    stream_files,
+    MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, SearchResult, SearchStream,
+    stream_attributes, stream_files,
 };
 pub use types::tags_for_relative_path;
 pub use types::{
-    FacetRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchSelection,
+    AttributeRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchSelection,
     TruncationStyle,
 };

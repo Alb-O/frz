@@ -7,7 +7,7 @@ use std::time::Duration;
 use anyhow::Result;
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
 
-use frz_plugin_api::{FacetRow, FileRow, SearchData, tags_for_relative_path};
+use frz_plugin_api::{AttributeRow, FileRow, SearchData, tags_for_relative_path};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::FilesystemOptions;
@@ -46,19 +46,19 @@ pub fn spawn_filesystem_index(
                 }
 
                 let files: Arc<[FileRow]> = preview.data.files.clone().into();
-                let facets: Arc<[FacetRow]> = preview.data.facets.clone().into();
+                let attributes: Arc<[AttributeRow]> = preview.data.attributes.clone().into();
                 let progress = ProgressSnapshot {
-                    indexed_facets: facets.len(),
+                    indexed_attributes: attributes.len(),
                     indexed_files: files.len(),
-                    total_facets: preview_is_complete.then_some(facets.len()),
+                    total_attributes: preview_is_complete.then_some(attributes.len()),
                     total_files: preview_is_complete.then_some(files.len()),
                     complete: preview_is_complete,
                 };
 
-                if !files.is_empty() || !facets.is_empty() {
+                if !files.is_empty() || !attributes.is_empty() {
                     let _ = tx.send(IndexUpdate {
                         files,
-                        facets,
+                        attributes,
                         progress,
                         reset: true,
                         cached_data: Some(preview.data),

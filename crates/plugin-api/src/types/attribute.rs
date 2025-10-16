@@ -1,12 +1,12 @@
-/// Represents a single facet row with its label and the number of matches.
+/// Represents a single attribute row with its label and the number of matches.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct FacetRow {
+pub struct AttributeRow {
     pub name: String,
     pub count: usize,
 }
 
-impl FacetRow {
-    /// Create a new [`FacetRow`] with the provided `name` and `count`.
+impl AttributeRow {
+    /// Create a new [`AttributeRow`] with the provided `name` and `count`.
     #[must_use]
     pub fn new(name: impl Into<String>, count: usize) -> Self {
         Self {
@@ -22,7 +22,7 @@ mod tests {
 
     #[test]
     fn new_row_uses_provided_values() {
-        let row = FacetRow::new("tag", 3);
+        let row = AttributeRow::new("tag", 3);
         assert_eq!(row.name, "tag");
         assert_eq!(row.count, 3);
     }

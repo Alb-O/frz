@@ -6,7 +6,7 @@ mod streaming;
 
 pub use config::config_for_query;
 pub use stream::{SearchResult, SearchStream};
-pub use streaming::{stream_facets, stream_files};
+pub use streaming::{stream_attributes, stream_files};
 
 pub const PREFILTER_ENABLE_THRESHOLD: usize = 1_000;
 pub const MAX_RENDERED_RESULTS: usize = 2_000;

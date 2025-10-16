@@ -157,15 +157,15 @@ impl SearchUi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::builtin::{facets, files};
+    use crate::plugins::builtin::{attributes, files};
 
     #[test]
     fn builder_registers_builtin_plugins() {
         let ui = SearchUi::new(SearchData::new());
 
         assert!(
-            ui.plugins.contains_mode(facets::mode()),
-            "expected facets plugin to be registered"
+            ui.plugins.contains_mode(attributes::mode()),
+            "expected attributes plugin to be registered"
         );
         assert!(
             ui.plugins.contains_mode(files::mode()),

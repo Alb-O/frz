@@ -7,8 +7,8 @@ use super::{
 };
 use crate::types::SearchData;
 
-/// Streams facet matches for the given query back to the UI thread.
-pub fn stream_facets(
+/// Streams attribute matches for the given query back to the UI thread.
+pub fn stream_attributes(
     data: &SearchData,
     query: &str,
     stream: SearchStream<'_>,
@@ -17,19 +17,19 @@ pub fn stream_facets(
     let id = stream.id();
     let trimmed = query.trim();
     if trimmed.is_empty() {
-        return stream_alphabetical_facets(data, stream, latest_query_id);
+        return stream_alphabetical_attributes(data, stream, latest_query_id);
     }
 
-    let config = config_for_query(trimmed, data.facets.len());
+    let config = config_for_query(trimmed, data.attributes.len());
     let mut aggregator = ScoreAggregator::new(stream);
     let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
     let mut offset = 0;
-    for chunk in data.facets.chunks(MATCH_CHUNK_SIZE) {
+    for chunk in data.attributes.chunks(MATCH_CHUNK_SIZE) {
         if should_abort(id, latest_query_id) {
             return true;
         }
         haystacks.clear();
-        haystacks.extend(chunk.iter().map(|facet| facet.name.as_str()));
+        haystacks.extend(chunk.iter().map(|attribute| attribute.name.as_str()));
         let matches = match_list(trimmed, &haystacks, config);
         for entry in matches {
             if entry.score == 0 {
@@ -101,18 +101,18 @@ pub fn stream_files(
     aggregator.finish()
 }
 
-fn stream_alphabetical_facets(
+fn stream_alphabetical_attributes(
     data: &SearchData,
     stream: SearchStream<'_>,
     latest_query_id: &AtomicU64,
 ) -> bool {
     let id = stream.id();
-    let mut collector = AlphabeticalCollector::new(stream, data.facets.len(), |index| {
-        data.facets[index].name.clone()
+    let mut collector = AlphabeticalCollector::new(stream, data.attributes.len(), |index| {
+        data.attributes[index].name.clone()
     });
 
     let mut processed = 0;
-    for index in 0..data.facets.len() {
+    for index in 0..data.attributes.len() {
         if should_abort(id, latest_query_id) {
             return true;
         }
@@ -178,7 +178,7 @@ mod tests {
     use super::*;
     use crate::{
         descriptors::{SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition},
-        types::{FacetRow, FileRow},
+        types::{AttributeRow, FileRow},
     };
     use std::sync::mpsc::channel;
 
@@ -218,7 +218,10 @@ mod tests {
 
     fn sample_data() -> SearchData {
         SearchData::default()
-            .with_facets(vec![FacetRow::new("alpha", 1), FacetRow::new("beta", 1)])
+            .with_attributes(vec![
+                AttributeRow::new("alpha", 1),
+                AttributeRow::new("beta", 1),
+            ])
             .with_files(vec![
                 FileRow::new("src/lib.rs", Vec::<String>::new()),
                 FileRow::new("src/main.rs", Vec::<String>::new()),

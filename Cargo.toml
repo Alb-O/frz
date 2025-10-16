@@ -2,7 +2,7 @@
 members = [
     "crates/plugin-api",
     "crates/plugin-files",
-    "crates/plugin-facets",
+    "crates/plugin-attributes",
     "crates/tui",
 ]
 
@@ -30,7 +30,7 @@ serde_json = "1"
 unicode-width = "0.2"
 frz-plugin-api = { path = "crates/plugin-api" }
 frz-plugin-files = { path = "crates/plugin-files" }
-frz-plugin-facets = { path = "crates/plugin-facets" }
+frz-plugin-attributes = { path = "crates/plugin-attributes" }
 frz-tui = { path = "crates/tui" }
 
 [dev-dependencies]

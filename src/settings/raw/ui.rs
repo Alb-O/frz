@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use frz::plugins::builtin::{facets, files};
+use frz::plugins::builtin::{attributes, files};
 use frz::{SearchMode, UiConfig};
 
 use crate::cli::CliArgs;
@@ -20,7 +20,7 @@ pub(super) struct UiSection {
     pub(super) preset: Option<String>,
     pub(super) filter_label: Option<String>,
     pub(super) detail_panel_title: Option<String>,
-    pub(super) facets: Option<PaneSection>,
+    pub(super) attributes: Option<PaneSection>,
     pub(super) files: Option<PaneSection>,
     pub(super) facet_headers: Option<Vec<String>>,
     pub(super) file_headers: Option<Vec<String>>,
@@ -69,21 +69,21 @@ impl UiSection {
         if let Some(label) = cli.detail_title.clone() {
             self.detail_panel_title = Some(label);
         }
-        if let Some(value) = cli.facets_mode_title.clone() {
-            let facets = self.facets.get_or_insert_with(PaneSection::default);
-            facets.mode_title = Some(value);
+        if let Some(value) = cli.attributes_mode_title.clone() {
+            let attributes = self.attributes.get_or_insert_with(PaneSection::default);
+            attributes.mode_title = Some(value);
         }
-        if let Some(value) = cli.facets_hint.clone() {
-            let facets = self.facets.get_or_insert_with(PaneSection::default);
-            facets.hint = Some(value);
+        if let Some(value) = cli.attributes_hint.clone() {
+            let attributes = self.attributes.get_or_insert_with(PaneSection::default);
+            attributes.hint = Some(value);
         }
-        if let Some(value) = cli.facets_table_title.clone() {
-            let facets = self.facets.get_or_insert_with(PaneSection::default);
-            facets.table_title = Some(value);
+        if let Some(value) = cli.attributes_table_title.clone() {
+            let attributes = self.attributes.get_or_insert_with(PaneSection::default);
+            attributes.table_title = Some(value);
         }
-        if let Some(value) = cli.facets_count_label.clone() {
-            let facets = self.facets.get_or_insert_with(PaneSection::default);
-            facets.count_label = Some(value);
+        if let Some(value) = cli.attributes_count_label.clone() {
+            let attributes = self.attributes.get_or_insert_with(PaneSection::default);
+            attributes.count_label = Some(value);
         }
         if let Some(value) = cli.files_mode_title.clone() {
             let files = self.files.get_or_insert_with(PaneSection::default);
@@ -117,8 +117,8 @@ impl UiSection {
         if let Some(detail) = self.detail_panel_title {
             ui.detail_panel_title = detail;
         }
-        if let Some(pane) = self.facets
-            && let Some(mode) = ui.mode_by_id(facets::descriptor().id)
+        if let Some(pane) = self.attributes
+            && let Some(mode) = ui.mode_by_id(attributes::descriptor().id)
             && let Some(target) = ui.pane_mut(mode)
         {
             apply_pane_config(target, pane);

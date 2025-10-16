@@ -61,7 +61,7 @@ pub struct UiConfig {
 impl Default for UiConfig {
     fn default() -> Self {
         let mut config = Self {
-            filter_label: "Filter facets".to_string(),
+            filter_label: "Filter attributes".to_string(),
             detail_panel_title: "Selection details".to_string(),
             tabs: Vec::new(),
             index: HashMap::new(),
@@ -84,9 +84,9 @@ impl UiConfig {
             index: HashMap::new(),
         };
 
-        let facets = crate::plugins::builtin::facets::mode();
+        let attributes = crate::plugins::builtin::attributes::mode();
         config.register_tab(TabUiConfig::new(
-            facets,
+            attributes,
             "Tags",
             PaneUiConfig::new(
                 "Tag search",
@@ -202,12 +202,12 @@ impl UiConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::builtin::{facets, files};
+    use crate::plugins::builtin::{attributes, files};
 
     #[test]
     fn tags_and_files_registers_tabs() {
         let config = UiConfig::tags_and_files();
-        assert!(config.tab(facets::mode()).is_some());
+        assert!(config.tab(attributes::mode()).is_some());
         assert!(config.tab(files::mode()).is_some());
     }
 }

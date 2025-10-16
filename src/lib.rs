@@ -8,7 +8,7 @@ pub use frz_tui::input::SearchInput;
 pub use frz_tui::tables::rows as utils;
 
 pub use frz_plugin_api::{
-    FacetRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchPlugin,
+    AttributeRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchPlugin,
     SearchPluginRegistry, SearchSelection, TruncationStyle,
 };
 pub use frz_tui::theme::{LIGHT, SLATE, SOLARIZED, Theme};

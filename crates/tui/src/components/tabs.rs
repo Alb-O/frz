@@ -254,7 +254,7 @@ mod tests {
     static DATASET: DummyDataset = DummyDataset;
 
     static TAG_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
-        id: "facets",
+        id: "attributes",
         ui: SearchPluginUiDefinition {
             tab_label: "Tags",
             mode_title: "Tag search",

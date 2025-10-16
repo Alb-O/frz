@@ -4,14 +4,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Component, Path};
 use std::sync::{Arc, mpsc};
 
-use super::{FacetRow, FileRow, SearchMode};
+use super::{AttributeRow, FileRow, SearchMode};
 
-/// Data displayed in the search interface, including facets and files.
+/// Data displayed in the search interface, including attributes and files.
 #[derive(Debug, Default, Clone)]
 pub struct SearchData {
     pub context_label: Option<String>,
     pub initial_query: String,
-    pub facets: Vec<FacetRow>,
+    pub attributes: Vec<AttributeRow>,
     pub files: Vec<FileRow>,
 }
 
@@ -36,10 +36,10 @@ impl SearchData {
         self
     }
 
-    /// Replace the facet rows with a new collection.
+    /// Replace the attribute rows with a new collection.
     #[must_use]
-    pub fn with_facets(mut self, facets: Vec<FacetRow>) -> Self {
-        self.facets = facets;
+    pub fn with_attributes(mut self, attributes: Vec<AttributeRow>) -> Self {
+        self.attributes = attributes;
         self
     }
 
@@ -111,15 +111,15 @@ impl SearchData {
 
         files.sort_by(|a, b| a.path.cmp(&b.path));
 
-        let facets = facet_counts
+        let attributes = facet_counts
             .into_iter()
-            .map(|(name, count)| FacetRow::new(name, count))
+            .map(|(name, count)| AttributeRow::new(name, count))
             .collect();
 
         Ok(Self {
             context_label: Some(root.display().to_string()),
             initial_query: String::new(),
-            facets,
+            attributes,
             files,
         })
     }
@@ -136,7 +136,7 @@ pub struct SearchOutcome {
 /// The active selection made by the user when a search ends.
 #[derive(Debug, Clone)]
 pub enum SearchSelection {
-    Facet(FacetRow),
+    Attribute(AttributeRow),
     File(FileRow),
     Plugin(PluginSelection),
 }
@@ -158,11 +158,11 @@ impl SearchOutcome {
         }
     }
 
-    /// Return the selected facet, if the user confirmed a facet result.
+    /// Return the selected attribute, if the user confirmed a attribute result.
     #[must_use]
-    pub fn selected_facet(&self) -> Option<&FacetRow> {
+    pub fn selected_attribute(&self) -> Option<&AttributeRow> {
         match self.selection {
-            Some(SearchSelection::Facet(ref facet)) => Some(facet),
+            Some(SearchSelection::Attribute(ref attribute)) => Some(attribute),
             _ => None,
         }
     }
@@ -208,17 +208,17 @@ mod tests {
 
     #[test]
     fn builder_methods_replace_data() {
-        let facets = vec![FacetRow::new("tag", 1)];
+        let attributes = vec![AttributeRow::new("tag", 1)];
         let files = vec![FileRow::new("file", Vec::<String>::new())];
         let data = SearchData::new()
             .with_context("context")
             .with_initial_query("query")
-            .with_facets(facets.clone())
+            .with_attributes(attributes.clone())
             .with_files(files.clone());
 
         assert_eq!(data.context_label.as_deref(), Some("context"));
         assert_eq!(data.initial_query, "query");
-        assert_eq!(data.facets[0].name, "tag");
+        assert_eq!(data.attributes[0].name, "tag");
         assert_eq!(data.files[0].path, "file");
     }
 

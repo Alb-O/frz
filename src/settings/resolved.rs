@@ -78,7 +78,7 @@ impl ResolvedConfig {
             println!("  Initial query: {}", self.initial_query);
         }
         if let Some(headers) = &self.facet_headers {
-            println!("  Facet headers: {}", headers.join(", "));
+            println!("  attribute headers: {}", headers.join(", "));
         }
         if let Some(headers) = &self.file_headers {
             println!("  File headers: {}", headers.join(", "));

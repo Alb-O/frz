@@ -13,7 +13,7 @@ impl<'a> App<'a> {
 
     pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
         self.index_updates = Some(updates);
-        if self.data.facets.is_empty() && self.data.files.is_empty() {
+        if self.data.attributes.is_empty() && self.data.files.is_empty() {
             self.index_progress = IndexProgress::with_unknown_totals();
         } else {
             self.index_progress
@@ -88,7 +88,7 @@ impl<'a> App<'a> {
                 }
 
                 let update_changed =
-                    update.reset || !update.files.is_empty() || !update.facets.is_empty();
+                    update.reset || !update.files.is_empty() || !update.attributes.is_empty();
                 if update_changed {
                     merge_update(&mut self.data, &update);
                     self.mark_query_dirty();
@@ -98,14 +98,14 @@ impl<'a> App<'a> {
         }
 
         let progress = update.progress;
-        let facets_key = crate::plugins::builtin::facets::descriptor().id;
+        let attributes_key = crate::plugins::builtin::attributes::descriptor().id;
         let files_key = crate::plugins::builtin::files::descriptor().id;
         self.index_progress.record_indexed(&[
-            (facets_key, progress.indexed_facets),
+            (attributes_key, progress.indexed_attributes),
             (files_key, progress.indexed_files),
         ]);
         self.index_progress.set_totals(&[
-            (facets_key, progress.total_facets),
+            (attributes_key, progress.total_attributes),
             (files_key, progress.total_files),
         ]);
         if progress.complete {
@@ -120,7 +120,7 @@ impl<'a> App<'a> {
 mod tests {
     use super::*;
     use crate::systems::filesystem::ProgressSnapshot;
-    use frz_plugin_api::{FacetRow, FileRow, SearchData};
+    use frz_plugin_api::{AttributeRow, FileRow, SearchData};
     use std::time::{Duration, Instant};
 
     fn wait_for_results(app: &mut App) {
@@ -144,11 +144,11 @@ mod tests {
         assert_eq!(app.filtered_len(), 0);
         let update = IndexUpdate {
             files: vec![FileRow::filesystem("src/lib.rs", ["alpha"])].into(),
-            facets: vec![FacetRow::new("alpha", 1)].into(),
+            attributes: vec![AttributeRow::new("alpha", 1)].into(),
             progress: ProgressSnapshot {
-                indexed_facets: 1,
+                indexed_attributes: 1,
                 indexed_files: 1,
-                total_facets: Some(1),
+                total_attributes: Some(1),
                 total_files: Some(1),
                 complete: true,
             },

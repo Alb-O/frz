@@ -1,9 +1,9 @@
-mod facet;
+mod attribute;
 mod file;
 mod mode;
 mod search_data;
 
-pub use facet::FacetRow;
+pub use attribute::AttributeRow;
 pub use file::{FileRow, TruncationStyle};
 pub use mode::SearchMode;
 pub use search_data::{PluginSelection, SearchData, SearchOutcome, SearchSelection};

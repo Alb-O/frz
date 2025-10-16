@@ -10,7 +10,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::app_dirs;
-use frz_plugin_api::{FacetRow, FileRow, SearchData};
+use frz_plugin_api::{AttributeRow, FileRow, SearchData};
 
 use super::FilesystemOptions;
 
@@ -83,7 +83,7 @@ pub(super) struct CacheWriter {
     fingerprint: u64,
     context_label: Option<String>,
     files: Vec<CacheFileEntry>,
-    facets: BTreeMap<String, usize>,
+    attributes: BTreeMap<String, usize>,
     preview_path: PathBuf,
 }
 
@@ -96,7 +96,7 @@ impl CacheWriter {
             fingerprint,
             context_label,
             files: Vec::new(),
-            facets: BTreeMap::new(),
+            attributes: BTreeMap::new(),
             preview_path,
         }
     }
@@ -108,7 +108,7 @@ impl CacheWriter {
         });
 
         for tag in &file.tags {
-            let count = self.facets.entry(tag.clone()).or_insert(0);
+            let count = self.attributes.entry(tag.clone()).or_insert(0);
             *count += 1;
         }
     }
@@ -124,10 +124,10 @@ impl CacheWriter {
             .unwrap_or_default()
             .as_secs();
 
-        let facets = self
-            .facets
+        let attributes = self
+            .attributes
             .into_iter()
-            .map(|(name, count)| CacheFacetEntry { name, count })
+            .map(|(name, count)| CacheAttributeEntry { name, count })
             .collect::<Vec<_>>();
 
         let preview_files: Vec<CacheFileEntry> = self
@@ -136,15 +136,15 @@ impl CacheWriter {
             .take(CACHE_PREVIEW_LIMIT)
             .cloned()
             .collect();
-        let mut preview_facets = BTreeMap::new();
+        let mut preview_attributes = BTreeMap::new();
         for file in &preview_files {
             for tag in &file.tags {
-                *preview_facets.entry(tag.clone()).or_insert(0) += 1;
+                *preview_attributes.entry(tag.clone()).or_insert(0) += 1;
             }
         }
-        let preview_facets = preview_facets
+        let preview_attributes = preview_attributes
             .into_iter()
-            .map(|(name, count)| CacheFacetEntry { name, count })
+            .map(|(name, count)| CacheAttributeEntry { name, count })
             .collect::<Vec<_>>();
         let preview_complete = preview_files.len() == self.files.len();
 
@@ -155,7 +155,7 @@ impl CacheWriter {
             context_label: self.context_label.clone(),
             complete: true,
             files: self.files,
-            facets,
+            attributes,
         };
 
         let preview_payload = CachePayload {
@@ -165,7 +165,7 @@ impl CacheWriter {
             context_label: self.context_label,
             complete: preview_complete,
             files: preview_files,
-            facets: preview_facets,
+            attributes: preview_attributes,
         };
 
         write_payload(&self.path, &payload)?;
@@ -182,7 +182,7 @@ struct CachePayload {
     #[serde(default)]
     complete: bool,
     files: Vec<CacheFileEntry>,
-    facets: Vec<CacheFacetEntry>,
+    attributes: Vec<CacheAttributeEntry>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -192,7 +192,7 @@ struct CacheFileEntry {
 }
 
 #[derive(Serialize, Deserialize)]
-struct CacheFacetEntry {
+struct CacheAttributeEntry {
     name: String,
     count: usize,
 }
@@ -235,10 +235,10 @@ fn load_payload(path: &Path, fingerprint: u64) -> Option<CachedEntry> {
         .into_iter()
         .map(|entry| FileRow::filesystem(entry.path, entry.tags))
         .collect();
-    data.facets = payload
-        .facets
+    data.attributes = payload
+        .attributes
         .into_iter()
-        .map(|entry| FacetRow::new(entry.name, entry.count))
+        .map(|entry| AttributeRow::new(entry.name, entry.count))
         .collect();
 
     Some(CachedEntry {

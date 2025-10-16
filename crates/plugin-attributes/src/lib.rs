@@ -5,40 +5,40 @@ use frz_plugin_api::{
         SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
         TableDescriptor,
     },
-    stream_facets,
+    stream_attributes,
 };
 use frz_tui::tables::rows::build_facet_rows;
 use ratatui::layout::{Constraint, Layout, Rect};
 
-const DATASET_KEY: &str = "facets";
+const DATASET_KEY: &str = "attributes";
 
 pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
 }
 
 pub fn descriptor() -> &'static SearchPluginDescriptor {
-    &FACET_DESCRIPTOR
+    &ATTRIBUTE_DESCRIPTOR
 }
 
-static FACET_DATASET: FacetDataset = FacetDataset;
+static ATTRIBUTE_DATASET: AttributeDataset = AttributeDataset;
 
-pub static FACET_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+pub static ATTRIBUTE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
     id: DATASET_KEY,
     ui: SearchPluginUiDefinition {
         tab_label: "Tags",
-        mode_title: "Facet search",
-        hint: "Type to filter facets. Press Tab to view files.",
-        table_title: "Matching facets",
-        count_label: "Facets",
+        mode_title: "attribute search",
+        hint: "Type to filter attributes. Press Tab to view files.",
+        table_title: "Matching attributes",
+        count_label: "attributes",
     },
-    dataset: &FACET_DATASET,
+    dataset: &ATTRIBUTE_DATASET,
 };
 
-struct FacetDataset;
+struct AttributeDataset;
 
-impl FacetDataset {
+impl AttributeDataset {
     fn default_headers() -> Vec<String> {
-        vec!["Facet".into(), "Count".into(), "Score".into()]
+        vec!["attribute".into(), "Count".into(), "Score".into()]
     }
 
     fn default_widths() -> Vec<Constraint> {
@@ -78,13 +78,13 @@ impl FacetDataset {
     }
 }
 
-impl SearchPluginDataset for FacetDataset {
+impl SearchPluginDataset for AttributeDataset {
     fn key(&self) -> &'static str {
         DATASET_KEY
     }
 
     fn total_count(&self, data: &SearchData) -> usize {
-        data.facets.len()
+        data.attributes.len()
     }
 
     fn build_table<'a>(&self, context: TableContext<'a>) -> TableDescriptor<'a> {
@@ -102,7 +102,7 @@ impl SearchPluginDataset for FacetDataset {
         let rows = build_facet_rows(
             context.filtered,
             context.scores,
-            &context.data.facets,
+            &context.data.attributes,
             context.highlight,
             Some(&column_widths),
         );
@@ -110,9 +110,9 @@ impl SearchPluginDataset for FacetDataset {
     }
 }
 
-pub struct FacetSearchPlugin;
+pub struct AttributeSearchPlugin;
 
-impl SearchPlugin for FacetSearchPlugin {
+impl SearchPlugin for AttributeSearchPlugin {
     fn descriptor(&self) -> &'static SearchPluginDescriptor {
         descriptor()
     }
@@ -123,7 +123,7 @@ impl SearchPlugin for FacetSearchPlugin {
         stream: SearchStream<'_>,
         context: PluginQueryContext<'_>,
     ) -> bool {
-        stream_facets(context.data(), query, stream, context.latest_query_id())
+        stream_attributes(context.data(), query, stream, context.latest_query_id())
     }
 
     fn selection(
@@ -133,9 +133,9 @@ impl SearchPlugin for FacetSearchPlugin {
     ) -> Option<SearchSelection> {
         context
             .data()
-            .facets
+            .attributes
             .get(index)
             .cloned()
-            .map(SearchSelection::Facet)
+            .map(SearchSelection::Attribute)
     }
 }

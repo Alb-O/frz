@@ -12,7 +12,7 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
 
     match &outcome.selection {
         Some(SearchSelection::File(file)) => println!("{}", file.path),
-        Some(SearchSelection::Facet(facet)) => println!("Facet: {}", facet.name),
+        Some(SearchSelection::Attribute(attribute)) => println!("attribute: {}", attribute.name),
         Some(SearchSelection::Plugin(plugin)) => {
             println!("Plugin selection: {} @ {}", plugin.mode.id(), plugin.index)
         }
@@ -29,10 +29,10 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
             "tags": file.tags,
             "display_tags": file.display_tags,
         }),
-        Some(SearchSelection::Facet(facet)) => json!({
-            "type": "facet",
-            "name": facet.name,
-            "count": facet.count,
+        Some(SearchSelection::Attribute(attribute)) => json!({
+            "type": "attribute",
+            "name": attribute.name,
+            "count": attribute.count,
         }),
         Some(SearchSelection::Plugin(PluginSelection { mode, index })) => json!({
             "type": "plugin",
@@ -61,7 +61,7 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 mod tests {
     use super::*;
     use frz::plugins::builtin::files;
-    use frz::{FacetRow, FileRow};
+    use frz::{AttributeRow, FileRow};
     use serde_json::Value;
 
     #[test]
@@ -80,17 +80,20 @@ mod tests {
     }
 
     #[test]
-    fn json_format_includes_facet_selection() {
+    fn json_format_includes_attribute_selection() {
         let outcome = SearchOutcome {
             accepted: true,
             query: "test".into(),
-            selection: Some(SearchSelection::Facet(FacetRow::new("Facet", 3))),
+            selection: Some(SearchSelection::Attribute(AttributeRow::new(
+                "attribute",
+                3,
+            ))),
         };
 
         let json = format_outcome_json(&outcome).expect("json");
         let value: Value = serde_json::from_str(&json).expect("parse");
-        assert_eq!(value["selection"]["type"], "facet");
-        assert_eq!(value["selection"]["name"], "Facet");
+        assert_eq!(value["selection"]["type"], "attribute");
+        assert_eq!(value["selection"]["name"], "attribute");
         assert_eq!(value["selection"]["count"], 3);
     }
 

@@ -1,7 +1,7 @@
 //! Public-facing search system APIs that plugins can opt into using.
 
 pub use frz_plugin_api::search::config_for_query;
-pub use frz_plugin_api::{SearchStream, stream_facets, stream_files};
+pub use frz_plugin_api::{SearchStream, stream_attributes, stream_files};
 
 /// Threshold after which pre-filtering should be enabled for large data sets.
 pub const PREFILTER_ENABLE_THRESHOLD: usize = frz_plugin_api::search::PREFILTER_ENABLE_THRESHOLD;

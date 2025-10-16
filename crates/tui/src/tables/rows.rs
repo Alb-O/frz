@@ -1,6 +1,6 @@
 use frizbee::Options;
 use frizbee::match_indices;
-use frz_plugin_api::{FacetRow, FileRow, TruncationStyle};
+use frz_plugin_api::{AttributeRow, FileRow, TruncationStyle};
 use ratatui::widgets::{Cell, Row};
 
 use crate::highlight::highlight_cell;
@@ -16,24 +16,29 @@ pub fn highlight_for_refs(needle: &str, config: Options, text: &str) -> Option<V
 
 #[must_use]
 pub fn build_facet_rows<'a>(
-    filtered_facets: &'a [usize],
+    filtered_attributes: &'a [usize],
     facet_scores: &'a [u16],
-    facets: &'a [FacetRow],
+    attributes: &'a [AttributeRow],
     highlight_state: Option<(&'a str, Options)>,
     column_widths: Option<&[u16]>,
 ) -> Vec<Row<'a>> {
-    filtered_facets
+    filtered_attributes
         .iter()
         .enumerate()
         .filter_map(|(idx, &actual_index)| {
-            let facet = facets.get(actual_index)?;
+            let attribute = attributes.get(actual_index)?;
             let score = facet_scores.get(idx).copied().unwrap_or_default();
             let highlight = highlight_state
-                .and_then(|(needle, config)| highlight_for_refs(needle, config, &facet.name));
+                .and_then(|(needle, config)| highlight_for_refs(needle, config, &attribute.name));
             let name_width = column_widths.and_then(|widths| widths.first()).copied();
             Some(Row::new([
-                highlight_cell(&facet.name, highlight, name_width, TruncationStyle::Right),
-                Cell::from(facet.count.to_string()),
+                highlight_cell(
+                    &attribute.name,
+                    highlight,
+                    name_width,
+                    TruncationStyle::Right,
+                ),
+                Cell::from(attribute.count.to_string()),
                 Cell::from(score.to_string()),
             ]))
         })

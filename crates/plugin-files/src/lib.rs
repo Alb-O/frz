@@ -27,7 +27,7 @@ pub static FILE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
     ui: SearchPluginUiDefinition {
         tab_label: "Files",
         mode_title: "File search",
-        hint: "Type to filter files. Press Tab to view facets.",
+        hint: "Type to filter files. Press Tab to view attributes.",
         table_title: "Matching files",
         count_label: "Files",
     },

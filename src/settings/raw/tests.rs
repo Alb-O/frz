@@ -25,10 +25,10 @@ fn cli_overrides_take_precedence() {
     cli.theme = Some("dark".into());
     cli.filter_label = Some("filter".into());
     cli.detail_title = Some("detail".into());
-    cli.facets_mode_title = Some("facet".into());
-    cli.facets_hint = Some("hint".into());
-    cli.facets_table_title = Some("table".into());
-    cli.facets_count_label = Some("count".into());
+    cli.attributes_mode_title = Some("attribute".into());
+    cli.attributes_hint = Some("hint".into());
+    cli.attributes_table_title = Some("table".into());
+    cli.attributes_count_label = Some("count".into());
     cli.files_mode_title = Some("file".into());
     cli.files_hint = Some("file hint".into());
     cli.files_table_title = Some("files table".into());

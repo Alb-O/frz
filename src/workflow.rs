@@ -1,5 +1,5 @@
 use anyhow::Result;
-use frz::plugins::builtin::{facets, files};
+use frz::plugins::builtin::{attributes, files};
 use frz::{FilesystemOptions, SearchMode, SearchOutcome, SearchUi, UiConfig};
 use std::path::PathBuf;
 
@@ -46,7 +46,7 @@ impl SearchUiFactory {
             .with_initial_query(initial_query)
             .with_theme(theme)
             .with_start_mode(start_mode)
-            .with_headers(facets::mode(), facet_headers)
+            .with_headers(attributes::mode(), facet_headers)
             .with_headers(files::mode(), file_headers);
 
         Ok(builder.finish())

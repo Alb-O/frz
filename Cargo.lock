@@ -484,7 +484,7 @@ dependencies = [
  "directories",
  "frizbee",
  "frz-plugin-api",
- "frz-plugin-facets",
+ "frz-plugin-attributes",
  "frz-plugin-files",
  "frz-tui",
  "ignore",
@@ -512,7 +512,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "frz-plugin-facets"
+name = "frz-plugin-attributes"
 version = "0.1.0"
 dependencies = [
  "frz-plugin-api",

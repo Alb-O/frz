@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 
-use frz_plugin_api::{FacetRow, FileRow};
+use frz_plugin_api::{AttributeRow, FileRow};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::MAX_BATCH_SIZE;
@@ -14,14 +14,14 @@ pub(super) fn stream_cached_entry(
 ) {
     let data = entry.data;
     let total_files = data.files.len();
-    let total_facets = data.facets.len();
+    let total_attributes = data.attributes.len();
 
-    if total_files == 0 && total_facets == 0 {
+    if total_files == 0 && total_attributes == 0 {
         return;
     }
 
     let start_index = preview_len.unwrap_or(0).min(total_files);
-    let facets: Arc<[FacetRow]> = data.facets.into();
+    let attributes: Arc<[AttributeRow]> = data.attributes.into();
     let mut files = data.files;
 
     if start_index > 0 {
@@ -30,16 +30,16 @@ pub(super) fn stream_cached_entry(
 
     if files.is_empty() {
         let progress = ProgressSnapshot {
-            indexed_facets: total_facets,
+            indexed_attributes: total_attributes,
             indexed_files: total_files,
-            total_facets: Some(total_facets),
+            total_attributes: Some(total_attributes),
             total_files: Some(total_files),
             complete: false,
         };
 
         let _ = tx.send(IndexUpdate {
             files: Arc::from(Vec::<FileRow>::new()),
-            facets,
+            attributes,
             progress,
             reset: preview_len.is_none(),
             cached_data: None,
@@ -56,16 +56,16 @@ pub(super) fn stream_cached_entry(
         dispatched += chunk_len;
 
         let progress = ProgressSnapshot {
-            indexed_facets: total_facets,
+            indexed_attributes: total_attributes,
             indexed_files: dispatched,
-            total_facets: Some(total_facets),
+            total_attributes: Some(total_attributes),
             total_files: Some(total_files),
             complete: false,
         };
 
         let update = IndexUpdate {
             files: chunk.into(),
-            facets: facets.clone(),
+            attributes: attributes.clone(),
             progress,
             reset: preview_len.is_none() && first_batch,
             cached_data: None,

@@ -80,7 +80,7 @@ impl<'a> App<'a> {
             .next()
             .map(|plugin| plugin.mode())
             .or_else(|| ui.tabs().first().map(|tab| tab.mode))
-            .unwrap_or_else(crate::plugins::builtin::facets::mode);
+            .unwrap_or_else(crate::plugins::builtin::attributes::mode);
 
         index_progress.refresh_from_data(
             &data,
@@ -191,14 +191,14 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use frz_plugin_api::{FacetRow, FileRow};
+    use frz_plugin_api::{AttributeRow, FileRow};
 
     fn sample_data() -> SearchData {
         let mut data = SearchData::new();
-        data.facets = vec![
-            FacetRow::new("alpha", 3),
-            FacetRow::new("beta", 5),
-            FacetRow::new("gamma", 2),
+        data.attributes = vec![
+            AttributeRow::new("alpha", 3),
+            AttributeRow::new("beta", 5),
+            AttributeRow::new("gamma", 2),
         ];
         data.files = vec![
             FileRow::new("src/main.rs", ["alpha", "beta"]),
@@ -225,9 +225,9 @@ mod tests {
         let data = sample_data();
         let mut app = App::new(data);
         prime_and_wait_for_results(&mut app);
-        let facets_ready = app
+        let attributes_ready = app
             .tab_states
-            .get(&crate::plugins::builtin::facets::mode())
+            .get(&crate::plugins::builtin::attributes::mode())
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         let files_ready = app
@@ -236,7 +236,7 @@ mod tests {
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         assert!(
-            facets_ready || files_ready,
+            attributes_ready || files_ready,
             "expected initial search results to populate"
         );
     }

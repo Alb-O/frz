@@ -2,7 +2,7 @@ mod fs;
 
 use std::sync::Arc;
 
-use frz_plugin_api::{FacetRow, FileRow, SearchData};
+use frz_plugin_api::{AttributeRow, FileRow, SearchData};
 
 pub use fs::FilesystemOptions;
 pub use fs::spawn_filesystem_index;
@@ -12,7 +12,7 @@ pub mod plugin;
 #[derive(Debug, Clone)]
 pub struct IndexUpdate {
     pub files: Arc<[FileRow]>,
-    pub facets: Arc<[FacetRow]>,
+    pub attributes: Arc<[AttributeRow]>,
     pub progress: ProgressSnapshot,
     pub reset: bool,
     pub cached_data: Option<SearchData>,
@@ -21,9 +21,9 @@ pub struct IndexUpdate {
 /// Snapshot of the indexing progress suitable for updating the UI tracker.
 #[derive(Debug, Clone, Copy)]
 pub struct ProgressSnapshot {
-    pub indexed_facets: usize,
+    pub indexed_attributes: usize,
     pub indexed_files: usize,
-    pub total_facets: Option<usize>,
+    pub total_attributes: Option<usize>,
     pub total_files: Option<usize>,
     pub complete: bool,
 }
@@ -31,21 +31,21 @@ pub struct ProgressSnapshot {
 pub fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
     if update.reset {
         data.files.clear();
-        data.facets.clear();
+        data.attributes.clear();
     }
 
     if !update.files.is_empty() {
         data.files.extend(update.files.iter().cloned());
     }
 
-    if !update.facets.is_empty() {
-        for facet in update.facets.iter() {
+    if !update.attributes.is_empty() {
+        for attribute in update.attributes.iter() {
             match data
-                .facets
-                .binary_search_by(|existing| existing.name.cmp(&facet.name))
+                .attributes
+                .binary_search_by(|existing| existing.name.cmp(&attribute.name))
             {
-                Ok(index) => data.facets[index].count = facet.count,
-                Err(index) => data.facets.insert(index, facet.clone()),
+                Ok(index) => data.attributes[index].count = attribute.count,
+                Err(index) => data.attributes.insert(index, attribute.clone()),
             }
         }
     }

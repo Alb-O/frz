@@ -3,7 +3,7 @@ use clap::ValueEnum;
 /// Search modes accepted via the command line.
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub(crate) enum ModeArg {
-    Facets,
+    Attributes,
     Files,
 }
 
@@ -11,7 +11,7 @@ impl ModeArg {
     /// Return the string representation consumed by configuration loading.
     pub(crate) fn as_str(self) -> &'static str {
         match self {
-            ModeArg::Facets => "facets",
+            ModeArg::Attributes => "attributes",
             ModeArg::Files => "files",
         }
     }

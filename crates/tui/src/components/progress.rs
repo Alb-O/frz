@@ -158,11 +158,14 @@ impl IndexProgress {
         self.mark_complete();
         if self.entries.is_empty() {
             // Fallback for datasets not explicitly registered.
-            self.register_dataset("facets");
+            self.register_dataset("attributes");
             self.register_dataset("files");
-            self.record_indexed(&[("facets", data.facets.len()), ("files", data.files.len())]);
+            self.record_indexed(&[
+                ("attributes", data.attributes.len()),
+                ("files", data.files.len()),
+            ]);
             self.set_totals(&[
-                ("facets", Some(data.facets.len())),
+                ("attributes", Some(data.attributes.len())),
                 ("files", Some(data.files.len())),
             ]);
             self.mark_complete();

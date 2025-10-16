@@ -56,7 +56,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frz::plugins::builtin::{facets, files};
+    use frz::plugins::builtin::{attributes, files};
 
     #[test]
     fn default_preset_is_returned_for_empty_input() {
@@ -64,15 +64,15 @@ mod tests {
         let default = UiConfig::default();
 
         assert_eq!(config.filter_label, default.filter_label);
-        let facets_mode = facets::mode();
-        let config_facets = config.pane(facets_mode).unwrap();
-        let default_facets = default.pane(facets_mode).unwrap();
-        assert_eq!(config_facets.mode_title, default_facets.mode_title);
+        let attributes_mode = attributes::mode();
+        let config_attributes = config.pane(attributes_mode).unwrap();
+        let default_attributes = default.pane(attributes_mode).unwrap();
+        assert_eq!(config_attributes.mode_title, default_attributes.mode_title);
     }
 
     #[test]
     fn parse_mode_supports_known_variants() {
-        assert_eq!(parse_mode("facets").unwrap(), facets::mode());
+        assert_eq!(parse_mode("attributes").unwrap(), attributes::mode());
         assert_eq!(parse_mode("FILES").unwrap(), files::mode());
         assert!(parse_mode("unknown").is_err());
     }

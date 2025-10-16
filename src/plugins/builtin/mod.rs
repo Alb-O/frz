@@ -1,5 +1,5 @@
-pub mod facets {
-    pub use frz_plugin_facets::*;
+pub mod attributes {
+    pub use frz_plugin_attributes::*;
 }
 
 pub mod files {
@@ -9,7 +9,7 @@ pub mod files {
 use frz_plugin_api::{SearchPluginDescriptor, SearchPluginRegistry};
 
 pub fn register_builtin_plugins(registry: &mut SearchPluginRegistry) {
-    registry.register(facets::FacetSearchPlugin);
+    registry.register(attributes::AttributeSearchPlugin);
     registry.register(files::FileSearchPlugin);
 }
 
@@ -18,4 +18,4 @@ pub fn descriptors() -> &'static [&'static SearchPluginDescriptor] {
 }
 
 static BUILTIN_DESCRIPTORS: [&SearchPluginDescriptor; 2] =
-    [&facets::FACET_DESCRIPTOR, &files::FILE_DESCRIPTOR];
+    [&attributes::ATTRIBUTE_DESCRIPTOR, &files::FILE_DESCRIPTOR];

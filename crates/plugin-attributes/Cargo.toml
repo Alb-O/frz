@@ -1,9 +1,9 @@
 [package]
-name = "frz-plugin-facets"
+name = "frz-plugin-attributes"
 version = "0.1.0"
 edition = "2024"
 authors = ["Albert O'Shea"]
-description = "Built-in facet search plugin for frz"
+description = "Built-in attribute search plugin for frz"
 license = "MIT"
 
 [dependencies]

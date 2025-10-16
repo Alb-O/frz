@@ -86,29 +86,29 @@ pub(crate) struct CliArgs {
     )]
     pub(crate) detail_title: Option<String>,
     #[arg(
-        long = "facets-mode-title",
+        long = "attributes-mode-title",
         value_name = "TEXT",
-        help = "Set the facets pane title (default: preset value)"
+        help = "Set the attributes pane title (default: preset value)"
     )]
-    pub(crate) facets_mode_title: Option<String>,
+    pub(crate) attributes_mode_title: Option<String>,
     #[arg(
-        long = "facets-hint",
+        long = "attributes-hint",
         value_name = "TEXT",
-        help = "Set the hint for the facets pane (default: preset value)"
+        help = "Set the hint for the attributes pane (default: preset value)"
     )]
-    pub(crate) facets_hint: Option<String>,
+    pub(crate) attributes_hint: Option<String>,
     #[arg(
-        long = "facets-table-title",
+        long = "attributes-table-title",
         value_name = "TEXT",
-        help = "Set the table title for facets (default: preset value)"
+        help = "Set the table title for attributes (default: preset value)"
     )]
-    pub(crate) facets_table_title: Option<String>,
+    pub(crate) attributes_table_title: Option<String>,
     #[arg(
-        long = "facets-count-label",
+        long = "attributes-count-label",
         value_name = "TEXT",
-        help = "Set the count label for facets (default: preset value)"
+        help = "Set the count label for attributes (default: preset value)"
     )]
-    pub(crate) facets_count_label: Option<String>,
+    pub(crate) attributes_count_label: Option<String>,
     #[arg(
         long = "files-mode-title",
         value_name = "TEXT",
@@ -134,10 +134,10 @@ pub(crate) struct CliArgs {
     )]
     pub(crate) files_count_label: Option<String>,
     #[arg(
-        long = "facet-headers",
+        long = "attribute-headers",
         value_delimiter = ',',
         value_name = "HEADER",
-        help = "Comma-separated facet table headers (default: preset value)"
+        help = "Comma-separated attribute table headers (default: preset value)"
     )]
     pub(crate) facet_headers: Option<Vec<String>>,
     #[arg(
