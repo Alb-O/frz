@@ -5,6 +5,9 @@ use indexmap::IndexMap;
 
 use crate::{descriptors::SearchPluginDescriptor, types::SearchMode};
 
+#[cfg(feature = "capabilities")]
+use crate::capabilities::{Capability, PluginBundle};
+
 use super::{RegisteredPlugin, SearchPlugin};
 
 /// Registry of all search plugins contributing to the current UI.
@@ -36,13 +39,35 @@ impl SearchPluginRegistry {
         P: SearchPlugin + 'static,
     {
         let descriptor = plugin.descriptor();
-        let mode = SearchMode::from_descriptor(descriptor);
         let plugin = Arc::new(plugin) as Arc<dyn SearchPlugin>;
+        self.insert(descriptor, plugin);
+    }
+
+    fn insert(
+        &mut self,
+        descriptor: &'static SearchPluginDescriptor,
+        plugin: Arc<dyn SearchPlugin>,
+    ) {
+        let mode = SearchMode::from_descriptor(descriptor);
         let entry = RegisteredPlugin::new(descriptor, plugin);
         if let Some(existing) = self.plugins.insert(mode, entry) {
             self.id_index.remove(existing.descriptor().id);
         }
         self.id_index.insert(descriptor.id, mode);
+    }
+
+    #[cfg(feature = "capabilities")]
+    pub fn register_bundle<B>(&mut self, bundle: B)
+    where
+        B: PluginBundle,
+    {
+        for capability in bundle.capabilities() {
+            match capability {
+                Capability::SearchTab { descriptor, plugin } => {
+                    self.insert(descriptor, plugin);
+                }
+            }
+        }
     }
 
     /// Lookup a plugin servicing the requested mode.

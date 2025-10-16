@@ -6,6 +6,10 @@ authors = ["Albert O'Shea"]
 description = "Shared plugin interfaces and data types for frz"
 license = "MIT"
 
+[features]
+default = []
+capabilities = []
+
 [dependencies]
 anyhow = "1"
 frizbee = "0.5"

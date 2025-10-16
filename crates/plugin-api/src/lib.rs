@@ -1,9 +1,13 @@
+#[cfg(feature = "capabilities")]
+pub mod capabilities;
 pub mod context;
 pub mod descriptors;
 pub mod registry;
 pub mod search;
 pub mod types;
 
+#[cfg(feature = "capabilities")]
+pub use capabilities::{Capability, PluginBundle};
 pub use context::{PluginQueryContext, PluginSelectionContext};
 pub use descriptors::{
     SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
