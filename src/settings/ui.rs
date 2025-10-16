@@ -46,7 +46,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
     }
     let id = trimmed.to_ascii_lowercase();
     let mut registry = SearchPluginRegistry::new();
-    frz::plugins::builtin::register_builtin_plugins(&mut registry);
+    frz::plugins::builtin::register_builtin_plugins(&mut registry)?;
     registry
         .mode_by_id(&id)
         .or_else(|| registry.mode_by_id(trimmed))

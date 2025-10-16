@@ -89,7 +89,9 @@ fn main() {
     }
 
     let mut registry = SearchPluginRegistry::new();
-    registry.register_bundle(DemoBundle);
+    registry
+        .register_bundle(DemoBundle)
+        .expect("demo bundle should register");
 
     for descriptor in registry.descriptors() {
         println!("Registered capability: {}", descriptor.id);

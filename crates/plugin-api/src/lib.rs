@@ -2,6 +2,7 @@
 pub mod capabilities;
 pub mod context;
 pub mod descriptors;
+pub mod error;
 pub mod registry;
 pub mod search;
 pub mod types;
@@ -13,6 +14,7 @@ pub use descriptors::{
     SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
     TableDescriptor,
 };
+pub use error::PluginRegistryError;
 pub use registry::{RegisteredPlugin, SearchPlugin, SearchPluginRegistry};
 pub use search::{
     MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, SearchResult, SearchStream,

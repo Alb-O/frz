@@ -51,7 +51,8 @@ pub(crate) struct TabBuffers {
 impl<'a> App<'a> {
     pub fn new(data: SearchData) -> Self {
         let mut plugins = SearchPluginRegistry::default();
-        crate::plugins::builtin::register_builtin_plugins(&mut plugins);
+        crate::plugins::builtin::register_builtin_plugins(&mut plugins)
+            .expect("builtin plugins must register successfully");
         Self::with_plugins(data, plugins)
     }
 

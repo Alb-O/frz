@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use indexmap::IndexMap;
 
-use crate::{descriptors::SearchPluginDescriptor, types::SearchMode};
+use crate::{descriptors::SearchPluginDescriptor, error::PluginRegistryError, types::SearchMode};
 
 #[cfg(feature = "capabilities")]
 use crate::capabilities::{Capability, PluginBundle};
@@ -33,14 +33,22 @@ impl SearchPluginRegistry {
         Self::empty()
     }
 
-    /// Register or replace a plugin implementation for its declared mode.
-    pub fn register<P>(&mut self, plugin: P)
+    /// Register a plugin implementation for its declared mode.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PluginRegistryError::DuplicateId`] if a plugin with the same identifier has
+    /// already been registered, or [`PluginRegistryError::DuplicateMode`] if the descriptor is
+    /// already present in the registry.
+    pub fn register<P>(&mut self, plugin: P) -> Result<(), PluginRegistryError>
     where
         P: SearchPlugin + 'static,
     {
         let descriptor = plugin.descriptor();
+        self.ensure_available(descriptor)?;
         let plugin = Arc::new(plugin) as Arc<dyn SearchPlugin>;
         self.insert(descriptor, plugin);
+        Ok(())
     }
 
     fn insert(
@@ -50,24 +58,43 @@ impl SearchPluginRegistry {
     ) {
         let mode = SearchMode::from_descriptor(descriptor);
         let entry = RegisteredPlugin::new(descriptor, plugin);
-        if let Some(existing) = self.plugins.insert(mode, entry) {
-            self.id_index.remove(existing.descriptor().id);
+        let existing = self.plugins.insert(mode, entry);
+        debug_assert!(
+            existing.is_none(),
+            "plugins should be unique per descriptor"
+        );
+        let existing_id = self.id_index.insert(descriptor.id, mode);
+        debug_assert!(existing_id.is_none(), "plugin identifiers should be unique");
+    }
+
+    fn ensure_available(
+        &self,
+        descriptor: &'static SearchPluginDescriptor,
+    ) -> Result<(), PluginRegistryError> {
+        let mode = SearchMode::from_descriptor(descriptor);
+        if self.plugins.contains_key(&mode) {
+            return Err(PluginRegistryError::DuplicateMode { mode });
         }
-        self.id_index.insert(descriptor.id, mode);
+        if self.id_index.contains_key(descriptor.id) {
+            return Err(PluginRegistryError::DuplicateId { id: descriptor.id });
+        }
+        Ok(())
     }
 
     #[cfg(feature = "capabilities")]
-    pub fn register_bundle<B>(&mut self, bundle: B)
+    pub fn register_bundle<B>(&mut self, bundle: B) -> Result<(), PluginRegistryError>
     where
         B: PluginBundle,
     {
         for capability in bundle.capabilities() {
             match capability {
                 Capability::SearchTab { descriptor, plugin } => {
+                    self.ensure_available(descriptor)?;
                     self.insert(descriptor, plugin);
                 }
             }
         }
+        Ok(())
     }
 
     /// Lookup a plugin servicing the requested mode.

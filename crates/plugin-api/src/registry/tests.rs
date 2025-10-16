@@ -1,4 +1,5 @@
 use super::*;
+use crate::PluginRegistryError;
 use crate::{
     context::{PluginQueryContext, PluginSelectionContext},
     descriptors::{
@@ -130,8 +131,10 @@ impl SearchPlugin for AlternatePlugin {
 #[test]
 fn registers_plugins_in_insertion_order() {
     let mut registry = SearchPluginRegistry::empty();
-    registry.register(TestPlugin);
-    registry.register(AlternatePlugin);
+    registry.register(TestPlugin).expect("register test plugin");
+    registry
+        .register(AlternatePlugin)
+        .expect("register alternate plugin");
     let modes: Vec<SearchMode> = registry.iter().map(|plugin| plugin.mode()).collect();
     assert_eq!(modes, vec![test_mode(), alt_mode()]);
 }
@@ -139,8 +142,10 @@ fn registers_plugins_in_insertion_order() {
 #[test]
 fn deregister_removes_plugin_and_updates_indexes() {
     let mut registry = SearchPluginRegistry::empty();
-    registry.register(TestPlugin);
-    registry.register(AlternatePlugin);
+    registry.register(TestPlugin).expect("register test plugin");
+    registry
+        .register(AlternatePlugin)
+        .expect("register alternate plugin");
 
     let removed = registry.deregister(test_mode()).expect("plugin removed");
     assert_eq!(removed.descriptor().id, TEST_DESCRIPTOR.id);
@@ -157,7 +162,7 @@ fn deregister_removes_plugin_and_updates_indexes() {
 #[test]
 fn deregister_by_id_removes_plugin() {
     let mut registry = SearchPluginRegistry::empty();
-    registry.register(TestPlugin);
+    registry.register(TestPlugin).expect("register test plugin");
 
     let removed = registry
         .deregister_by_id(TEST_DESCRIPTOR.id)
@@ -169,10 +174,24 @@ fn deregister_by_id_removes_plugin() {
 #[test]
 fn plugin_by_id_returns_plugin() {
     let mut registry = SearchPluginRegistry::empty();
-    registry.register(TestPlugin);
+    registry.register(TestPlugin).expect("register test plugin");
 
     let plugin = registry
         .plugin_by_id(TEST_DESCRIPTOR.id)
         .expect("plugin resolved by id");
     assert_eq!(plugin.descriptor().id, TEST_DESCRIPTOR.id);
+}
+
+#[test]
+fn duplicate_registration_returns_error() {
+    let mut registry = SearchPluginRegistry::empty();
+    registry.register(TestPlugin).expect("register test plugin");
+
+    let error = registry
+        .register(TestPlugin)
+        .expect_err("expected duplicate registration to fail");
+    assert!(matches!(
+        error,
+        PluginRegistryError::DuplicateMode { .. } | PluginRegistryError::DuplicateId { .. }
+    ));
 }
