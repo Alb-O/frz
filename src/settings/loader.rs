@@ -14,5 +14,5 @@ pub fn load(cli: &CliArgs) -> Result<ResolvedConfig> {
         .try_deserialize()
         .map_err(|err| anyhow!("failed to deserialize configuration: {err}"))?;
     raw.apply_cli_overrides(cli);
-    raw.resolve()
+    raw.resolve(cli)
 }
