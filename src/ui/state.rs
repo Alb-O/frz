@@ -7,10 +7,7 @@ use throbber_widgets_tui::ThrobberState;
 use super::components::progress::IndexProgress;
 use super::config::UiConfig;
 use crate::input::SearchInput;
-#[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;
-#[cfg(not(feature = "fs"))]
-type IndexUpdate = ();
 use crate::systems::search;
 use frz_plugin_api::{
     PluginSelectionContext, SearchData, SearchMode, SearchPluginRegistry, SearchSelection,
@@ -39,7 +36,6 @@ pub struct App<'a> {
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
     plugins: SearchPluginRegistry,
-    #[cfg_attr(not(feature = "fs"), allow(dead_code))]
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search: SearchRuntime,
 }

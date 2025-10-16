@@ -1,7 +1,6 @@
 use std::sync::mpsc::TryRecvError;
 
 use super::App;
-#[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::SearchResult;
 
@@ -24,7 +23,6 @@ impl<'a> App<'a> {
     }
 
     /// Propagate an index update to the background search worker.
-    #[cfg(feature = "fs")]
     pub(crate) fn notify_search_of_update(&self, update: &IndexUpdate) {
         self.search.notify_of_update(update);
     }

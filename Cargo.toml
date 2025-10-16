@@ -16,16 +16,12 @@ homepage = "https://github.com/Alb-O/frz"
 repository = "https://github.com/Alb-O/frz"
 authors = ["Albert O'Shea"]
 
-[features]
-default = ["fs"]
-fs = ["dep:ignore", "frz-plugin-api/fs"]
-
 [dependencies]
 ratatui = "0.29"
 frizbee = { version = "0.5" }
 anyhow = "1"
 tui-textarea = "0.7"
-ignore = { version = "0.4", optional = true }
+ignore = "0.4"
 throbber-widgets-tui = "0.9"
 clap = { version = "4", features = ["derive", "env"] }
 config = "0.15"
@@ -33,7 +29,7 @@ directories = "6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 unicode-width = "0.2"
-frz-plugin-api = { path = "crates/plugin-api", default-features = false }
+frz-plugin-api = { path = "crates/plugin-api" }
 frz-plugin-files = { path = "crates/plugin-files" }
 frz-plugin-facets = { path = "crates/plugin-facets" }
 frz-tui = { path = "crates/tui" }

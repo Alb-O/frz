@@ -29,9 +29,6 @@ if let Some(file) = outcome.selected_file() {
 }
 ```
 
-> **Note:** Filesystem helpers are gated behind the default-enabled `fs` feature. Disable default features or omit `fs` when you
-> want to build frz without any filesystem access.
-
 ## Run the examples
 
 ```bash
@@ -101,8 +98,7 @@ search worker can be accessed through
 [`plugins::systems::search`](https://docs.rs/frz/latest/frz/plugins/systems/search/),
 which exposes the [`SearchStream`](https://docs.rs/frz/latest/frz/plugins/systems/search/struct.SearchStream.html)
 type along with helpers for streaming facets and files using the built-in
-matching pipeline. When the crate is built with the `fs` feature you can reuse
-the filesystem indexer via
+matching pipeline. You can also reuse the filesystem indexer via
 [`plugins::systems::filesystem`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/),
 which provides access to [`FilesystemOptions`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/struct.FilesystemOptions.html),
 [`spawn_filesystem_index`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/fn.spawn_filesystem_index.html),

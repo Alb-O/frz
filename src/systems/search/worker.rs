@@ -6,11 +6,9 @@ use std::thread;
 use super::commands::{SearchCommand, SearchResult};
 use frz_plugin_api::{PluginQueryContext, SearchData, SearchPluginRegistry, SearchStream};
 
-#[cfg(feature = "fs")]
 use crate::systems::filesystem::merge_update;
 
 /// Launches the background search worker thread and returns communication channels.
-#[cfg_attr(not(feature = "fs"), allow(unused_mut))]
 pub(crate) fn spawn(
     mut data: SearchData,
     plugins: SearchPluginRegistry,
@@ -60,7 +58,6 @@ fn handle_command(
                 true
             }
         }
-        #[cfg(feature = "fs")]
         SearchCommand::Update(update) => {
             merge_update(data, &update);
             true

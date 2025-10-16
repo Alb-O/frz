@@ -1,14 +1,7 @@
 use anyhow::Result;
-#[cfg(not(feature = "fs"))]
-use anyhow::bail;
-
-#[cfg(feature = "fs")]
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
-#[cfg(feature = "fs")]
 use std::collections::{BTreeMap, BTreeSet};
-#[cfg(feature = "fs")]
 use std::path::{Component, Path};
-#[cfg(feature = "fs")]
 use std::sync::{Arc, mpsc};
 
 use super::{FacetRow, FileRow, SearchMode};
@@ -63,7 +56,6 @@ impl SearchData {
     ///
     /// Returns an error if the underlying filesystem walker or channel
     /// operations fail while enumerating files.
-    #[cfg(feature = "fs")]
     pub fn from_filesystem(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         let (tx, rx) = mpsc::channel();
@@ -131,17 +123,6 @@ impl SearchData {
             files,
         })
     }
-
-    /// Attempting to build filesystem-backed [`SearchData`] when the `fs`
-    /// feature is disabled will always fail.
-    ///
-    /// # Errors
-    ///
-    /// Always returns an error indicating the `fs` feature is disabled.
-    #[cfg(not(feature = "fs"))]
-    pub fn from_filesystem(_root: impl AsRef<std::path::Path>) -> Result<Self> {
-        bail!("filesystem support is disabled; enable the `fs` feature");
-    }
 }
 
 /// Captures the outcome of a search interaction.
@@ -197,7 +178,6 @@ impl SearchOutcome {
 }
 
 /// Derive tags for a path relative to the search root.
-#[cfg(feature = "fs")]
 pub fn tags_for_relative_path(relative: &Path) -> Vec<String> {
     let mut tags: BTreeSet<String> = BTreeSet::new();
 
@@ -224,7 +204,6 @@ pub fn tags_for_relative_path(relative: &Path) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(feature = "fs")]
     use std::path::Path;
 
     #[test]
@@ -243,7 +222,6 @@ mod tests {
         assert_eq!(data.files[0].path, "file");
     }
 
-    #[cfg(feature = "fs")]
     #[test]
     fn relative_path_tags_include_directories_and_extension() {
         let path = Path::new("dir/sub/file.txt");

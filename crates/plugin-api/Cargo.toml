@@ -6,14 +6,10 @@ authors = ["Albert O'Shea"]
 description = "Shared plugin interfaces and data types for frz"
 license = "MIT"
 
-[features]
-default = ["fs"]
-fs = ["ignore"]
-
 [dependencies]
 anyhow = "1"
 frizbee = "0.5"
-ignore = { version = "0.4", optional = true }
+ignore = "0.4"
 ratatui = "0.29"
 unicode-truncate = "2.0"
 unicode-width = "0.2"

@@ -1,30 +1,14 @@
-#[cfg(feature = "fs")]
 mod fs;
 
 use std::sync::Arc;
 
 use frz_plugin_api::{FacetRow, FileRow, SearchData};
 
-#[cfg(not(feature = "fs"))]
-use std::path::PathBuf;
-#[cfg(not(feature = "fs"))]
-use std::sync::mpsc::Receiver;
-
-#[cfg(not(feature = "fs"))]
-use anyhow::Result;
-#[cfg(not(feature = "fs"))]
-use anyhow::bail;
-
-#[cfg(feature = "fs")]
 pub use fs::FilesystemOptions;
-#[cfg(feature = "fs")]
 pub use fs::spawn_filesystem_index;
-
-#[cfg(feature = "fs")]
 pub mod plugin;
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
-#[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone)]
 pub struct IndexUpdate {
     pub files: Arc<[FileRow]>,
@@ -35,7 +19,6 @@ pub struct IndexUpdate {
 }
 
 /// Snapshot of the indexing progress suitable for updating the UI tracker.
-#[cfg_attr(not(feature = "fs"), allow(dead_code))]
 #[derive(Debug, Clone, Copy)]
 pub struct ProgressSnapshot {
     pub indexed_facets: usize,
@@ -66,9 +49,4 @@ pub fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
             }
         }
     }
-}
-
-#[cfg(not(feature = "fs"))]
-pub fn spawn_filesystem_index(_root: PathBuf) -> Result<(SearchData, Receiver<IndexUpdate>)> {
-    bail!("filesystem support is disabled; enable the `fs` feature");
 }

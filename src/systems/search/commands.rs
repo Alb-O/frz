@@ -1,7 +1,6 @@
 use frz_plugin_api::SearchMode;
 pub(crate) use frz_plugin_api::SearchResult;
 
-#[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;
 
 /// Commands understood by the background search worker.
@@ -17,7 +16,6 @@ pub(crate) enum SearchCommand {
         mode: SearchMode,
     },
     /// Merge a fresh index update into the existing in-memory search data.
-    #[cfg(feature = "fs")]
     Update(IndexUpdate),
     /// Stop the background worker thread.
     Shutdown,

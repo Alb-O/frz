@@ -1,16 +1,11 @@
-#[cfg(feature = "fs")]
+use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
-use std::collections::HashMap;
-
 use anyhow::Result;
-#[cfg(not(feature = "fs"))]
-use anyhow::bail;
 use ratatui::layout::Constraint;
 
 use super::App;
 use super::config::UiConfig;
-#[cfg(feature = "fs")]
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 use frz_plugin_api::{SearchData, SearchMode, SearchOutcome, SearchPluginRegistry};
 pub use frz_tui::theme::Theme;
@@ -27,7 +22,6 @@ pub struct SearchUi {
     theme: Option<Theme>,
     start_mode: Option<SearchMode>,
     plugins: SearchPluginRegistry,
-    #[cfg(feature = "fs")]
     index_updates: Option<Receiver<IndexUpdate>>,
 }
 
@@ -46,18 +40,15 @@ impl SearchUi {
             theme: None,
             start_mode: None,
             plugins,
-            #[cfg(feature = "fs")]
             index_updates: None,
         }
     }
 
     /// Create a search UI pre-populated with files from the filesystem rooted at `path`.
-    #[cfg(feature = "fs")]
     pub fn filesystem(path: impl AsRef<std::path::Path>) -> Result<Self> {
         Self::filesystem_with_options(path.as_ref().to_path_buf(), FilesystemOptions::default())
     }
 
-    #[cfg(feature = "fs")]
     pub fn filesystem_with_options(
         path: impl Into<std::path::PathBuf>,
         options: FilesystemOptions,
@@ -68,11 +59,6 @@ impl SearchUi {
         ui.start_mode = Some(crate::plugins::builtin::files::mode());
         ui.index_updates = Some(updates);
         Ok(ui)
-    }
-
-    #[cfg(not(feature = "fs"))]
-    pub fn filesystem(_path: impl AsRef<std::path::Path>) -> Result<Self> {
-        bail!("filesystem support is disabled; enable the `fs` feature");
     }
 
     pub fn with_input_title(mut self, title: impl Into<String>) -> Self {
@@ -133,7 +119,6 @@ impl SearchUi {
     }
 
     /// Run the interactive search UI with the configured options.
-    #[cfg_attr(not(feature = "fs"), allow(unused_mut))]
     pub fn run(mut self) -> Result<SearchOutcome> {
         // Build an App and apply optional customizations, then run it.
         let mut app = App::with_plugins(self.data, self.plugins);
@@ -156,7 +141,6 @@ impl SearchUi {
         if let Some(mode) = self.start_mode {
             app.set_mode(mode);
         }
-        #[cfg(feature = "fs")]
         if let Some(updates) = self.index_updates.take() {
             app.set_index_updates(updates);
         }

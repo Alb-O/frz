@@ -9,9 +9,8 @@ use crate::{
 ///
 /// Search-specific helpers live under [`crate::search`], which exposes
 /// functionality such as [`SearchStream`](crate::SearchStream) and the built-in
-/// streaming helpers for common data sets. When built with the `fs` feature you
-/// can also opt into the filesystem indexer to populate [`SearchData`]
-/// instances.
+/// streaming helpers for common data sets. You can also opt into the filesystem
+/// indexer to populate [`SearchData`] instances.
 pub trait SearchPlugin: Send + Sync {
     /// Static descriptor advertising plugin metadata.
     fn descriptor(&self) -> &'static SearchPluginDescriptor;

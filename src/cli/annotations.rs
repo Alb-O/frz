@@ -1,12 +1,9 @@
-#[cfg(feature = "fs")]
 use clap::Arg;
-#[cfg(feature = "fs")]
 use clap::builder::{
     StyledStr,
     styling::{AnsiColor, Color, Style},
 };
 
-#[cfg(feature = "fs")]
 /// Apply dimmed styling to relevant clap annotations for improved readability.
 pub(crate) fn dim_cli_annotations(mut arg: Arg) -> Arg {
     let help_text = arg
@@ -52,7 +49,6 @@ pub(crate) fn dim_cli_annotations(mut arg: Arg) -> Arg {
     arg
 }
 
-#[cfg(feature = "fs")]
 /// Highlight default annotations within clap-generated help text.
 pub(crate) fn highlight_help_annotations(text: &str) -> Option<StyledStr> {
     const ANNOTATIONS: &[(&str, char)] = &[("(default: ", ')')];
@@ -104,7 +100,6 @@ pub(crate) fn highlight_help_annotations(text: &str) -> Option<StyledStr> {
     Some(styled)
 }
 
-#[cfg(feature = "fs")]
 /// Return the muted style used to annotate clap help metadata.
 fn muted_default_style() -> Style {
     Style::new()
@@ -112,7 +107,6 @@ fn muted_default_style() -> Style {
         .dimmed()
 }
 
-#[cfg(feature = "fs")]
 /// Create a baseline styled help entry for clap arguments.
 pub(crate) fn style_base_help(text: &str) -> StyledStr {
     if text.is_empty() {
@@ -126,14 +120,12 @@ pub(crate) fn style_base_help(text: &str) -> StyledStr {
     })
 }
 
-#[cfg(feature = "fs")]
 /// Append an annotation using the muted help style.
 fn append_muted_annotation(target: &mut StyledStr, annotation: &str) {
     let style = muted_default_style();
     let _ = std::fmt::write(target, format_args!("{style}{annotation}{style:#}"));
 }
 
-#[cfg(feature = "fs")]
 /// Render clap possible value annotations for display.
 pub(crate) fn render_possible_values_annotation(arg: &Arg) -> Option<String> {
     if !arg.get_action().takes_values() {
@@ -167,7 +159,6 @@ pub(crate) fn render_possible_values_annotation(arg: &Arg) -> Option<String> {
     Some(format!("[possible values: {}]", visible.join(", ")))
 }
 
-#[cfg(feature = "fs")]
 /// Render clap default value annotations with optional quoting.
 pub(crate) fn render_default_value_annotation(arg: &Arg) -> Option<String> {
     let defaults = arg.get_default_values();
@@ -197,7 +188,6 @@ pub(crate) fn render_default_value_annotation(arg: &Arg) -> Option<String> {
     Some(format!("(default: {})", rendered.join(", ")))
 }
 
-#[cfg(feature = "fs")]
 /// Render environment variable annotations for clap arguments.
 pub(crate) fn render_env_annotation(arg: &Arg) -> Option<String> {
     if let Some(env) = arg.get_env() {
@@ -212,7 +202,7 @@ pub(crate) fn render_env_annotation(arg: &Arg) -> Option<String> {
     }
 }
 
-#[cfg(all(test, feature = "fs"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

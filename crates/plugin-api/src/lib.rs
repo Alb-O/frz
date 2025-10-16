@@ -14,7 +14,6 @@ pub use search::{
     MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, SearchResult, SearchStream, stream_facets,
     stream_files,
 };
-#[cfg(feature = "fs")]
 pub use types::tags_for_relative_path;
 pub use types::{
     FacetRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchSelection,

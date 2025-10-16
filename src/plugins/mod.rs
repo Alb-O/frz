@@ -7,7 +7,6 @@ pub use frz_plugin_api::{SearchStream, stream_facets, stream_files};
 
 /// Re-exported systems that plugins can leverage.
 pub mod systems {
-    #[cfg(feature = "fs")]
     pub use crate::systems::filesystem::plugin as filesystem;
     pub use crate::systems::search::plugin as search;
 }

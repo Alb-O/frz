@@ -1,12 +1,8 @@
-#[cfg(feature = "fs")]
 use anyhow::Result;
-#[cfg(feature = "fs")]
 use serde_json::json;
 
-#[cfg(feature = "fs")]
 use frz::{PluginSelection, SearchOutcome, SearchSelection};
 
-#[cfg(feature = "fs")]
 /// Print a plain-text representation of the search outcome.
 pub(crate) fn print_plain(outcome: &SearchOutcome) {
     if !outcome.accepted {
@@ -24,7 +20,6 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
     }
 }
 
-#[cfg(feature = "fs")]
 /// Format the search outcome as a JSON string.
 pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
     let selection = match &outcome.selection {
@@ -56,14 +51,13 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
     Ok(serde_json::to_string_pretty(&payload)?)
 }
 
-#[cfg(feature = "fs")]
 /// Print the JSON representation of the search outcome.
 pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
     println!("{}", format_outcome_json(outcome)?);
     Ok(())
 }
 
-#[cfg(all(test, feature = "fs"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use frz::plugins::builtin::files;

@@ -1,22 +1,15 @@
-#[cfg(feature = "fs")]
 use anyhow::Result;
-#[cfg(feature = "fs")]
 use frz::plugins::builtin::{facets, files};
-#[cfg(feature = "fs")]
 use frz::{FilesystemOptions, SearchMode, SearchOutcome, SearchUi, UiConfig};
-#[cfg(feature = "fs")]
 use std::path::PathBuf;
 
-#[cfg(feature = "fs")]
 use crate::settings::ResolvedConfig;
 
-#[cfg(feature = "fs")]
 /// Coordinates building and running the interactive search experience.
 pub(crate) struct SearchWorkflow {
     search_ui: SearchUi,
 }
 
-#[cfg(feature = "fs")]
 impl SearchWorkflow {
     pub(crate) fn from_config(config: ResolvedConfig) -> Result<Self> {
         let search_ui = SearchUiFactory::build(config)?;
@@ -28,13 +21,11 @@ impl SearchWorkflow {
     }
 }
 
-#[cfg(feature = "fs")]
 /// Helper for translating resolved configuration into a configured `SearchUi`.
 struct SearchUiFactory {
     search_ui: SearchUi,
 }
 
-#[cfg(feature = "fs")]
 impl SearchUiFactory {
     fn build(config: ResolvedConfig) -> Result<SearchUi> {
         let ResolvedConfig {

@@ -1,25 +1,12 @@
-use std::sync::mpsc::Receiver;
-
-#[cfg(feature = "fs")]
+use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::{Duration, Instant};
 
-#[cfg(feature = "fs")]
-use std::sync::mpsc::TryRecvError;
-
-#[cfg(feature = "fs")]
-use crate::systems::filesystem::IndexUpdate;
-#[cfg(feature = "fs")]
-use crate::systems::filesystem::merge_update;
-#[cfg(not(feature = "fs"))]
-type IndexUpdate = ();
-#[cfg(feature = "fs")]
+use crate::systems::filesystem::{IndexUpdate, merge_update};
 use frz_plugin_api::SearchData;
 
 use super::App;
-#[cfg(feature = "fs")]
 use super::components::progress::IndexProgress;
 
-#[cfg(feature = "fs")]
 impl<'a> App<'a> {
     const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
     const MAX_INDEX_PROCESSING_TIME: Duration = Duration::from_millis(8);
@@ -129,17 +116,7 @@ impl<'a> App<'a> {
     }
 }
 
-#[cfg(not(feature = "fs"))]
-impl<'a> App<'a> {
-    #[allow(dead_code)]
-    pub(crate) fn set_index_updates(&mut self, _updates: Receiver<IndexUpdate>) {
-        let _ = _updates;
-    }
-
-    pub(crate) fn pump_index_updates(&mut self) {}
-}
-
-#[cfg(all(test, feature = "fs"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::systems::filesystem::ProgressSnapshot;

@@ -4,6 +4,7 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
 use frz_plugin_api::SearchMode;
 
+use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::{SearchCommand, SearchResult};
 
 #[derive(Default)]
@@ -98,8 +99,7 @@ impl SearchRuntime {
         self.rx.try_recv()
     }
 
-    #[cfg(feature = "fs")]
-    pub(crate) fn notify_of_update(&self, update: &crate::systems::filesystem::IndexUpdate) {
+    pub(crate) fn notify_of_update(&self, update: &IndexUpdate) {
         let _ = self.tx.send(SearchCommand::Update(update.clone()));
     }
 }
