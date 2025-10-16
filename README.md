@@ -89,6 +89,13 @@ implementation. The dataset abstraction lets plugins describe how to render
 their tables, report aggregate counts, and contribute progress information,
 enabling the registry to treat every plugin uniformly regardless of how many
 are registered.
+Registries preserve insertion order, making it easy to deterministically
+compose builtin and custom tabs. They also expose helpers such as
+[`SearchPluginRegistry::deregister`](https://docs.rs/frz/latest/frz/struct.SearchPluginRegistry.html#method.deregister)
+and
+[`SearchPluginRegistry::plugin_by_id`](https://docs.rs/frz/latest/frz/struct.SearchPluginRegistry.html#method.plugin_by_id)
+so applications can swap out built-in implementations or target plugins by
+their identifier without having to manage bookkeeping themselves.
 Reusable background capabilities live under the `plugins::systems` module. The
 search worker can be accessed through
 [`plugins::systems::search`](https://docs.rs/frz/latest/frz/plugins/systems/search/),
