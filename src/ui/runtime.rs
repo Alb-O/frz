@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::thread;
@@ -40,27 +41,37 @@ impl<'a> App<'a> {
             Ok(())
         });
 
+        let mut pending_events = VecDeque::new();
+
         let result: Result<SearchOutcome> = 'event_loop: loop {
             self.pump_index_updates();
             self.pump_search_results();
             self.throbber_state.calc_next();
+
+            loop {
+                match event_rx.try_recv() {
+                    Ok(Event::Resize(_, _)) => {}
+                    Ok(event) => pending_events.push_back(event),
+                    Err(mpsc::TryRecvError::Empty) => break,
+                    Err(mpsc::TryRecvError::Disconnected) => {
+                        break 'event_loop Err(anyhow!("input event channel disconnected"));
+                    }
+                }
+            }
+
             terminal.draw(|frame| self.draw(frame))?;
 
             let mut maybe_outcome = None;
-            loop {
-                match event_rx.try_recv() {
-                    Ok(Event::Key(key)) if key.kind == KeyEventKind::Press => {
+            while let Some(event) = pending_events.pop_front() {
+                match event {
+                    Event::Key(key) if key.kind == KeyEventKind::Press => {
                         if let Some(outcome) = self.handle_key(key)? {
                             maybe_outcome = Some(outcome);
                             break;
                         }
                     }
-                    Ok(Event::Resize(_, _)) => {}
-                    Ok(_) => {}
-                    Err(mpsc::TryRecvError::Empty) => break,
-                    Err(mpsc::TryRecvError::Disconnected) => {
-                        break 'event_loop Err(anyhow!("input event channel disconnected"));
-                    }
+                    Event::Resize(_, _) => {}
+                    _ => {}
                 }
             }
 

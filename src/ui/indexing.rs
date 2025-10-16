@@ -1,6 +1,12 @@
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::{Duration, Instant};
 
+// Indexing work intentionally runs under strict per-tick limits so UI rendering stays
+// responsive even when large trees are being ingested. `MAX_INDEX_UPDATES_PER_TICK`
+// bounds how many incremental updates we merge in a single frame, while
+// `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
+// yield back to drawing and input handling.
+
 use crate::systems::filesystem::{IndexUpdate, merge_update};
 use frz_plugin_api::SearchData;
 
