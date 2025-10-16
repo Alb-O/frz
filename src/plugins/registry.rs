@@ -2,10 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
-use crate::systems::search::SearchStream;
+use crate::plugins::systems::search::SearchStream;
 use crate::types::{SearchData, SearchMode, SearchSelection};
 
 /// A pluggable search component that can provide results for a tab.
+///
+/// Search-specific helpers live under [`crate::plugins::systems::search`], which
+/// exposes functionality such as [`SearchStream`](crate::plugins::systems::search::SearchStream)
+/// and the built-in streaming helpers for common data sets. When built with the
+/// `fs` feature you can also opt into the filesystem indexer via
+/// [`crate::plugins::systems::filesystem`], which provides helpers for spawning
+/// the index worker and merging updates into [`SearchData`].
 pub trait SearchPlugin: Send + Sync {
     /// Identifier describing which tab this plugin services.
     fn mode(&self) -> SearchMode;

@@ -75,3 +75,21 @@ detail_panel_title = "Entry details"
 You can inspect the resolved configuration before launching the TUI via
 `--print-config`, list available themes with `--list-themes`, or emit the final
 selection as pretty JSON using `--output json`.
+
+## Extending via plugins
+
+Plugins can register new tabs by implementing
+[`SearchPlugin`](https://docs.rs/frz/latest/frz/trait.SearchPlugin.html) and
+adding them to a [`SearchPluginRegistry`](https://docs.rs/frz/latest/frz/struct.SearchPluginRegistry.html).
+Reusable background capabilities live under the `plugins::systems` module. The
+search worker can be accessed through
+[`plugins::systems::search`](https://docs.rs/frz/latest/frz/plugins/systems/search/),
+which exposes the [`SearchStream`](https://docs.rs/frz/latest/frz/plugins/systems/search/struct.SearchStream.html)
+type along with helpers for streaming facets and files using the built-in
+matching pipeline. When the crate is built with the `fs` feature you can reuse
+the filesystem indexer via
+[`plugins::systems::filesystem`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/),
+which provides access to [`FilesystemOptions`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/struct.FilesystemOptions.html),
+[`spawn_filesystem_index`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/fn.spawn_filesystem_index.html),
+and the [`merge_update`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/fn.merge_update.html)
+helper for applying incremental results to `SearchData`.

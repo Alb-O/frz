@@ -1,7 +1,9 @@
 use std::sync::atomic::AtomicU64;
 
-use crate::plugins::SearchPlugin;
-use crate::systems::search::{SearchStream, stream_facets};
+use crate::plugins::{
+    systems::search::{stream_facets, SearchStream},
+    SearchPlugin,
+};
 use crate::types::{SearchData, SearchMode, SearchSelection};
 
 pub(crate) struct FacetSearchPlugin;

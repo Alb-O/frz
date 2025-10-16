@@ -8,7 +8,7 @@ use super::{EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, config::config_for_query};
 use crate::types::SearchData;
 
 /// Streams facet matches for the given query back to the UI thread.
-pub(crate) fn stream_facets(
+pub fn stream_facets(
     data: &SearchData,
     query: &str,
     stream: SearchStream<'_>,
@@ -55,7 +55,7 @@ pub(crate) fn stream_facets(
 }
 
 /// Streams file matches for the given query back to the UI thread.
-pub(crate) fn stream_files(
+pub fn stream_files(
     data: &SearchData,
     query: &str,
     stream: SearchStream<'_>,

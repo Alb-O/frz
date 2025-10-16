@@ -10,7 +10,11 @@ use ratatui::layout::Constraint;
 
 use super::App;
 #[cfg(feature = "fs")]
-use crate::indexing::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
+use crate::systems::filesystem::{
+    FilesystemOptions,
+    IndexUpdate,
+    spawn_filesystem_index,
+};
 use crate::plugins::SearchPluginRegistry;
 use crate::theme::Theme;
 use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};

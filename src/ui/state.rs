@@ -7,7 +7,7 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::components::progress::IndexProgress;
-use crate::indexing::IndexUpdate;
+use crate::systems::filesystem::IndexUpdate;
 use crate::input::SearchInput;
 use crate::plugins::SearchPluginRegistry;
 use crate::systems::search::{self, SearchCommand, SearchResult};
