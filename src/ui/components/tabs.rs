@@ -239,16 +239,17 @@ fn render_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::plugins::builtin::{facets, files};
 
     #[test]
     fn prompt_prefers_explicit_title() {
         let mut ui = UiConfig::default();
-        if let Some(pane) = ui.pane_mut(SearchMode::FACETS) {
+        if let Some(pane) = ui.pane_mut(facets::mode()) {
             pane.mode_title = "Default".to_string();
         }
         let input_title = Some("Custom".to_string());
 
-        let prompt = determine_prompt_text(&input_title, &ui, SearchMode::FACETS);
+        let prompt = determine_prompt_text(&input_title, &ui, facets::mode());
 
         assert_eq!(prompt, "Custom");
     }
@@ -258,9 +259,9 @@ mod tests {
         let ui = UiConfig::default();
         let input_title = None;
 
-        let prompt = determine_prompt_text(&input_title, &ui, SearchMode::FACETS);
+        let prompt = determine_prompt_text(&input_title, &ui, facets::mode());
 
-        let expected = ui.pane(SearchMode::FACETS).unwrap().mode_title.clone();
+        let expected = ui.pane(facets::mode()).unwrap().mode_title.clone();
         assert_eq!(prompt, expected);
     }
 
@@ -307,8 +308,8 @@ mod tests {
     #[test]
     fn selected_tab_index_matches_mode() {
         let ui = UiConfig::default();
-        assert_eq!(selected_tab_index(SearchMode::FACETS, &ui), 0);
-        assert_eq!(selected_tab_index(SearchMode::FILES, &ui), 1);
+        assert_eq!(selected_tab_index(facets::mode(), &ui), 0);
+        assert_eq!(selected_tab_index(files::mode(), &ui), 1);
     }
 
     #[test]

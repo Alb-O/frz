@@ -1,149 +1,62 @@
 pub mod rows;
 
-use self::rows::{build_facet_rows, build_file_rows};
 use frizbee::Options;
-use ratatui::Frame;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::Style;
-use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
+use ratatui::{
+    Frame,
+    layout::{Constraint, Rect},
+    style::Style,
+    text::{Line, Span, Text},
+    widgets::{Cell, HighlightSpacing, Paragraph, Row, Table},
+};
 use unicode_width::UnicodeWidthStr;
 
-use crate::types::UiConfig;
+use crate::plugins::descriptors::{SearchPluginDataset, TableContext, TableDescriptor};
+use crate::types::SearchData;
 
-/// Description of a table pane to render.
-pub enum TablePane<'a> {
-    Facets {
-        filtered: &'a [usize],
-        scores: &'a [u16],
-        facets: &'a [crate::types::FacetRow],
-        headers: Option<&'a Vec<String>>,
-        widths: Option<&'a Vec<Constraint>>,
-    },
-    Files {
-        filtered: &'a [usize],
-        scores: &'a [u16],
-        files: &'a [crate::types::FileRow],
-        headers: Option<&'a Vec<String>>,
-        widths: Option<&'a Vec<Constraint>>,
-    },
-}
-
-/// Unified renderer for both kinds of tables. Accepts a `TablePane` which
-/// packages all pane-specific data.
 const HIGHLIGHT_SYMBOL: &str = "▶ ";
 const TABLE_COLUMN_SPACING: u16 = 1;
 
+/// Argument bundle describing the data a table render should use.
+pub struct TableRenderContext<'a> {
+    pub area: Rect,
+    pub filtered: &'a [usize],
+    pub scores: &'a [u16],
+    pub headers: Option<&'a Vec<String>>,
+    pub widths: Option<&'a Vec<Constraint>>,
+    pub highlight: Option<(&'a str, Options)>,
+    pub data: &'a SearchData,
+}
+
+/// Render a plugin-backed table using the provided dataset definition.
 pub fn render_table(
     frame: &mut Frame,
-    area: ratatui::layout::Rect,
+    area: Rect,
     table_state: &mut ratatui::widgets::TableState,
-    _ui: &UiConfig,
-    highlight_state: Option<(&str, Options)>,
-    pane: TablePane<'_>,
+    dataset: &'static dyn SearchPluginDataset,
     theme: &crate::theme::Theme,
+    context: TableRenderContext<'_>,
 ) {
     let highlight_spacing = HighlightSpacing::WhenSelected;
     let selection_width = selection_column_width(table_state, &highlight_spacing);
-    let pane_params = PaneParameters::from_pane(pane, area, selection_width, highlight_state);
+    let descriptor = dataset.build_table(TableContext {
+        area,
+        filtered: context.filtered,
+        scores: context.scores,
+        headers: context.headers,
+        widths: context.widths,
+        highlight: context.highlight,
+        selection_width,
+        column_spacing: TABLE_COLUMN_SPACING,
+        data: context.data,
+    });
     render_configured_table(
         frame,
         area,
         table_state,
         highlight_spacing,
         theme,
-        pane_params,
+        descriptor,
     );
-}
-
-struct PaneParameters<'a> {
-    widths: Vec<Constraint>,
-    headers: Vec<String>,
-    rows: Vec<Row<'a>>,
-}
-
-impl<'a> PaneParameters<'a> {
-    fn from_pane(
-        pane: TablePane<'a>,
-        area: Rect,
-        selection_width: u16,
-        highlight_state: Option<(&'a str, Options)>,
-    ) -> Self {
-        match pane {
-            TablePane::Facets {
-                filtered,
-                scores,
-                facets,
-                headers,
-                widths,
-            } => {
-                let widths_owned = widths.cloned().unwrap_or_else(|| {
-                    vec![
-                        Constraint::Percentage(50),
-                        Constraint::Length(8),
-                        Constraint::Length(8),
-                    ]
-                });
-                let column_widths = resolve_column_widths(
-                    area,
-                    &widths_owned,
-                    selection_width,
-                    TABLE_COLUMN_SPACING,
-                );
-                let rows = build_facet_rows(
-                    filtered,
-                    scores,
-                    facets,
-                    highlight_state,
-                    Some(&column_widths),
-                );
-                let headers = headers
-                    .cloned()
-                    .unwrap_or_else(|| vec!["Facet".into(), "Count".into(), "Score".into()]);
-                Self {
-                    widths: widths_owned,
-                    headers,
-                    rows,
-                }
-            }
-            TablePane::Files {
-                filtered,
-                scores,
-                files,
-                headers,
-                widths,
-            } => {
-                let widths_owned = widths.cloned().unwrap_or_else(|| {
-                    vec![
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(30),
-                        Constraint::Length(8),
-                    ]
-                });
-                let column_widths = resolve_column_widths(
-                    area,
-                    &widths_owned,
-                    selection_width,
-                    TABLE_COLUMN_SPACING,
-                );
-                let rows = build_file_rows(
-                    filtered,
-                    scores,
-                    files,
-                    highlight_state,
-                    Some(&column_widths),
-                );
-                let headers = headers
-                    .cloned()
-                    .unwrap_or_else(|| vec!["Path".into(), "Tags".into(), "Score".into()]);
-                Self {
-                    widths: widths_owned,
-                    headers,
-                    rows,
-                }
-            }
-        }
-    }
 }
 
 fn render_configured_table(
@@ -152,9 +65,9 @@ fn render_configured_table(
     table_state: &mut ratatui::widgets::TableState,
     highlight_spacing: HighlightSpacing,
     theme: &crate::theme::Theme,
-    params: PaneParameters<'_>,
+    descriptor: TableDescriptor<'_>,
 ) {
-    let header_cells = params
+    let header_cells = descriptor
         .headers
         .into_iter()
         .map(Cell::from)
@@ -164,7 +77,7 @@ fn render_configured_table(
         .height(1)
         .bottom_margin(1);
 
-    let table = Table::new(params.rows, params.widths)
+    let table = Table::new(descriptor.rows, descriptor.widths)
         .header(header)
         .column_spacing(TABLE_COLUMN_SPACING)
         .highlight_spacing(highlight_spacing)
@@ -232,101 +145,5 @@ fn selection_column_width(state: &ratatui::widgets::TableState, spacing: &Highli
         UnicodeWidthStr::width(HIGHLIGHT_SYMBOL) as u16
     } else {
         0
-    }
-}
-
-fn resolve_column_widths(
-    area: Rect,
-    constraints: &[Constraint],
-    selection_width: u16,
-    column_spacing: u16,
-) -> Vec<u16> {
-    if constraints.is_empty() {
-        return Vec::new();
-    }
-
-    let layout_area = Rect {
-        x: 0,
-        y: 0,
-        width: area.width,
-        height: 1,
-    };
-    let [_, columns_area] =
-        Layout::horizontal([Constraint::Length(selection_width), Constraint::Fill(0)])
-            .areas(layout_area);
-
-    Layout::horizontal(constraints.to_vec())
-        .spacing(column_spacing)
-        .split(columns_area)
-        .iter()
-        .map(|rect| rect.width)
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::{FacetRow, FileRow};
-
-    fn mock_rect() -> Rect {
-        Rect {
-            x: 0,
-            y: 0,
-            width: 80,
-            height: 10,
-        }
-    }
-
-    #[test]
-    fn facets_pane_uses_default_configuration() {
-        let filtered = Vec::<usize>::new();
-        let scores = Vec::<u16>::new();
-        let facets = Vec::<FacetRow>::new();
-        let pane = TablePane::Facets {
-            filtered: &filtered,
-            scores: &scores,
-            facets: &facets,
-            headers: None,
-            widths: None,
-        };
-
-        let params = PaneParameters::from_pane(pane, mock_rect(), 0, None);
-
-        assert_eq!(params.headers, vec!["Facet", "Count", "Score"]);
-        assert_eq!(
-            params.widths,
-            vec![
-                Constraint::Percentage(50),
-                Constraint::Length(8),
-                Constraint::Length(8),
-            ]
-        );
-        assert!(params.rows.is_empty());
-    }
-
-    #[test]
-    fn files_pane_respects_custom_configuration() {
-        let filtered = vec![0usize];
-        let scores = vec![42u16];
-        let files = vec![FileRow::new("file.txt", Vec::<String>::new())];
-        let headers = vec!["One".to_string(), "Two".to_string(), "Three".to_string()];
-        let widths = vec![
-            Constraint::Length(1),
-            Constraint::Length(2),
-            Constraint::Length(3),
-        ];
-        let pane = TablePane::Files {
-            filtered: &filtered,
-            scores: &scores,
-            files: &files,
-            headers: Some(&headers),
-            widths: Some(&widths),
-        };
-
-        let params = PaneParameters::from_pane(pane, mock_rect(), 0, None);
-
-        assert_eq!(params.headers, headers);
-        assert_eq!(params.widths, widths);
-        assert_eq!(params.rows.len(), filtered.len());
     }
 }

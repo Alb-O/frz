@@ -27,11 +27,9 @@ fn main() -> anyhow::Result<()> {
     match outcome.selection {
         Some(SearchSelection::File(file)) => println!("{}", file.path),
         Some(SearchSelection::Facet(facet)) => println!("Facet: {}", facet.name),
-        Some(SearchSelection::Plugin(plugin)) => println!(
-            "Plugin selection: {} @ {}",
-            plugin.mode.as_str(),
-            plugin.index
-        ),
+        Some(SearchSelection::Plugin(plugin)) => {
+            println!("Plugin selection: {} @ {}", plugin.mode.id(), plugin.index)
+        }
         None => println!("No selection"),
     }
 

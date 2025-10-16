@@ -1,5 +1,5 @@
-use anyhow::{Result, bail};
-use frz::{PaneUiConfig, SearchMode, UiConfig};
+use anyhow::{Result, anyhow, bail};
+use frz::{PaneUiConfig, SearchMode, SearchPluginRegistry, UiConfig};
 
 use super::raw::PaneSection;
 
@@ -39,16 +39,22 @@ pub(super) fn apply_pane_config(target: &mut PaneUiConfig, pane: PaneSection) {
 
 /// Parse a start mode string into a strongly typed [`SearchMode`].
 pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "facets" => Ok(SearchMode::FACETS),
-        "files" => Ok(SearchMode::FILES),
-        other => bail!("unknown start mode '{other}'"),
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        bail!("start mode cannot be empty");
     }
+    let id = trimmed.to_ascii_lowercase();
+    let registry = SearchPluginRegistry::new();
+    registry
+        .mode_by_id(&id)
+        .or_else(|| registry.mode_by_id(trimmed))
+        .ok_or_else(|| anyhow!("unknown start mode '{trimmed}'"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use frz::plugins::builtin::{facets, files};
 
     #[test]
     fn default_preset_is_returned_for_empty_input() {
@@ -56,15 +62,16 @@ mod tests {
         let default = UiConfig::default();
 
         assert_eq!(config.filter_label, default.filter_label);
-        let config_facets = config.pane(SearchMode::FACETS).unwrap();
-        let default_facets = default.pane(SearchMode::FACETS).unwrap();
+        let facets_mode = facets::mode();
+        let config_facets = config.pane(facets_mode).unwrap();
+        let default_facets = default.pane(facets_mode).unwrap();
         assert_eq!(config_facets.mode_title, default_facets.mode_title);
     }
 
     #[test]
     fn parse_mode_supports_known_variants() {
-        assert_eq!(parse_mode("facets").unwrap(), SearchMode::FACETS);
-        assert_eq!(parse_mode("FILES").unwrap(), SearchMode::FILES);
+        assert_eq!(parse_mode("facets").unwrap(), facets::mode());
+        assert_eq!(parse_mode("FILES").unwrap(), files::mode());
         assert!(parse_mode("unknown").is_err());
     }
 

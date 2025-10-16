@@ -1,4 +1,4 @@
-use frz::{FacetRow, FileRow, SearchData, SearchMode, SearchSelection, SearchUi, UiConfig};
+use frz::{FacetRow, FileRow, SearchData, SearchSelection, SearchUi, UiConfig};
 
 fn main() -> anyhow::Result<()> {
     // Build sample data
@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
     let search_ui = SearchUi::new(data)
         .with_ui_config(UiConfig::tags_and_files())
         .with_input_title("workspace-prototype")
-        .with_start_mode(SearchMode::FACETS);
+        .with_start_mode(frz::plugins::builtin::facets::mode());
     let outcome = search_ui.run()?;
     println!("Accepted? {}", outcome.accepted);
     match outcome.selection {
@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
         Some(SearchSelection::Facet(facet)) => println!("Selected facet: {}", facet.name),
         Some(SearchSelection::Plugin(plugin)) => println!(
             "Selected plugin result: {} @ {}",
-            plugin.mode.as_str(),
+            plugin.mode.id(),
             plugin.index
         ),
         None => println!("No selection"),

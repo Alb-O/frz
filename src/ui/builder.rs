@@ -62,7 +62,7 @@ impl SearchUi {
         let root = path.into();
         let (data, updates) = spawn_filesystem_index(root, options)?;
         let mut ui = Self::new(data);
-        ui.start_mode = Some(SearchMode::FILES);
+        ui.start_mode = Some(crate::plugins::builtin::files::mode());
         ui.index_updates = Some(updates);
         Ok(ui)
     }

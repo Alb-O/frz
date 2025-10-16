@@ -64,18 +64,34 @@ impl<'a> App<'a> {
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();
         let context_label = data.context_label.clone();
-        let index_progress = IndexProgress::from(&data);
+        let mut index_progress = IndexProgress::new();
         let worker_plugins = plugins.clone();
         let (search_tx, search_rx, search_latest_query_id) =
             search::spawn(data.clone(), worker_plugins);
         let mut tab_states = HashMap::new();
         for plugin in plugins.iter() {
-            tab_states.insert(plugin.mode(), TabBuffers::default());
+            let mode = plugin.mode();
+            tab_states.insert(mode, TabBuffers::default());
+            index_progress.register_dataset(plugin.descriptor().dataset.key());
         }
-        let mut mode = SearchMode::FACETS;
-        if let Some(plugin) = plugins.iter().next() {
-            mode = plugin.mode();
+        let mut ui = UiConfig::default();
+        for descriptor in plugins.descriptors() {
+            ui.register_plugin(descriptor);
         }
+        let mode = plugins
+            .iter()
+            .next()
+            .map(|plugin| plugin.mode())
+            .or_else(|| ui.tabs().first().map(|tab| tab.mode))
+            .unwrap_or_else(crate::plugins::builtin::facets::mode);
+
+        index_progress.refresh_from_data(
+            &data,
+            plugins.iter().map(|plugin| {
+                let dataset = plugin.dataset();
+                (dataset.key(), dataset.total_count(&data))
+            }),
+        );
 
         Self {
             data,
@@ -83,7 +99,7 @@ impl<'a> App<'a> {
             search_input: SearchInput::new(initial_query),
             table_state,
             input_title: context_label,
-            ui: UiConfig::default(),
+            ui,
             theme: Theme::default(),
             throbber_state: ThrobberState::default(),
             index_progress,
@@ -164,6 +180,16 @@ impl<'a> App<'a> {
         }
     }
 
+    pub(crate) fn dataset_totals(&self) -> Vec<(&'static str, usize)> {
+        self.plugins
+            .iter()
+            .map(|plugin| {
+                let dataset = plugin.dataset();
+                (dataset.key(), dataset.total_count(&self.data))
+            })
+            .collect()
+    }
+
     pub fn set_headers_for(&mut self, mode: SearchMode, headers: Vec<String>) {
         self.tab_states.entry(mode).or_default().headers = Some(headers);
     }
@@ -214,12 +240,12 @@ mod tests {
         prime_and_wait_for_results(&mut app);
         let facets_ready = app
             .tab_states
-            .get(&SearchMode::FACETS)
+            .get(&crate::plugins::builtin::facets::mode())
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         let files_ready = app
             .tab_states
-            .get(&SearchMode::FILES)
+            .get(&crate::plugins::builtin::files::mode())
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         assert!(
