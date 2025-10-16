@@ -10,7 +10,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::app_dirs;
-use crate::types::{FacetRow, FileRow, SearchData};
+use frz_plugin_api::{FacetRow, FileRow, SearchData};
 
 use super::FilesystemOptions;
 

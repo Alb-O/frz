@@ -1,0 +1,27 @@
+[package]
+name = "frz-plugin-api"
+version = "0.1.0"
+edition = "2024"
+authors = ["Albert O'Shea"]
+description = "Shared plugin interfaces and data types for frz"
+license = "MIT"
+
+[features]
+default = ["fs"]
+fs = ["ignore"]
+
+[dependencies]
+anyhow = "1"
+frizbee = "0.5"
+ignore = { version = "0.4", optional = true }
+ratatui = "0.29"
+unicode-truncate = "2.0"
+unicode-width = "0.2"
+indexmap = "2"
+
+[dependencies.serde]
+version = "1"
+features = ["derive"]
+
+[dev-dependencies]
+serde_json = "1"

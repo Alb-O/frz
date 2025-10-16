@@ -7,12 +7,17 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::components::progress::IndexProgress;
+use super::config::UiConfig;
 use crate::input::SearchInput;
-use crate::plugins::{PluginSelectionContext, SearchPluginRegistry};
+#[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;
+#[cfg(not(feature = "fs"))]
+type IndexUpdate = ();
 use crate::systems::search::{self, SearchCommand, SearchResult};
-use crate::theme::Theme;
-use crate::types::{SearchData, SearchMode, SearchSelection, UiConfig};
+use frz_plugin_api::{
+    PluginSelectionContext, SearchData, SearchMode, SearchPluginRegistry, SearchSelection,
+};
+pub use frz_tui::theme::Theme;
 
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
@@ -56,7 +61,9 @@ pub(crate) struct TabBuffers {
 
 impl<'a> App<'a> {
     pub fn new(data: SearchData) -> Self {
-        Self::with_plugins(data, SearchPluginRegistry::default())
+        let mut plugins = SearchPluginRegistry::default();
+        crate::plugins::builtin::register_builtin_plugins(&mut plugins);
+        Self::with_plugins(data, plugins)
     }
 
     pub fn with_plugins(data: SearchData, plugins: SearchPluginRegistry) -> Self {
@@ -204,7 +211,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use crate::types::{FacetRow, FileRow};
+    use frz_plugin_api::{FacetRow, FileRow};
 
     fn sample_data() -> SearchData {
         let mut data = SearchData::new();

@@ -7,6 +7,7 @@
 mod actions;
 mod builder;
 pub mod components;
+mod config;
 mod indexing;
 mod render;
 mod runtime;
@@ -14,5 +15,6 @@ mod search;
 mod state;
 
 pub use builder::SearchUi;
+pub use config::{PaneUiConfig, TabUiConfig, UiConfig};
 pub use runtime::run;
 pub use state::App;

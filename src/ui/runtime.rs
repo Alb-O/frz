@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
-use crate::types::{SearchData, SearchOutcome};
+use frz_plugin_api::{SearchData, SearchOutcome};
 
 use super::App;
 

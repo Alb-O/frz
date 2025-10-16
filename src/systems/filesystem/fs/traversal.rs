@@ -7,8 +7,7 @@ use std::time::Duration;
 use anyhow::Result;
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
 
-use crate::types::tags_for_relative_path;
-use crate::types::{FacetRow, FileRow, SearchData};
+use frz_plugin_api::{FacetRow, FileRow, SearchData, tags_for_relative_path};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::FilesystemOptions;

@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde_json::json;
 
 #[cfg(feature = "fs")]
-use frz::types::{PluginSelection, SearchOutcome, SearchSelection};
+use frz::{PluginSelection, SearchOutcome, SearchSelection};
 
 #[cfg(feature = "fs")]
 /// Print a plain-text representation of the search outcome.
@@ -67,7 +67,7 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 mod tests {
     use super::*;
     use frz::plugins::builtin::files;
-    use frz::types::{FacetRow, FileRow};
+    use frz::{FacetRow, FileRow};
     use serde_json::Value;
 
     #[test]

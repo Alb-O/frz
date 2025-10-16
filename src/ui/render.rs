@@ -5,8 +5,8 @@ use ratatui::{
 };
 
 use crate::systems::search;
-use crate::theme::Theme;
 use frizbee::Options;
+pub use frz_tui::theme::Theme;
 
 use super::App;
 use super::components::{

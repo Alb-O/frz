@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 
-use crate::types::{FacetRow, FileRow};
+use frz_plugin_api::{FacetRow, FileRow};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::MAX_BATCH_SIZE;

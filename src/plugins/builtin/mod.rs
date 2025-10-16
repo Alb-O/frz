@@ -1,15 +1,19 @@
-pub mod facets;
-pub mod files;
+pub mod facets {
+    pub use frz_plugin_facets::*;
+}
 
-use super::SearchPluginRegistry;
-use crate::plugins::descriptors::SearchPluginDescriptor;
+pub mod files {
+    pub use frz_plugin_files::*;
+}
 
-pub(crate) fn register_builtin_plugins(registry: &mut SearchPluginRegistry) {
+use frz_plugin_api::{SearchPluginDescriptor, SearchPluginRegistry};
+
+pub fn register_builtin_plugins(registry: &mut SearchPluginRegistry) {
     registry.register(facets::FacetSearchPlugin);
     registry.register(files::FileSearchPlugin);
 }
 
-pub(crate) fn descriptors() -> &'static [&'static SearchPluginDescriptor] {
+pub fn descriptors() -> &'static [&'static SearchPluginDescriptor] {
     &BUILTIN_DESCRIPTORS
 }
 

@@ -9,11 +9,11 @@ use anyhow::bail;
 use ratatui::layout::Constraint;
 
 use super::App;
-use crate::plugins::SearchPluginRegistry;
+use super::config::UiConfig;
 #[cfg(feature = "fs")]
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
-use crate::theme::Theme;
-use crate::types::{SearchData, SearchMode, SearchOutcome, UiConfig};
+use frz_plugin_api::{SearchData, SearchMode, SearchOutcome, SearchPluginRegistry};
+pub use frz_tui::theme::Theme;
 
 /// A small builder for configuring the interactive search UI.
 /// This presents an fzf-like API for setting prompts, column
@@ -34,6 +34,9 @@ pub struct SearchUi {
 impl SearchUi {
     /// Create a new search UI for the provided data.
     pub fn new(data: SearchData) -> Self {
+        let mut plugins = SearchPluginRegistry::default();
+        crate::plugins::builtin::register_builtin_plugins(&mut plugins);
+
         Self {
             data,
             input_title: None,
@@ -42,7 +45,7 @@ impl SearchUi {
             ui_config: None,
             theme: None,
             start_mode: None,
-            plugins: SearchPluginRegistry::default(),
+            plugins,
             #[cfg(feature = "fs")]
             index_updates: None,
         }
@@ -98,7 +101,7 @@ impl SearchUi {
     }
 
     pub fn with_theme_name(mut self, name: &str) -> Self {
-        if let Some(theme) = crate::theme::by_name(name) {
+        if let Some(theme) = frz_tui::theme::by_name(name) {
             self.theme = Some(theme);
         }
         self
@@ -164,5 +167,25 @@ impl SearchUi {
     fn with_headers(mut self, mode: SearchMode, headers: Vec<String>) -> Self {
         self.headers.insert(mode, headers);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::plugins::builtin::{facets, files};
+
+    #[test]
+    fn builder_registers_builtin_plugins() {
+        let ui = SearchUi::new(SearchData::new());
+
+        assert!(
+            ui.plugins.contains_mode(facets::mode()),
+            "expected facets plugin to be registered"
+        );
+        assert!(
+            ui.plugins.contains_mode(files::mode()),
+            "expected files plugin to be registered"
+        );
     }
 }

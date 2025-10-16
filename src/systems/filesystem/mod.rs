@@ -3,7 +3,7 @@ mod fs;
 
 use std::sync::Arc;
 
-use crate::types::{FacetRow, FileRow, SearchData};
+use frz_plugin_api::{FacetRow, FileRow, SearchData};
 
 #[cfg(not(feature = "fs"))]
 use std::path::PathBuf;

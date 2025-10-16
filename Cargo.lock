@@ -483,15 +483,61 @@ dependencies = [
  "config",
  "directories",
  "frizbee",
+ "frz-plugin-api",
+ "frz-plugin-facets",
+ "frz-plugin-files",
+ "frz-tui",
  "ignore",
- "indexmap",
  "ratatui",
  "serde",
  "serde_json",
  "tempfile",
  "throbber-widgets-tui",
  "tui-textarea",
- "unicode-truncate",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
+name = "frz-plugin-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "frizbee",
+ "ignore",
+ "indexmap",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "unicode-truncate 2.0.0",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
+name = "frz-plugin-facets"
+version = "0.1.0"
+dependencies = [
+ "frz-plugin-api",
+ "frz-tui",
+ "ratatui",
+]
+
+[[package]]
+name = "frz-plugin-files"
+version = "0.1.0"
+dependencies = [
+ "frz-plugin-api",
+ "frz-tui",
+ "ratatui",
+]
+
+[[package]]
+name = "frz-tui"
+version = "0.1.0"
+dependencies = [
+ "frizbee",
+ "frz-plugin-api",
+ "ratatui",
+ "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
 ]
 
@@ -873,7 +919,7 @@ dependencies = [
  "paste",
  "strum",
  "unicode-segmentation",
- "unicode-truncate",
+ "unicode-truncate 1.1.0",
  "unicode-width 0.2.0",
 ]
 
@@ -1297,6 +1343,17 @@ dependencies = [
  "itertools",
  "unicode-segmentation",
  "unicode-width 0.1.14",
+]
+
+[[package]]
+name = "unicode-truncate"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fbf03860ff438702f3910ca5f28f8dac63c1c11e7efb5012b8b175493606330"
+dependencies = [
+ "itertools",
+ "unicode-segmentation",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@
 //! This module provides a wrapper around `TextArea` configured for single-line input,
 //! similar to `<input>` in HTML.
 
-use crate::theme::Theme;
+pub use ::frz_tui::theme::Theme;
 use ratatui::{Frame, layout::Rect};
 use tui_textarea::{Input, Key, TextArea};
 

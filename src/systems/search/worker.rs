@@ -3,9 +3,8 @@ use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use super::commands::{SearchCommand, SearchResult, SearchStream};
-use crate::plugins::{PluginQueryContext, SearchPluginRegistry};
-use crate::types::SearchData;
+use super::commands::{SearchCommand, SearchResult};
+use frz_plugin_api::{PluginQueryContext, SearchData, SearchPluginRegistry, SearchStream};
 
 #[cfg(feature = "fs")]
 use crate::systems::filesystem::merge_update;
@@ -73,7 +72,7 @@ fn handle_command(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SearchData;
+    use frz_plugin_api::SearchData;
 
     #[test]
     fn shutdown_command_stops_worker() {

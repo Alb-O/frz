@@ -1,0 +1,12 @@
+[package]
+name = "frz-plugin-files"
+version = "0.1.0"
+edition = "2024"
+authors = ["Albert O'Shea"]
+description = "Built-in file search plugin for frz"
+license = "MIT"
+
+[dependencies]
+frz-plugin-api = { path = "../plugin-api" }
+frz-tui = { path = "../tui" }
+ratatui = "0.29"

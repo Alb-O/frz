@@ -6,11 +6,14 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "fs")]
 use std::sync::mpsc::TryRecvError;
 
+#[cfg(feature = "fs")]
 use crate::systems::filesystem::IndexUpdate;
 #[cfg(feature = "fs")]
 use crate::systems::filesystem::merge_update;
+#[cfg(not(feature = "fs"))]
+type IndexUpdate = ();
 #[cfg(feature = "fs")]
-use crate::types::SearchData;
+use frz_plugin_api::SearchData;
 
 use super::App;
 #[cfg(feature = "fs")]
@@ -140,7 +143,7 @@ impl<'a> App<'a> {
 mod tests {
     use super::*;
     use crate::systems::filesystem::ProgressSnapshot;
-    use crate::types::{FacetRow, FileRow, SearchData};
+    use frz_plugin_api::{FacetRow, FileRow, SearchData};
     use std::time::{Duration, Instant};
 
     fn wait_for_results(app: &mut App) {

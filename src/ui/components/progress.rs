@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::types::SearchData;
+use frz_plugin_api::SearchData;
 
 #[derive(Default, Clone, Debug)]
 struct ProgressEntry {

@@ -1,7 +1,7 @@
 use crate::input::SearchInput;
-use crate::theme::Theme;
-use crate::types::SearchMode;
-use crate::types::UiConfig;
+use crate::ui::UiConfig;
+use frz_plugin_api::SearchMode;
+pub use frz_tui::theme::Theme;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
