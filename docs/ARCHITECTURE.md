@@ -33,8 +33,8 @@ Plugins build on top of systems to deliver user-facing experiences. A plugin is
 an implementation of `SearchPlugin` from `crates/plugin-api` alongside a static
 `SearchPluginDescriptor`. Plugins describe how to stream search results, how to
 select items, and how to render tables through dataset implementations. Built-in
-plugins are provided by dedicated crates (`frz-plugin-files`,
-`frz-plugin-attributes`) that are re-exported from `src/plugins/builtin/` so the app
+plugins are provided by dedicated crates (`frz-plugins-files`,
+`frz-plugins-attributes`) that are re-exported from `src/plugins/builtin/` so the app
 crate can register them without special casing.
 
 To keep plugin registration ergonomic the binary crate uses

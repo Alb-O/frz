@@ -1,5 +1,5 @@
 [package]
-name = "frz-plugin-files"
+name = "frz-plugins-files"
 version = "0.1.0"
 edition = "2024"
 authors = ["Albert O'Shea"]
@@ -7,6 +7,6 @@ description = "Built-in file search plugin for frz"
 license = "MIT"
 
 [dependencies]
-frz-plugin-api = { path = "../plugin-api" }
-frz-tui = { path = "../tui" }
+frz-plugin-api = { path = "../../plugin-api", version = "0.1" }
+frz-tui = { path = "../../tui", version = "0.1" }
 ratatui = "0.29"

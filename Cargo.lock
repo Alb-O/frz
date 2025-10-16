@@ -476,7 +476,7 @@ dependencies = [
 
 [[package]]
 name = "frz"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -484,8 +484,8 @@ dependencies = [
  "directories",
  "frizbee",
  "frz-plugin-api",
- "frz-plugin-attributes",
- "frz-plugin-files",
+ "frz-plugins-attributes",
+ "frz-plugins-files",
  "frz-tui",
  "ignore",
  "ratatui",
@@ -512,7 +512,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "frz-plugin-attributes"
+name = "frz-plugins-attributes"
 version = "0.1.0"
 dependencies = [
  "frz-plugin-api",
@@ -521,7 +521,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "frz-plugin-files"
+name = "frz-plugins-files"
 version = "0.1.0"
 dependencies = [
  "frz-plugin-api",

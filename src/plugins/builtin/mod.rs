@@ -1,9 +1,9 @@
 pub mod attributes {
-    pub use frz_plugin_attributes::*;
+    pub use frz_plugins_attributes::*;
 }
 
 pub mod files {
-    pub use frz_plugin_files::*;
+    pub use frz_plugins_files::*;
 }
 
 use frz_plugin_api::{SearchPluginDescriptor, SearchPluginRegistry};

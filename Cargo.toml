@@ -1,14 +1,14 @@
 [workspace]
 members = [
     "crates/plugin-api",
-    "crates/plugin-files",
-    "crates/plugin-attributes",
+    "crates/plugins/files",
+    "crates/plugins/attributes",
     "crates/tui",
 ]
 
 [package]
 name = "frz"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2024"
 description = "TUI fuzzy finder revolving around tabular data, utilising Saghen's Frizbee crate for matching"
 license = "MIT"
@@ -28,10 +28,10 @@ directories = "6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 unicode-width = "0.2"
-frz-plugin-api = { path = "crates/plugin-api" }
-frz-plugin-files = { path = "crates/plugin-files" }
-frz-plugin-attributes = { path = "crates/plugin-attributes" }
-frz-tui = { path = "crates/tui" }
+frz-plugin-api = { path = "crates/plugin-api", version = "0.1" }
+frz-plugins-files = { path = "crates/plugins/files", version = "0.1" }
+frz-plugins-attributes = { path = "crates/plugins/attributes", version = "0.1" }
+frz-tui = { path = "crates/tui", version = "0.1" }
 
 [dev-dependencies]
 tempfile = "3"
