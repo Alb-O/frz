@@ -1,4 +1,5 @@
 use std::sync::mpsc::TryRecvError;
+use std::time::Instant;
 
 use super::App;
 use crate::systems::filesystem::IndexUpdate;
@@ -17,7 +18,9 @@ impl<'a> App<'a> {
         // unless the user currently has a query edit that hasn't been
         // processed yet. This lets indexing continue without the visible result
         // list jumping around while the user is idle.
-        if self.search.should_refresh_after_index_update() {
+        if self.initial_results_deadline.is_some()
+            || self.search.should_refresh_after_index_update()
+        {
             self.issue_search();
         }
     }
@@ -48,6 +51,12 @@ impl<'a> App<'a> {
         let entry = self.tab_states.entry(result.mode).or_default();
         entry.filtered = result.indices;
         entry.scores = result.scores;
+
+        if let Some(deadline) = self.initial_results_deadline {
+            if !entry.filtered.is_empty() || Instant::now() >= deadline {
+                self.initial_results_deadline = None;
+            }
+        }
 
         self.ensure_selection();
 

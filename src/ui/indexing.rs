@@ -1,4 +1,5 @@
 use std::sync::mpsc::{Receiver, TryRecvError};
+use std::thread;
 use std::time::{Duration, Instant};
 
 // Indexing work intentionally runs under strict per-tick limits so UI rendering stays
@@ -63,7 +64,14 @@ impl<'a> App<'a> {
         }
 
         if should_request {
+            let waiting_for_initial = self.filtered_len() == 0;
+            if waiting_for_initial {
+                self.initial_results_deadline = Some(Instant::now() + Duration::from_millis(250));
+            }
             self.request_search_after_index_update();
+            if waiting_for_initial {
+                self.wait_for_initial_results();
+            }
         }
     }
 
@@ -119,6 +127,36 @@ impl<'a> App<'a> {
         }
 
         changed
+    }
+
+    fn wait_for_initial_results(&mut self) {
+        let Some(deadline) = self.initial_results_deadline else {
+            return;
+        };
+
+        if Instant::now() >= deadline {
+            self.initial_results_deadline = None;
+            return;
+        }
+
+        while Instant::now() < deadline {
+            self.pump_search_results();
+            if self.filtered_len() > 0 {
+                return;
+            }
+
+            if !self.search.is_in_flight() {
+                thread::sleep(Duration::from_millis(10));
+                continue;
+            }
+
+            thread::sleep(Duration::from_millis(10));
+        }
+
+        self.pump_search_results();
+        if Instant::now() >= deadline {
+            self.initial_results_deadline = None;
+        }
     }
 }
 

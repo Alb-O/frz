@@ -79,6 +79,7 @@ impl SearchRuntime {
         if complete {
             self.in_flight = false;
             self.revisions.last_applied = self.revisions.pending_result;
+            self.revisions.last_user_input = self.revisions.last_applied;
         }
     }
 

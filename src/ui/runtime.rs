@@ -100,11 +100,14 @@ impl<'a> App<'a> {
         }
 
         let deadline = Instant::now() + Duration::from_millis(250);
-        while self.search.is_in_flight() && Instant::now() < deadline {
+        self.initial_results_deadline = Some(deadline);
+        while Instant::now() < deadline {
+            self.pump_index_updates();
             self.pump_search_results();
-            if self.search.is_in_flight() {
-                thread::sleep(Duration::from_millis(10));
+            if !self.search.is_in_flight() {
+                break;
             }
+            thread::sleep(Duration::from_millis(10));
         }
         self.pump_search_results();
     }

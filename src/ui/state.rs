@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, mpsc::Receiver};
+use std::time::Instant;
 
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
@@ -39,6 +40,7 @@ pub struct App<'a> {
     plugins: SearchPluginRegistry,
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search: SearchRuntime,
+    pub(crate) initial_results_deadline: Option<Instant>,
 }
 
 #[derive(Default)]
@@ -106,6 +108,7 @@ impl<'a> App<'a> {
             plugins,
             index_updates: None,
             search,
+            initial_results_deadline: None,
         }
     }
 
