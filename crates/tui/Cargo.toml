@@ -1,6 +1,6 @@
 [package]
 name = "frz-tui"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Albert O'Shea"]
 description = "Shared TUI utilities for frz"
@@ -11,6 +11,6 @@ frizbee = "0.5"
 ratatui = "0.29"
 unicode-truncate = "2.0"
 unicode-width = "0.2"
-frz-plugin-api = { path = "../plugin-api", version = "0.1" }
+frz-plugin-api = { path = "../plugin-api", version = "0.2" }
 tui-textarea = "0.7"
 throbber-widgets-tui = "0.9"

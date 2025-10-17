@@ -494,7 +494,7 @@ dependencies = [
 
 [[package]]
 name = "frz"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "frz-plugin-api"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "frizbee",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "frz-plugins-attributes"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frz-plugin-api",
  "frz-tui",
@@ -544,7 +544,7 @@ dependencies = [
 
 [[package]]
 name = "frz-plugins-files"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frz-plugin-api",
  "frz-tui",
@@ -553,7 +553,7 @@ dependencies = [
 
 [[package]]
 name = "frz-tui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frizbee",
  "frz-plugin-api",
