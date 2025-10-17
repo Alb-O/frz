@@ -52,10 +52,10 @@ impl<'a> App<'a> {
         entry.filtered = result.indices;
         entry.scores = result.scores;
 
-        if let Some(deadline) = self.initial_results_deadline {
-            if !entry.filtered.is_empty() || Instant::now() >= deadline {
-                self.initial_results_deadline = None;
-            }
+        if let Some(deadline) = self.initial_results_deadline
+            && (!entry.filtered.is_empty() || Instant::now() >= deadline)
+        {
+            self.initial_results_deadline = None;
         }
 
         self.ensure_selection();
