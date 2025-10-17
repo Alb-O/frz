@@ -69,7 +69,98 @@ fn handle_command(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frz_plugin_api::SearchData;
+    use std::time::Duration;
+
+    use frz_plugin_api::{
+        PluginSelectionContext, SearchData, SearchMode, SearchSelection,
+        descriptors::{
+            SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
+            TableDescriptor,
+        },
+        registry::SearchPlugin,
+        search::SearchStream,
+        types::FileRow,
+    };
+
+    struct DummyDataset;
+
+    impl SearchPluginDataset for DummyDataset {
+        fn key(&self) -> &'static str {
+            "dummy"
+        }
+
+        fn total_count(&self, _data: &SearchData) -> usize {
+            0
+        }
+
+        fn build_table<'a>(&self, _context: TableContext<'a>) -> TableDescriptor<'a> {
+            TableDescriptor::new(Vec::new(), Vec::new(), Vec::new())
+        }
+    }
+
+    static DATASET: DummyDataset = DummyDataset;
+
+    static DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+        id: "dummy",
+        ui: SearchPluginUiDefinition {
+            tab_label: "Dummy",
+            mode_title: "Dummy",
+            hint: "",
+            table_title: "",
+            count_label: "",
+        },
+        dataset: &DATASET,
+    };
+
+    fn mode() -> SearchMode {
+        SearchMode::from_descriptor(&DESCRIPTOR)
+    }
+
+    #[derive(Clone)]
+    struct DummyPlugin;
+
+    impl SearchPlugin for DummyPlugin {
+        fn descriptor(&self) -> &'static SearchPluginDescriptor {
+            &DESCRIPTOR
+        }
+
+        fn stream(
+            &self,
+            query: &str,
+            stream: SearchStream<'_>,
+            context: PluginQueryContext<'_>,
+        ) -> bool {
+            let query = query.to_lowercase();
+            let indices: Vec<usize> = context
+                .data()
+                .files
+                .iter()
+                .enumerate()
+                .filter_map(|(index, file)| {
+                    if file.path.to_lowercase().contains(&query) {
+                        Some(index)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            let scores = vec![u16::MAX; indices.len()];
+            stream.send(indices, scores, true)
+        }
+
+        fn selection(
+            &self,
+            context: PluginSelectionContext<'_>,
+            index: usize,
+        ) -> Option<SearchSelection> {
+            context
+                .data()
+                .files
+                .get(index)
+                .cloned()
+                .map(SearchSelection::File)
+        }
+    }
 
     #[test]
     fn shutdown_command_stops_worker() {
@@ -78,5 +169,39 @@ mod tests {
         let (tx, _rx, latest) = spawn(data, plugins);
         assert_eq!(latest.load(std::sync::atomic::Ordering::Relaxed), 0);
         tx.send(SearchCommand::Shutdown).unwrap();
+    }
+
+    #[test]
+    fn streaming_plugin_results_are_forwarded() {
+        let data = SearchData::new().with_files(vec![
+            FileRow::new("src/lib.rs", Vec::<String>::new()),
+            FileRow::new("README.md", Vec::<String>::new()),
+        ]);
+
+        let mut registry = SearchPluginRegistry::empty();
+        registry.register(DummyPlugin).expect("register plugin");
+
+        let (command_tx, result_rx, _) = spawn(data, registry);
+        command_tx
+            .send(SearchCommand::Query {
+                id: 1,
+                query: "readme".to_string(),
+                mode: mode(),
+            })
+            .expect("send query");
+
+        let result = result_rx
+            .recv_timeout(Duration::from_secs(1))
+            .expect("receive search result");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.mode, mode());
+        assert_eq!(result.indices, vec![1]);
+        assert_eq!(result.scores, vec![u16::MAX]);
+        assert!(result.complete);
+
+        command_tx
+            .send(SearchCommand::Shutdown)
+            .expect("send shutdown");
     }
 }

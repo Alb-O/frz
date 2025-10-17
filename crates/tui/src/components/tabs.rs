@@ -234,6 +234,8 @@ mod tests {
             TableDescriptor,
         },
     };
+    use ratatui::{Terminal, backend::TestBackend};
+    use throbber_widgets_tui::ThrobberState;
 
     struct DummyDataset;
 
@@ -386,5 +388,59 @@ mod tests {
             },
         ];
         assert!(calculate_tabs_width(&tabs) >= 12);
+    }
+
+    #[test]
+    fn rendering_input_with_tabs_populates_buffer() {
+        let backend = TestBackend::new(40, 3);
+        let mut terminal = Terminal::new(backend).expect("create terminal");
+        let input = SearchInput::new("hello");
+        let tabs = vec![
+            TabItem {
+                mode: mode(&TAG_DESCRIPTOR),
+                label: TAG_DESCRIPTOR.ui.tab_label,
+            },
+            TabItem {
+                mode: mode(&FILE_DESCRIPTOR),
+                label: FILE_DESCRIPTOR.ui.tab_label,
+            },
+        ];
+        let theme = Theme::default();
+        let throbber_state = ThrobberState::default();
+        let current_mode = mode(&FILE_DESCRIPTOR);
+
+        terminal
+            .draw(|frame| {
+                let area = frame.area();
+                let context = InputContext {
+                    search_input: &input,
+                    input_title: Some("Search"),
+                    pane_title: None,
+                    mode: current_mode,
+                    tabs: &tabs,
+                    area,
+                    theme: &theme,
+                };
+                let progress = ProgressState {
+                    progress_text: "Indexing files",
+                    progress_complete: true,
+                    throbber_state: &throbber_state,
+                };
+                render_input_with_tabs(frame, context, progress);
+            })
+            .expect("render frame");
+
+        let buffer = terminal.backend().buffer();
+        let width = buffer.area.width as usize;
+        let first_row = buffer
+            .content
+            .chunks(width)
+            .next()
+            .expect("first row available");
+        let rendered: String = first_row.iter().map(|cell| cell.symbol()).collect();
+
+        assert!(rendered.contains("Search"));
+        assert!(rendered.contains("hello"));
+        assert!(rendered.contains("Indexing files"));
     }
 }
