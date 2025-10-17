@@ -1,3 +1,4 @@
+#[path = "../capabilities/mod.rs"]
 pub mod capabilities;
 pub mod context;
 pub mod descriptors;

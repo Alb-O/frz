@@ -527,6 +527,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror 1.0.69",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
