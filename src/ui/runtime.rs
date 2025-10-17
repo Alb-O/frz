@@ -99,17 +99,21 @@ impl<'a> App<'a> {
             self.request_search();
         }
 
-        let deadline = Instant::now() + Duration::from_millis(250);
-        self.initial_results_deadline = Some(deadline);
-        while Instant::now() < deadline {
-            self.pump_index_updates();
-            self.pump_search_results();
-            if !self.search.is_in_flight() {
-                break;
+        if let Some(timeout) = self.initial_results_timeout {
+            let deadline = Instant::now() + timeout;
+            self.initial_results_deadline = Some(deadline);
+            while Instant::now() < deadline {
+                self.pump_index_updates();
+                self.pump_search_results();
+                if !self.search.is_in_flight() {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(10));
             }
-            thread::sleep(Duration::from_millis(10));
+            self.pump_search_results();
+        } else {
+            self.initial_results_deadline = None;
         }
-        self.pump_search_results();
     }
 }
 
@@ -118,8 +122,11 @@ mod tests {
     use super::*;
     use crate::plugins::builtin::files;
     use crate::systems::filesystem::{IndexUpdate, ProgressSnapshot};
+    use frz_plugin_api::search::Fs;
     use frz_plugin_api::{AttributeRow, FileRow, SearchData};
     use ratatui::{Terminal, backend::TestBackend};
+    use std::io;
+    use std::path::{Path, PathBuf};
     use std::sync::mpsc;
 
     fn sample_index_update() -> IndexUpdate {
@@ -173,6 +180,112 @@ mod tests {
         assert!(
             app.filtered_len() > 0,
             "expected initial search results to populate without any user input"
+        );
+    }
+
+    struct MassiveSyntheticFs {
+        total: usize,
+    }
+
+    impl MassiveSyntheticFs {
+        fn new(total: usize) -> Self {
+            Self { total }
+        }
+    }
+
+    struct MassiveIter {
+        remaining: usize,
+        index: usize,
+    }
+
+    impl Iterator for MassiveIter {
+        type Item = io::Result<PathBuf>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.index >= self.remaining {
+                return None;
+            }
+
+            let dir = self.index / 512;
+            let path = PathBuf::from(format!("dir_{dir:04}/file_{:06}.txt", self.index));
+            self.index += 1;
+            Some(Ok(path))
+        }
+    }
+
+    impl Fs for MassiveSyntheticFs {
+        type Iter = MassiveIter;
+
+        fn walk(&self, _root: &Path) -> io::Result<Self::Iter> {
+            Ok(MassiveIter {
+                remaining: self.total,
+                index: 0,
+            })
+        }
+    }
+
+    #[test]
+    fn massive_filesystem_initial_load_remains_empty_snapshot() {
+        const TOTAL_FILES: usize = 125_000;
+
+        let fs = MassiveSyntheticFs::new(TOTAL_FILES);
+        let data = SearchData::from_filesystem_with(&fs, Path::new("/synthetic")).unwrap();
+        assert!(
+            data.files.len() >= 100_000,
+            "expected synthetic filesystem to exceed 100k entries"
+        );
+        let total_files = data.files.len();
+        let total_attributes = data.attributes.len();
+        drop(data);
+
+        let mut app = App::new(SearchData::new());
+        app.set_mode(files::mode());
+        app.disable_initial_results_timeout();
+        app.hydrate_initial_results();
+
+        assert_eq!(
+            app.filtered_len(),
+            0,
+            "no results should be visible during load"
+        );
+
+        let (tx, rx) = mpsc::channel();
+        app.set_index_updates(rx);
+        tx.send(IndexUpdate {
+            files: Vec::<FileRow>::new().into(),
+            attributes: Vec::<AttributeRow>::new().into(),
+            progress: ProgressSnapshot {
+                indexed_attributes: 0,
+                indexed_files: 0,
+                total_attributes: Some(total_attributes),
+                total_files: Some(total_files),
+                complete: false,
+            },
+            reset: true,
+            cached_data: None,
+        })
+        .unwrap();
+
+        app.pump_index_updates();
+        assert_eq!(
+            app.filtered_len(),
+            0,
+            "results should remain empty while indexing"
+        );
+
+        app.throbber_state.calc_next();
+
+        let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+
+        let view = {
+            let backend = terminal.backend();
+            backend.to_string()
+        };
+
+        insta::assert_snapshot!(
+            "massive_filesystem_initial_load_remains_empty_snapshot",
+            view
         );
     }
 }

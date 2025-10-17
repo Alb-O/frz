@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, mpsc::Receiver};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
@@ -41,6 +41,7 @@ pub struct App<'a> {
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search: SearchRuntime,
     pub(crate) initial_results_deadline: Option<Instant>,
+    pub(crate) initial_results_timeout: Option<Duration>,
 }
 
 #[derive(Default)]
@@ -109,6 +110,7 @@ impl<'a> App<'a> {
             index_updates: None,
             search,
             initial_results_deadline: None,
+            initial_results_timeout: Some(Duration::from_millis(250)),
         }
     }
 
@@ -192,6 +194,11 @@ impl<'a> App<'a> {
 
     pub(crate) fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
         self.plugins.preview_split(mode)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn disable_initial_results_timeout(&mut self) {
+        self.initial_results_timeout = None;
     }
 }
 

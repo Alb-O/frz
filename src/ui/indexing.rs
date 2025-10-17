@@ -66,11 +66,19 @@ impl<'a> App<'a> {
         if should_request {
             let waiting_for_initial = self.filtered_len() == 0;
             if waiting_for_initial {
-                self.initial_results_deadline = Some(Instant::now() + Duration::from_millis(250));
+                if let Some(timeout) = self.initial_results_timeout {
+                    self.initial_results_deadline = Some(Instant::now() + timeout);
+                } else {
+                    self.initial_results_deadline = Some(Instant::now());
+                }
             }
             self.request_search_after_index_update();
             if waiting_for_initial {
-                self.wait_for_initial_results();
+                if self.initial_results_timeout.is_some() {
+                    self.wait_for_initial_results();
+                } else {
+                    self.initial_results_deadline = None;
+                }
             }
         }
     }
