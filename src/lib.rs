@@ -6,6 +6,7 @@
 
 pub mod app_dirs;
 pub mod plugins;
+pub mod previewers;
 mod systems;
 pub mod tui;
 pub mod ui;
