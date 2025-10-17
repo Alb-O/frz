@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow, bail};
+use frz::plugins::api::{SearchMode, SearchPluginRegistry};
 use frz::{PaneUiConfig, UiConfig};
-use frz_plugin_api::{SearchMode, SearchPluginRegistry};
 
 use super::raw::PaneSection;
 

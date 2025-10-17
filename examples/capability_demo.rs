@@ -1,7 +1,7 @@
 fn main() {
     use std::sync::atomic::Ordering;
 
-    use frz_plugin_api::{
+    use frz::plugins::api::{
         Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchPlugin,
         SearchPluginRegistry, SearchSelection, SearchStream,
         descriptors::{
@@ -31,7 +31,7 @@ fn main() {
             "capability-demo"
         }
 
-        fn total_count(&self, _data: &frz_plugin_api::SearchData) -> usize {
+        fn total_count(&self, _data: &frz::plugins::api::SearchData) -> usize {
             0
         }
 

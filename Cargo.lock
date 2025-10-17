@@ -501,63 +501,14 @@ dependencies = [
  "config",
  "directories",
  "frizbee",
- "frz-plugin-api",
- "frz-plugins-attributes",
- "frz-plugins-files",
- "frz-tui",
  "ignore",
+ "indexmap",
  "insta",
  "ratatui",
  "serde",
  "serde_json",
  "tempfile",
  "thiserror 1.0.69",
- "throbber-widgets-tui",
- "unicode-width 0.2.0",
-]
-
-[[package]]
-name = "frz-plugin-api"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "frizbee",
- "ignore",
- "indexmap",
- "ratatui",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 1.0.69",
- "unicode-truncate 2.0.0",
- "unicode-width 0.2.0",
-]
-
-[[package]]
-name = "frz-plugins-attributes"
-version = "0.2.0"
-dependencies = [
- "frz-plugin-api",
- "frz-tui",
- "ratatui",
-]
-
-[[package]]
-name = "frz-plugins-files"
-version = "0.2.0"
-dependencies = [
- "frz-plugin-api",
- "frz-tui",
- "ratatui",
-]
-
-[[package]]
-name = "frz-tui"
-version = "0.2.0"
-dependencies = [
- "frizbee",
- "frz-plugin-api",
- "ratatui",
  "throbber-widgets-tui",
  "tui-textarea",
  "unicode-truncate 2.0.0",

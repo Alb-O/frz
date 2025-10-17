@@ -8,11 +8,11 @@ use std::time::{Duration, Instant};
 // `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
 // yield back to drawing and input handling.
 
+use crate::plugins::api::SearchData;
 use crate::systems::filesystem::{IndexUpdate, merge_update};
-use frz_plugin_api::SearchData;
 
 use super::App;
-use frz_tui::components::IndexProgress;
+use crate::tui::components::IndexProgress;
 
 impl<'a> App<'a> {
     const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
@@ -171,8 +171,8 @@ impl<'a> App<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::plugins::api::{AttributeRow, FileRow, SearchData};
     use crate::systems::filesystem::ProgressSnapshot;
-    use frz_plugin_api::{AttributeRow, FileRow, SearchData};
     use std::time::{Duration, Instant};
 
     fn wait_for_results(app: &mut App) {

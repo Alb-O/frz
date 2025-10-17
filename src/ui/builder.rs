@@ -6,9 +6,9 @@ use ratatui::layout::Constraint;
 
 use super::App;
 use super::config::UiConfig;
+use crate::plugins::api::{SearchData, SearchMode, SearchOutcome, SearchPluginRegistry};
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
-use frz_plugin_api::{SearchData, SearchMode, SearchOutcome, SearchPluginRegistry};
-pub use frz_tui::theme::Theme;
+pub use crate::tui::theme::Theme;
 
 /// A small builder for configuring the interactive search UI.
 /// This presents an fzf-like API for setting prompts, column
@@ -88,7 +88,7 @@ impl SearchUi {
     }
 
     pub fn with_theme_name(mut self, name: &str) -> Self {
-        if let Some(theme) = frz_tui::theme::by_name(name) {
+        if let Some(theme) = crate::tui::theme::by_name(name) {
             self.theme = Some(theme);
         }
         self

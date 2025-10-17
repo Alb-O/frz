@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let cli = parse_cli();
 
     if cli.list_themes {
-        for name in frz_tui::theme::NAMES {
+        for name in frz::tui::theme::NAMES {
             println!("{name}");
         }
         return Ok(());

@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
-use frz_plugin_api::{SearchData, SearchOutcome};
+use crate::plugins::api::{SearchData, SearchOutcome};
 
 use super::App;
 
@@ -120,10 +120,9 @@ impl<'a> App<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::plugins::api::{AttributeRow, FileRow, SearchData, search::Fs};
     use crate::plugins::builtin::files;
     use crate::systems::filesystem::{IndexUpdate, ProgressSnapshot};
-    use frz_plugin_api::search::Fs;
-    use frz_plugin_api::{AttributeRow, FileRow, SearchData};
     use ratatui::{Terminal, backend::TestBackend};
     use std::io;
     use std::path::{Path, PathBuf};

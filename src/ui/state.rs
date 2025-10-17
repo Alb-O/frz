@@ -6,15 +6,15 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::config::UiConfig;
-use crate::systems::filesystem::IndexUpdate;
-use crate::systems::search;
-use frz_plugin_api::{
+use crate::plugins::api::{
     PluginSelectionContext, PreviewSplit, SearchData, SearchMode, SearchPluginRegistry,
     SearchSelection,
 };
-use frz_tui::components::IndexProgress;
-use frz_tui::input::SearchInput;
-pub use frz_tui::theme::Theme;
+use crate::systems::filesystem::IndexUpdate;
+use crate::systems::search;
+use crate::tui::components::IndexProgress;
+use crate::tui::input::SearchInput;
+pub use crate::tui::theme::Theme;
 
 mod search_runtime;
 
@@ -202,7 +202,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use frz_plugin_api::{AttributeRow, FileRow};
+    use crate::plugins::api::{AttributeRow, FileRow};
 
     fn sample_data() -> SearchData {
         let mut data = SearchData::new();

@@ -4,7 +4,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult};
-use frz_plugin_api::{PluginQueryContext, SearchData, SearchPluginRegistry, SearchStream};
+use crate::plugins::api::{PluginQueryContext, SearchData, SearchPluginRegistry, SearchStream};
 
 use crate::systems::filesystem::merge_update;
 
@@ -71,7 +71,7 @@ mod tests {
     use super::*;
     use std::time::Duration;
 
-    use frz_plugin_api::{
+    use crate::plugins::api::{
         PluginSelectionContext, SearchData, SearchMode, SearchSelection,
         descriptors::{
             SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,

@@ -1,12 +1,7 @@
-pub mod attributes {
-    pub use frz_plugins_attributes::*;
-}
+pub mod attributes;
+pub mod files;
 
-pub mod files {
-    pub use frz_plugins_files::*;
-}
-
-use frz_plugin_api::{PluginRegistryError, SearchPluginDescriptor, SearchPluginRegistry};
+use crate::plugins::api::{PluginRegistryError, SearchPluginDescriptor, SearchPluginRegistry};
 
 pub fn register_builtin_plugins(
     registry: &mut SearchPluginRegistry,

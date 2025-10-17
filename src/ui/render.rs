@@ -4,13 +4,13 @@ use ratatui::{
     widgets::{Clear, Paragraph},
 };
 
+use crate::plugins::api::PreviewSplitContext;
 use crate::systems::search;
-use frizbee::Options;
-use frz_plugin_api::PreviewSplitContext;
-use frz_tui::components::{
+use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
 };
-pub use frz_tui::theme::Theme;
+pub use crate::tui::theme::Theme;
+use frizbee::Options;
 
 use super::App;
 

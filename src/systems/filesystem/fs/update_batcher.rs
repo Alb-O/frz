@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::mpsc::{self, Sender};
 use std::time::Instant;
 
-use frz_plugin_api::{AttributeRow, FileRow};
+use crate::plugins::api::{AttributeRow, FileRow};
 
 use super::super::IndexUpdate;
 use super::cache::CacheWriter;

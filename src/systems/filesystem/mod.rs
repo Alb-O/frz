@@ -2,7 +2,7 @@ mod fs;
 
 use std::sync::Arc;
 
-use frz_plugin_api::{AttributeRow, FileRow, SearchData};
+use crate::plugins::api::{AttributeRow, FileRow, SearchData};
 
 pub use fs::FilesystemOptions;
 pub use fs::spawn_filesystem_index;

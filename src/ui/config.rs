@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use frz_plugin_api::{SearchMode, descriptors::SearchPluginDescriptor};
+use crate::plugins::api::{SearchMode, descriptors::SearchPluginDescriptor};
 
 /// Labels and titles for one of the search panes.
 #[derive(Debug, Clone)]

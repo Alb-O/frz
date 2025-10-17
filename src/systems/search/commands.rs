@@ -1,5 +1,5 @@
-use frz_plugin_api::SearchMode;
-pub(crate) use frz_plugin_api::SearchResult;
+use crate::plugins::api::SearchMode;
+pub(crate) use crate::plugins::api::SearchResult;
 
 use crate::systems::filesystem::IndexUpdate;
 
