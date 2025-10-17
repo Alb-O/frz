@@ -45,19 +45,16 @@ impl SearchPluginRegistry {
     {
         let descriptor = plugin.descriptor();
         self.ensure_available(descriptor)?;
-        let plugin = Arc::new(plugin) as Arc<dyn SearchPlugin>;
-        self.insert(descriptor, plugin);
+        let plugin: Arc<dyn SearchPlugin> = Arc::new(plugin);
+        let entry = RegisteredPlugin::new(descriptor, plugin);
+        self.insert(entry);
         Ok(())
     }
 
-    fn insert(
-        &mut self,
-        descriptor: &'static SearchPluginDescriptor,
-        plugin: Arc<dyn SearchPlugin>,
-    ) {
-        let mode = SearchMode::from_descriptor(descriptor);
-        let entry = RegisteredPlugin::new(descriptor, plugin);
-        let existing = self.plugins.insert(mode, entry);
+    fn insert(&mut self, plugin: RegisteredPlugin) {
+        let mode = plugin.mode();
+        let descriptor = plugin.descriptor();
+        let existing = self.plugins.insert(mode, plugin);
         debug_assert!(
             existing.is_none(),
             "plugins should be unique per descriptor"
@@ -86,9 +83,10 @@ impl SearchPluginRegistry {
     {
         for capability in bundle.capabilities() {
             match capability {
-                Capability::SearchTab { descriptor, plugin } => {
+                Capability::SearchTab(_) => {
+                    let descriptor = capability.descriptor();
                     self.ensure_available(descriptor)?;
-                    self.insert(descriptor, plugin);
+                    self.insert(capability.into_registered_plugin());
                 }
             }
         }

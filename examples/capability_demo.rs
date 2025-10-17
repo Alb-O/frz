@@ -1,5 +1,5 @@
 fn main() {
-    use std::sync::{Arc, atomic::Ordering};
+    use std::sync::atomic::Ordering;
 
     use frz_plugin_api::{
         Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchPlugin,
@@ -74,11 +74,13 @@ fn main() {
     struct DemoBundle;
 
     impl PluginBundle for DemoBundle {
-        fn capabilities(&self) -> Vec<Capability> {
-            vec![Capability::SearchTab {
-                descriptor: &DESCRIPTOR,
-                plugin: Arc::new(DemoPlugin),
-            }]
+        type Capabilities<'a>
+            = std::iter::Once<Capability>
+        where
+            Self: 'a;
+
+        fn capabilities(&self) -> Self::Capabilities<'_> {
+            std::iter::once(Capability::search_tab(&DESCRIPTOR, DemoPlugin))
         }
     }
 

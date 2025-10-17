@@ -11,8 +11,8 @@ use frz_plugin_api::{PluginRegistryError, SearchPluginDescriptor, SearchPluginRe
 pub fn register_builtin_plugins(
     registry: &mut SearchPluginRegistry,
 ) -> Result<(), PluginRegistryError> {
-    registry.register(attributes::AttributeSearchPlugin)?;
-    registry.register(files::FileSearchPlugin)?;
+    registry.register_bundle(attributes::bundle())?;
+    registry.register_bundle(files::bundle())?;
     Ok(())
 }
 

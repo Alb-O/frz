@@ -1,6 +1,6 @@
 use frz_plugin_api::{
-    PluginQueryContext, PluginSelectionContext, SearchData, SearchMode, SearchPlugin,
-    SearchSelection, SearchStream,
+    Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData, SearchMode,
+    SearchPlugin, SearchSelection, SearchStream,
     descriptors::{
         SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
         TableDescriptor,
@@ -138,4 +138,38 @@ impl SearchPlugin for AttributeSearchPlugin {
             .cloned()
             .map(SearchSelection::Attribute)
     }
+}
+
+pub struct AttributePluginBundle {
+    capability: Capability,
+}
+
+impl AttributePluginBundle {
+    fn new_capability() -> Capability {
+        Capability::search_tab(descriptor(), AttributeSearchPlugin)
+    }
+}
+
+impl Default for AttributePluginBundle {
+    fn default() -> Self {
+        Self {
+            capability: Self::new_capability(),
+        }
+    }
+}
+
+impl PluginBundle for AttributePluginBundle {
+    type Capabilities<'a>
+        = std::iter::Once<Capability>
+    where
+        Self: 'a;
+
+    fn capabilities(&self) -> Self::Capabilities<'_> {
+        std::iter::once(self.capability.clone())
+    }
+}
+
+#[must_use]
+pub fn bundle() -> AttributePluginBundle {
+    AttributePluginBundle::default()
 }
