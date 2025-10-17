@@ -13,7 +13,16 @@ pub enum PluginRegistryError {
     #[error("plugin for mode {mode:?} is already registered")]
     DuplicateMode { mode: SearchMode },
 
-    /// A plugin attempted to register a preview split for a mode that already has one.
-    #[error("preview split for mode {mode:?} is already registered")]
-    DuplicatePreviewSplit { mode: SearchMode },
+    /// A capability attempted to register for a mode that already has an implementation.
+    #[error("{capability} capability for mode {mode:?} is already registered")]
+    CapabilityConflict {
+        capability: &'static str,
+        mode: SearchMode,
+    },
+}
+
+impl PluginRegistryError {
+    pub fn capability_conflict(capability: &'static str, mode: SearchMode) -> Self {
+        Self::CapabilityConflict { capability, mode }
+    }
 }

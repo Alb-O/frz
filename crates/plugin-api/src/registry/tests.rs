@@ -265,6 +265,7 @@ fn duplicate_preview_split_returns_error() {
         .expect_err("expected duplicate preview split to fail");
     assert!(matches!(
         error,
-        PluginRegistryError::DuplicatePreviewSplit { .. }
+        PluginRegistryError::CapabilityConflict { capability, .. }
+            if capability == "preview split"
     ));
 }

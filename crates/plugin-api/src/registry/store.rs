@@ -1,183 +1,124 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
-use indexmap::IndexMap;
+use crate::capabilities::{
+    Capability, CapabilityInstallContext, CapabilityRegistry, PluginBundle, PreviewSplit,
+    PreviewSplitStore, SearchTabStore,
+};
+use crate::descriptors::SearchPluginDescriptor;
+use crate::error::PluginRegistryError;
+use crate::registry::RegisteredPlugin;
+use crate::types::SearchMode;
 
-use crate::{descriptors::SearchPluginDescriptor, error::PluginRegistryError, types::SearchMode};
-
-use crate::capabilities::{Capability, PluginBundle, PreviewSplit, PreviewSplitCapability};
-
-use super::{RegisteredPlugin, SearchPlugin};
+use super::SearchPlugin;
 
 /// Registry of all search plugins contributing to the current UI.
 #[derive(Clone)]
 pub struct SearchPluginRegistry {
-    plugins: IndexMap<SearchMode, RegisteredPlugin>,
-    id_index: HashMap<&'static str, SearchMode>,
-    preview_splits: HashMap<SearchMode, Arc<dyn PreviewSplit>>,
+    search_tabs: SearchTabStore,
+    capabilities: CapabilityRegistry,
 }
 
 impl SearchPluginRegistry {
     /// Create an empty registry without any plugins registered.
-    #[must_use]
     pub fn empty() -> Self {
         Self {
-            plugins: IndexMap::new(),
-            id_index: HashMap::new(),
-            preview_splits: HashMap::new(),
+            search_tabs: SearchTabStore::default(),
+            capabilities: CapabilityRegistry::new(),
         }
     }
 
     /// Create a registry without registering any plugins.
-    #[must_use]
     pub fn new() -> Self {
         Self::empty()
     }
 
+    fn install_capability(&mut self, capability: &Capability) -> Result<(), PluginRegistryError> {
+        let mut context =
+            CapabilityInstallContext::new(&mut self.search_tabs, &mut self.capabilities);
+        capability.install(&mut context)
+    }
+
     /// Register a plugin implementation for its declared mode.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`PluginRegistryError::DuplicateId`] if a plugin with the same identifier has
-    /// already been registered, or [`PluginRegistryError::DuplicateMode`] if the descriptor is
-    /// already present in the registry.
     pub fn register<P>(&mut self, plugin: P) -> Result<(), PluginRegistryError>
     where
         P: SearchPlugin + 'static,
     {
-        let descriptor = plugin.descriptor();
-        self.ensure_available(descriptor)?;
-        let plugin: Arc<dyn SearchPlugin> = Arc::new(plugin);
-        let entry = RegisteredPlugin::new(descriptor, plugin);
-        self.insert(entry);
-        Ok(())
+        let capability = Capability::search_tab(plugin.descriptor(), plugin);
+        self.install_capability(&capability)
     }
 
-    fn insert(&mut self, plugin: RegisteredPlugin) {
-        let mode = plugin.mode();
-        let descriptor = plugin.descriptor();
-        let existing = self.plugins.insert(mode, plugin);
-        debug_assert!(
-            existing.is_none(),
-            "plugins should be unique per descriptor"
-        );
-        let existing_id = self.id_index.insert(descriptor.id, mode);
-        debug_assert!(existing_id.is_none(), "plugin identifiers should be unique");
-    }
-
-    fn ensure_available(
-        &self,
-        descriptor: &'static SearchPluginDescriptor,
-    ) -> Result<(), PluginRegistryError> {
-        let mode = SearchMode::from_descriptor(descriptor);
-        if self.plugins.contains_key(&mode) {
-            return Err(PluginRegistryError::DuplicateMode { mode });
-        }
-        if self.id_index.contains_key(descriptor.id) {
-            return Err(PluginRegistryError::DuplicateId { id: descriptor.id });
-        }
-        Ok(())
-    }
-
+    /// Register a capability bundle.
     pub fn register_bundle<B>(&mut self, bundle: B) -> Result<(), PluginRegistryError>
     where
         B: PluginBundle,
     {
         for capability in bundle.capabilities() {
-            match capability {
-                Capability::SearchTab(plugin) => {
-                    let descriptor = plugin.descriptor();
-                    self.ensure_available(descriptor)?;
-                    self.insert(plugin);
-                }
-                Capability::PreviewSplit(preview) => {
-                    self.register_preview_split(preview)?;
-                }
-            }
+            self.install_capability(&capability)?;
         }
         Ok(())
     }
 
     /// Lookup a plugin servicing the requested mode.
-    #[must_use]
     pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn SearchPlugin>> {
-        self.plugins.get(&mode).map(|entry| entry.plugin())
+        self.search_tabs.plugin(mode)
     }
 
     /// Iterate over all registered plugins.
     pub fn iter(&self) -> impl Iterator<Item = &RegisteredPlugin> {
-        self.plugins.values()
+        self.search_tabs.iter()
     }
 
     /// Iterate over registered plugin descriptors.
     pub fn descriptors(&self) -> impl Iterator<Item = &'static SearchPluginDescriptor> + '_ {
-        self.plugins.values().map(|entry| entry.descriptor())
+        self.search_tabs.descriptors()
     }
 
     /// Attempt to resolve a mode identifier to a registered plugin.
-    #[must_use]
     pub fn mode_by_id(&self, id: &str) -> Option<SearchMode> {
-        self.id_index.get(id).copied()
+        self.search_tabs.mode_by_id(id)
     }
 
     /// Attempt to resolve a mode identifier to a registered plugin implementation.
-    #[must_use]
     pub fn plugin_by_id(&self, id: &str) -> Option<Arc<dyn SearchPlugin>> {
-        self.mode_by_id(id).and_then(|mode| self.plugin(mode))
+        self.search_tabs.plugin_by_id(id)
     }
 
     /// Remove the plugin registered for the provided mode.
     pub fn deregister(&mut self, mode: SearchMode) -> Option<RegisteredPlugin> {
-        let removed = self.plugins.shift_remove(&mode);
-        if let Some(ref plugin) = removed {
-            self.id_index.remove(plugin.descriptor().id);
+        let removed = self.search_tabs.remove(mode);
+        if removed.is_some() {
+            self.capabilities.remove_mode(mode);
         }
-        self.preview_splits.remove(&mode);
         removed
     }
 
     /// Remove the plugin registered for the provided identifier.
     pub fn deregister_by_id(&mut self, id: &str) -> Option<RegisteredPlugin> {
-        let mode = self.id_index.remove(id)?;
-        self.preview_splits.remove(&mode);
-        self.plugins.shift_remove(&mode)
+        let (mode, plugin) = self.search_tabs.remove_by_id(id)?;
+        self.capabilities.remove_mode(mode);
+        Some(plugin)
     }
 
     /// Return the number of registered plugins.
-    #[must_use]
     pub fn len(&self) -> usize {
-        self.plugins.len()
+        self.search_tabs.len()
     }
 
     /// Returns `true` when no plugins have been registered.
-    #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.plugins.is_empty()
+        self.search_tabs.is_empty()
     }
 
     /// Returns `true` if a plugin has been registered for the provided mode.
-    #[must_use]
     pub fn contains_mode(&self, mode: SearchMode) -> bool {
-        self.plugins.contains_key(&mode)
-    }
-
-    fn register_preview_split(
-        &mut self,
-        capability: PreviewSplitCapability,
-    ) -> Result<(), crate::PluginRegistryError> {
-        let descriptor = capability.descriptor();
-        let mode = SearchMode::from_descriptor(descriptor);
-        if self.preview_splits.contains_key(&mode) {
-            return Err(crate::PluginRegistryError::DuplicatePreviewSplit { mode });
-        }
-        self.preview_splits.insert(mode, capability.preview());
-        Ok(())
+        self.search_tabs.contains_mode(mode)
     }
 
     /// Lookup the preview split renderer registered for the requested mode.
-    #[must_use]
     pub fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
-        self.preview_splits.get(&mode).map(Arc::clone)
+        self.capabilities
+            .storage::<PreviewSplitStore>()
+            .and_then(|store| store.get(mode))
     }
 }
 
