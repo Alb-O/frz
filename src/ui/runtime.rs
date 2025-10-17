@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn massive_filesystem_initial_load_remains_empty_snapshot() {
+    fn massive_filesystem_initial_load_shows_preview_snapshot() {
         const TOTAL_FILES: usize = 125_000;
 
         let fs = MassiveSyntheticFs::new(TOTAL_FILES);
@@ -236,27 +236,29 @@ mod tests {
         );
         let total_files = data.files.len();
         let total_attributes = data.attributes.len();
+        const PREVIEW_SLICE: usize = 512;
+        let preview_files: Vec<FileRow> = data.files.iter().take(PREVIEW_SLICE).cloned().collect();
+        let preview_attributes = data.attributes.clone();
         drop(data);
 
         let mut app = App::new(SearchData::new());
         app.set_mode(files::mode());
-        app.disable_initial_results_timeout();
         app.hydrate_initial_results();
 
         assert_eq!(
             app.filtered_len(),
             0,
-            "no results should be visible during load"
+            "no results should be visible before indexing begins"
         );
 
         let (tx, rx) = mpsc::channel();
         app.set_index_updates(rx);
         tx.send(IndexUpdate {
-            files: Vec::<FileRow>::new().into(),
-            attributes: Vec::<AttributeRow>::new().into(),
+            files: preview_files.into(),
+            attributes: preview_attributes.into(),
             progress: ProgressSnapshot {
-                indexed_attributes: 0,
-                indexed_files: 0,
+                indexed_attributes: total_attributes,
+                indexed_files: PREVIEW_SLICE,
                 total_attributes: Some(total_attributes),
                 total_files: Some(total_files),
                 complete: false,
@@ -267,10 +269,10 @@ mod tests {
         .unwrap();
 
         app.pump_index_updates();
-        assert_eq!(
-            app.filtered_len(),
-            0,
-            "results should remain empty while indexing"
+        app.pump_search_results();
+        assert!(
+            app.filtered_len() > 0,
+            "expected preview results to be visible during indexing"
         );
 
         app.throbber_state.calc_next();
@@ -284,7 +286,7 @@ mod tests {
         };
 
         insta::assert_snapshot!(
-            "massive_filesystem_initial_load_remains_empty_snapshot",
+            "massive_filesystem_initial_load_shows_preview_snapshot",
             view
         );
     }

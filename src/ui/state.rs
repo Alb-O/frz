@@ -195,11 +195,6 @@ impl<'a> App<'a> {
     pub(crate) fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
         self.plugins.preview_split(mode)
     }
-
-    #[cfg(test)]
-    pub(crate) fn disable_initial_results_timeout(&mut self) {
-        self.initial_results_timeout = None;
-    }
 }
 
 #[cfg(test)]
