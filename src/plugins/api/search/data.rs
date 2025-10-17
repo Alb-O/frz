@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
@@ -11,6 +11,7 @@ use super::fs::{Fs, OsFs};
 #[derive(Debug, Default, Clone)]
 pub struct SearchData {
     pub context_label: Option<String>,
+    pub root: Option<PathBuf>,
     pub initial_query: String,
     pub attributes: Vec<AttributeRow>,
     pub files: Vec<FileRow>,
@@ -27,6 +28,14 @@ impl SearchData {
     #[must_use]
     pub fn with_context(mut self, label: impl Into<String>) -> Self {
         self.context_label = Some(label.into());
+        self
+    }
+
+    /// Associate the search data with a filesystem root that relative file paths
+    /// should be resolved against.
+    #[must_use]
+    pub fn with_root(mut self, root: impl Into<PathBuf>) -> Self {
+        self.root = Some(root.into());
         self
     }
 
@@ -49,6 +58,20 @@ impl SearchData {
     pub fn with_files(mut self, files: Vec<FileRow>) -> Self {
         self.files = files;
         self
+    }
+
+    /// Resolve a file row to an absolute path on disk when possible.
+    #[must_use]
+    pub fn resolve_file_path(&self, file: &FileRow) -> PathBuf {
+        let candidate = PathBuf::from(&file.path);
+        if candidate.is_absolute() {
+            return candidate;
+        }
+
+        match &self.root {
+            Some(root) => root.join(candidate),
+            None => candidate,
+        }
     }
 
     /// Build a [`SearchData`] by walking the filesystem under `root`.
@@ -99,6 +122,7 @@ impl SearchData {
 
         Ok(Self {
             context_label: Some(root.display().to_string()),
+            root: Some(root.to_path_buf()),
             initial_query: String::new(),
             attributes,
             files,
@@ -311,5 +335,21 @@ mod tests {
         let data = SearchData::from_filesystem(root)?;
         assert!(data.files.len() >= 10_000);
         Ok(())
+    }
+
+    #[test]
+    fn resolve_file_path_joins_root_for_relative_paths() {
+        let data = SearchData::new().with_root("/root");
+        let file = FileRow::filesystem("dir/file.txt", Vec::<String>::new());
+        let resolved = data.resolve_file_path(&file);
+        assert_eq!(resolved, PathBuf::from("/root/dir/file.txt"));
+    }
+
+    #[test]
+    fn resolve_file_path_preserves_absolute_paths() {
+        let data = SearchData::new();
+        let file = FileRow::filesystem("/tmp/file.txt", Vec::<String>::new());
+        let resolved = data.resolve_file_path(&file);
+        assert_eq!(resolved, PathBuf::from("/tmp/file.txt"));
     }
 }

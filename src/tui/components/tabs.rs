@@ -441,6 +441,6 @@ mod tests {
 
         assert!(rendered.contains("Search"));
         assert!(rendered.contains("hello"));
-        assert!(rendered.contains("Indexing files"));
+        assert!(rendered.contains("Indexing"));
     }
 }

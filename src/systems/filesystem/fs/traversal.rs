@@ -23,6 +23,7 @@ pub fn spawn_filesystem_index(
 
     let cache_handle = CacheHandle::resolve(&root, &options);
     let mut data = SearchData::new();
+    data.root = Some(root.clone());
 
     let context_label = options.ensure_context_label(&root);
     data.context_label = context_label.clone();
@@ -34,6 +35,7 @@ pub fn spawn_filesystem_index(
         let mut reindex_delay = Duration::ZERO;
         let mut preview_complete = false;
         let mut preview_file_count = None;
+        let root_for_data = root.clone();
 
         if let Some(handle) = cache_handle_for_thread.as_ref() {
             if let Some(mut preview) = handle.load_preview() {
@@ -43,6 +45,9 @@ pub fn spawn_filesystem_index(
 
                 if preview.data.context_label.is_none() {
                     preview.data.context_label = context_label.clone();
+                }
+                if preview.data.root.is_none() {
+                    preview.data.root = Some(root_for_data.clone());
                 }
 
                 let files: Arc<[FileRow]> = preview.data.files.clone().into();
@@ -73,6 +78,9 @@ pub fn spawn_filesystem_index(
 
                 if entry.data.context_label.is_none() {
                     entry.data.context_label = context_label.clone();
+                }
+                if entry.data.root.is_none() {
+                    entry.data.root = Some(root_for_data.clone());
                 }
 
                 stream_cached_entry(entry, preview_file_count, &tx);
