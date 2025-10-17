@@ -1,8 +1,8 @@
-//! Interactive terminal UI components and helpers.
+//! Interactive terminal UI orchestration for `frz`.
 //!
-//! `builder` exposes the public-facing [`SearchUi`] builder, while the other
-//! submodules implement the event loop, rendering, and state management that
-//! power the terminal application.
+//! The [`builder`] module exposes the public-facing [`SearchUi`] builder. The
+//! remaining submodules implement the event loop, rendering pipeline, and state
+//! management that power the terminal application.
 
 mod actions;
 mod builder;

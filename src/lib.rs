@@ -1,3 +1,9 @@
+//! Core crate exports for building and running the `frz` terminal interface.
+//!
+//! The root module primarily re-exports types from the UI and plugin
+//! subsystems so that embedders can configure the application without digging
+//! through the module hierarchy.
+
 pub mod app_dirs;
 pub mod plugins;
 mod systems;

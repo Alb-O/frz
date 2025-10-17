@@ -2,17 +2,22 @@ use std::collections::HashMap;
 
 use crate::plugins::api::{SearchMode, descriptors::SearchPluginDescriptor};
 
-/// Labels and titles for one of the search panes.
+/// Human-readable labels and titles rendered within a single search pane.
 #[derive(Debug, Clone)]
 pub struct PaneUiConfig {
+    /// Title shown above the pane when it is active.
     pub mode_title: String,
+    /// Inline hint displayed beneath the pane title.
     pub hint: String,
+    /// Title rendered above the table of results.
     pub table_title: String,
+    /// Label summarizing the number of visible entries.
     pub count_label: String,
 }
 
 impl PaneUiConfig {
-    /// Construct a new [`PaneUiConfig`] with custom labels.
+    /// Construct a new [`PaneUiConfig`] from the individual bits of text shown
+    /// alongside the pane.
     #[must_use]
     pub fn new(
         mode_title: impl Into<String>,
@@ -29,16 +34,20 @@ impl PaneUiConfig {
     }
 }
 
-/// Full UI definition for a contributed tab.
+/// Complete UI definition for a contributed tab and its associated pane.
 #[derive(Debug, Clone)]
 pub struct TabUiConfig {
+    /// Identifier used to look up results for this tab.
     pub mode: SearchMode,
+    /// Label rendered on the tab selector.
     pub tab_label: String,
+    /// Text displayed within the tab's primary pane.
     pub pane: PaneUiConfig,
 }
 
 impl TabUiConfig {
-    /// Build a [`TabUiConfig`] from constituent pieces.
+    /// Build a [`TabUiConfig`] by combining the mode identifier, tab label, and
+    /// pane configuration.
     #[must_use]
     pub fn new(mode: SearchMode, tab_label: impl Into<String>, pane: PaneUiConfig) -> Self {
         Self {
@@ -49,10 +58,12 @@ impl TabUiConfig {
     }
 }
 
-/// Text used by the UI when rendering pane content and tab labels.
+/// Textual configuration used when rendering panes, tabs, and surrounding UI.
 #[derive(Debug, Clone)]
 pub struct UiConfig {
+    /// Placeholder text displayed next to the filter input.
     pub filter_label: String,
+    /// Title used for the detail panel.
     pub detail_panel_title: String,
     tabs: Vec<TabUiConfig>,
     index: HashMap<SearchMode, usize>,
@@ -74,7 +85,7 @@ impl Default for UiConfig {
 }
 
 impl UiConfig {
-    /// UI configuration tailored to searching tags and files.
+    /// Build a configuration with built-in panes for tag and file searching.
     #[must_use]
     pub fn tags_and_files() -> Self {
         let mut config = Self {
@@ -111,7 +122,8 @@ impl UiConfig {
         config
     }
 
-    /// Register a new tab definition with this configuration.
+    /// Register a new tab definition with this configuration, replacing an
+    /// existing tab for the same [`SearchMode`] if necessary.
     pub fn register_tab(&mut self, tab: TabUiConfig) {
         let mode = tab.mode;
         if let Some(position) = self.index.get(&mode).copied() {
@@ -123,7 +135,7 @@ impl UiConfig {
         }
     }
 
-    /// Register the default UI provided by a plugin descriptor.
+    /// Register the default UI contributed by a plugin descriptor.
     pub fn register_plugin(&mut self, descriptor: &'static SearchPluginDescriptor) {
         let mode = SearchMode::from_descriptor(descriptor);
         let pane = PaneUiConfig::new(
@@ -135,13 +147,14 @@ impl UiConfig {
         self.register_tab(TabUiConfig::new(mode, descriptor.ui.tab_label, pane));
     }
 
-    /// Return all registered tabs in the order they were added.
+    /// Return all registered tabs in the order they were added, preserving the
+    /// explicit registration order when plugins are loaded.
     #[must_use]
     pub fn tabs(&self) -> &[TabUiConfig] {
         &self.tabs
     }
 
-    /// Lookup tab metadata for the provided mode.
+    /// Look up tab metadata for the provided mode, if it has been registered.
     #[must_use]
     pub fn tab(&self, mode: SearchMode) -> Option<&TabUiConfig> {
         self.index
@@ -149,19 +162,19 @@ impl UiConfig {
             .and_then(|position| self.tabs.get(*position))
     }
 
-    /// Lookup pane metadata for the provided mode.
+    /// Look up pane metadata for the provided mode, if it has been registered.
     #[must_use]
     pub fn pane(&self, mode: SearchMode) -> Option<&PaneUiConfig> {
         self.tab(mode).map(|tab| &tab.pane)
     }
 
-    /// Mutably lookup pane metadata for the provided mode.
+    /// Mutably look up pane metadata for the provided mode, if it has been registered.
     pub fn pane_mut(&mut self, mode: SearchMode) -> Option<&mut PaneUiConfig> {
         let position = self.index.get(&mode).copied()?;
         self.tabs.get_mut(position).map(|tab| &mut tab.pane)
     }
 
-    /// Retrieve the label displayed on the tab itself.
+    /// Retrieve the label displayed on the tab itself for the provided mode.
     #[must_use]
     pub fn tab_label(&self, mode: SearchMode) -> Option<&str> {
         self.tab(mode).map(|tab| tab.tab_label.as_str())
@@ -176,7 +189,8 @@ impl UiConfig {
             .map(|tab| tab.mode)
     }
 
-    /// Return the pane title associated with the provided mode.
+    /// Return the pane title associated with the provided mode, defaulting to an
+    /// empty string when the mode is unknown.
     #[must_use]
     pub fn mode_title(&self, mode: SearchMode) -> &str {
         self.pane(mode)
@@ -184,13 +198,15 @@ impl UiConfig {
             .unwrap_or("")
     }
 
-    /// Return the hint text associated with the provided mode.
+    /// Return the hint text associated with the provided mode, defaulting to an
+    /// empty string when the mode is unknown.
     #[must_use]
     pub fn mode_hint(&self, mode: SearchMode) -> &str {
         self.pane(mode).map(|pane| pane.hint.as_str()).unwrap_or("")
     }
 
-    /// Return the table title associated with the provided mode.
+    /// Return the table title associated with the provided mode, defaulting to
+    /// an empty string when the mode is unknown.
     #[must_use]
     pub fn mode_table_title(&self, mode: SearchMode) -> &str {
         self.pane(mode)
