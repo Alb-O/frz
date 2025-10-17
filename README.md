@@ -19,9 +19,7 @@ application. `crates/plugin-api/` defines the stable plugin surface, including
 descriptors and the `SearchPlugin` trait. `crates/tui/` offers reusable widgets
 and helpers for rendering plugin output. The binary crate in `src/` wires these
 pieces together, initialises background systems, and registers built-in plugins
-via [`register_builtin_plugins`](src/plugins/builtin/mod.rs). See
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for a detailed walkthrough of the
-layered model and terminology.
+via [`register_builtin_plugins`](src/plugins/builtin/mod.rs).
 
 ## Quick example
 
