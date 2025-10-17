@@ -109,3 +109,67 @@ impl<'a> App<'a> {
         self.pump_search_results();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::plugins::builtin::files;
+    use crate::systems::filesystem::{IndexUpdate, ProgressSnapshot};
+    use frz_plugin_api::{AttributeRow, FileRow, SearchData};
+    use ratatui::{Terminal, backend::TestBackend};
+    use std::sync::mpsc;
+
+    fn sample_index_update() -> IndexUpdate {
+        IndexUpdate {
+            files: vec![
+                FileRow::filesystem("src/lib.rs", ["src", "*.rs"]),
+                FileRow::filesystem("src/main.rs", ["src", "*.rs"]),
+                FileRow::filesystem("README.md", ["*.md"]),
+            ]
+            .into(),
+            attributes: vec![
+                AttributeRow::new("*.md", 1),
+                AttributeRow::new("*.rs", 2),
+                AttributeRow::new("src", 2),
+            ]
+            .into(),
+            progress: ProgressSnapshot {
+                indexed_attributes: 3,
+                indexed_files: 3,
+                total_attributes: Some(3),
+                total_files: Some(3),
+                complete: true,
+            },
+            reset: true,
+            cached_data: None,
+        }
+    }
+
+    #[test]
+    fn initial_files_tab_render_captures_missing_results() {
+        let mut app = App::new(SearchData::new());
+        app.set_mode(files::mode());
+        app.hydrate_initial_results();
+
+        let (tx, rx) = mpsc::channel();
+        app.set_index_updates(rx);
+        tx.send(sample_index_update()).unwrap();
+
+        app.pump_index_updates();
+        app.pump_search_results();
+
+        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+
+        let view = {
+            let backend = terminal.backend();
+            backend.to_string()
+        };
+        insta::assert_snapshot!("initial_files_tab_render_captures_missing_results", view);
+
+        assert!(
+            app.filtered_len() > 0,
+            "expected initial search results to populate without any user input"
+        );
+    }
+}

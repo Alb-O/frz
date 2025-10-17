@@ -38,4 +38,5 @@ frz-plugins-attributes = { path = "crates/plugins/attributes", version = "0.1" }
 frz-tui = { path = "crates/tui", version = "0.1" }
 
 [dev-dependencies]
+insta = "1.43"
 tempfile = "3"
