@@ -1,0 +1,25 @@
+---
+source: src/ui/runtime.rs
+assertion_line: 171
+expression: view
+---
+" File search >          Indexed attributes: 3 • Indexed Files: 3  Tags   Files  "
+"   Path                                        Tags                    Score    "
+"  ────────────────────────────────────────────────────────────────────────────  "
+" ▶ README.md                                   *.md                    0        "
+"   src/lib.rs                                  *.rs, src               0        "
+"   src/main.rs                                 *.rs, src               0        "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
+"                                                                                "
