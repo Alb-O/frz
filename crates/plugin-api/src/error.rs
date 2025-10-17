@@ -12,4 +12,8 @@ pub enum PluginRegistryError {
     /// A plugin attempted to register a descriptor that is already present.
     #[error("plugin for mode {mode:?} is already registered")]
     DuplicateMode { mode: SearchMode },
+
+    /// A plugin attempted to register a preview split for a mode that already has one.
+    #[error("preview split for mode {mode:?} is already registered")]
+    DuplicatePreviewSplit { mode: SearchMode },
 }

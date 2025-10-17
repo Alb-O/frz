@@ -5,7 +5,7 @@ use indexmap::IndexMap;
 
 use crate::{descriptors::SearchPluginDescriptor, error::PluginRegistryError, types::SearchMode};
 
-use crate::capabilities::{Capability, PluginBundle};
+use crate::capabilities::{Capability, PluginBundle, PreviewSplit, PreviewSplitCapability};
 
 use super::{RegisteredPlugin, SearchPlugin};
 
@@ -14,6 +14,7 @@ use super::{RegisteredPlugin, SearchPlugin};
 pub struct SearchPluginRegistry {
     plugins: IndexMap<SearchMode, RegisteredPlugin>,
     id_index: HashMap<&'static str, SearchMode>,
+    preview_splits: HashMap<SearchMode, Arc<dyn PreviewSplit>>,
 }
 
 impl SearchPluginRegistry {
@@ -23,6 +24,7 @@ impl SearchPluginRegistry {
         Self {
             plugins: IndexMap::new(),
             id_index: HashMap::new(),
+            preview_splits: HashMap::new(),
         }
     }
 
@@ -83,10 +85,13 @@ impl SearchPluginRegistry {
     {
         for capability in bundle.capabilities() {
             match capability {
-                Capability::SearchTab(_) => {
-                    let descriptor = capability.descriptor();
+                Capability::SearchTab(plugin) => {
+                    let descriptor = plugin.descriptor();
                     self.ensure_available(descriptor)?;
-                    self.insert(capability.into_registered_plugin());
+                    self.insert(plugin);
+                }
+                Capability::PreviewSplit(preview) => {
+                    self.register_preview_split(preview)?;
                 }
             }
         }
@@ -127,12 +132,14 @@ impl SearchPluginRegistry {
         if let Some(ref plugin) = removed {
             self.id_index.remove(plugin.descriptor().id);
         }
+        self.preview_splits.remove(&mode);
         removed
     }
 
     /// Remove the plugin registered for the provided identifier.
     pub fn deregister_by_id(&mut self, id: &str) -> Option<RegisteredPlugin> {
         let mode = self.id_index.remove(id)?;
+        self.preview_splits.remove(&mode);
         self.plugins.shift_remove(&mode)
     }
 
@@ -152,6 +159,25 @@ impl SearchPluginRegistry {
     #[must_use]
     pub fn contains_mode(&self, mode: SearchMode) -> bool {
         self.plugins.contains_key(&mode)
+    }
+
+    fn register_preview_split(
+        &mut self,
+        capability: PreviewSplitCapability,
+    ) -> Result<(), crate::PluginRegistryError> {
+        let descriptor = capability.descriptor();
+        let mode = SearchMode::from_descriptor(descriptor);
+        if self.preview_splits.contains_key(&mode) {
+            return Err(crate::PluginRegistryError::DuplicatePreviewSplit { mode });
+        }
+        self.preview_splits.insert(mode, capability.preview());
+        Ok(())
+    }
+
+    /// Lookup the preview split renderer registered for the requested mode.
+    #[must_use]
+    pub fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
+        self.preview_splits.get(&mode).map(Arc::clone)
     }
 }
 

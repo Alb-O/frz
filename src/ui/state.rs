@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::mpsc::Receiver;
+use std::sync::{Arc, mpsc::Receiver};
 
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
@@ -8,7 +8,8 @@ use super::config::UiConfig;
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search;
 use frz_plugin_api::{
-    PluginSelectionContext, SearchData, SearchMode, SearchPluginRegistry, SearchSelection,
+    PluginSelectionContext, PreviewSplit, SearchData, SearchMode, SearchPluginRegistry,
+    SearchSelection,
 };
 use frz_tui::components::IndexProgress;
 use frz_tui::input::SearchInput;
@@ -184,6 +185,10 @@ impl<'a> App<'a> {
 
     pub fn set_widths_for(&mut self, mode: SearchMode, widths: Vec<ratatui::layout::Constraint>) {
         self.tab_states.entry(mode).or_default().widths = Some(widths);
+    }
+
+    pub(crate) fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
+        self.plugins.preview_split(mode)
     }
 }
 

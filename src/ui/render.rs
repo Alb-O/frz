@@ -6,6 +6,7 @@ use ratatui::{
 
 use crate::systems::search;
 use frizbee::Options;
+use frz_plugin_api::PreviewSplitContext;
 use frz_tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
 };
@@ -81,6 +82,18 @@ impl<'a> App<'a> {
     fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
         let descriptor = self.mode.descriptor();
         let dataset = descriptor.dataset;
+        let preview_split = self.preview_split(self.mode);
+        let query = self.search_input.text().to_string();
+
+        let (table_area, preview_area) = if preview_split.is_some() {
+            let [table_area, preview_area] =
+                Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                    .areas(area);
+            (table_area, Some(preview_area))
+        } else {
+            (area, None)
+        };
+
         let highlight_owned = self.highlight_for_query(dataset.total_count(&self.data));
         let highlight_state = highlight_owned
             .as_ref()
@@ -88,12 +101,12 @@ impl<'a> App<'a> {
         let state = self.tab_states.entry(self.mode).or_default();
         render_table(
             frame,
-            area,
+            table_area,
             &mut self.table_state,
             dataset,
             &self.theme,
             TableRenderContext {
-                area,
+                area: table_area,
                 filtered: &state.filtered,
                 scores: &state.scores,
                 headers: state.headers.as_ref(),
@@ -101,7 +114,19 @@ impl<'a> App<'a> {
                 highlight: highlight_state,
                 data: &self.data,
             },
-        )
+        );
+
+        if let (Some(preview), Some(preview_area)) = (preview_split, preview_area) {
+            let selected = self.table_state.selected();
+            let context = PreviewSplitContext::new(
+                &self.data,
+                &state.filtered,
+                &state.scores,
+                selected,
+                query.as_str(),
+            );
+            preview.render_preview(frame, preview_area, context);
+        }
     }
 
     fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {

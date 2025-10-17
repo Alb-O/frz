@@ -6,7 +6,7 @@ pub mod registry;
 pub mod search;
 pub mod types;
 
-pub use capabilities::{Capability, PluginBundle};
+pub use capabilities::{Capability, PluginBundle, PreviewSplit, PreviewSplitContext};
 pub use context::{PluginQueryContext, PluginSelectionContext};
 pub use descriptors::{
     SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
