@@ -8,7 +8,6 @@ license = "MIT"
 
 [features]
 default = []
-capabilities = []
 
 [dependencies]
 anyhow = "1"

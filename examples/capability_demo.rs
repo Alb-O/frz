@@ -1,9 +1,3 @@
-#[cfg(not(feature = "capabilities"))]
-fn main() {
-    eprintln!("Enable the `capabilities` feature to run this example.");
-}
-
-#[cfg(feature = "capabilities")]
 fn main() {
     use std::sync::{Arc, atomic::Ordering};
 

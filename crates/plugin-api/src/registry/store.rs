@@ -5,7 +5,6 @@ use indexmap::IndexMap;
 
 use crate::{descriptors::SearchPluginDescriptor, error::PluginRegistryError, types::SearchMode};
 
-#[cfg(feature = "capabilities")]
 use crate::capabilities::{Capability, PluginBundle};
 
 use super::{RegisteredPlugin, SearchPlugin};
@@ -81,7 +80,6 @@ impl SearchPluginRegistry {
         Ok(())
     }
 
-    #[cfg(feature = "capabilities")]
     pub fn register_bundle<B>(&mut self, bundle: B) -> Result<(), PluginRegistryError>
     where
         B: PluginBundle,
