@@ -1,8 +1,7 @@
 use crate::{
     context::{PluginQueryContext, PluginSelectionContext},
     descriptors::SearchPluginDescriptor,
-    search::SearchStream,
-    types::{SearchMode, SearchSelection},
+    search::{SearchMode, SearchSelection, SearchStream},
 };
 
 /// A pluggable search component that can provide results for a tab.

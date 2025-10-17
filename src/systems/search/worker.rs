@@ -78,8 +78,8 @@ mod tests {
             TableDescriptor,
         },
         registry::SearchPlugin,
+        search::FileRow,
         search::SearchStream,
-        types::FileRow,
     };
 
     struct DummyDataset;

@@ -4,7 +4,6 @@ pub mod descriptors;
 pub mod error;
 pub mod registry;
 pub mod search;
-pub mod types;
 
 pub use capabilities::{Capability, PluginBundle, PreviewSplit, PreviewSplitContext};
 pub use context::{PluginQueryContext, PluginSelectionContext};
@@ -15,11 +14,7 @@ pub use descriptors::{
 pub use error::PluginRegistryError;
 pub use registry::{RegisteredPlugin, SearchPlugin, SearchPluginRegistry};
 pub use search::{
-    MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, SearchResult, SearchStream,
-    stream_attributes, stream_files,
-};
-pub use types::tags_for_relative_path;
-pub use types::{
-    AttributeRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchSelection,
-    TruncationStyle,
+    AttributeRow, FileRow, MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, PluginSelection,
+    SearchData, SearchMode, SearchOutcome, SearchResult, SearchSelection, SearchStream,
+    TruncationStyle, stream_attributes, stream_files, tags_for_relative_path,
 };

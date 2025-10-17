@@ -125,8 +125,7 @@ mod tests {
     use super::*;
     use crate::{
         descriptors::{SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition},
-        search::SearchStream,
-        types::{SearchData, SearchMode},
+        search::{SearchData, SearchMode, SearchStream},
     };
     use std::sync::mpsc::channel;
 

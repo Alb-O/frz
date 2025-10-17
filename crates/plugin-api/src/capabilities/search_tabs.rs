@@ -6,7 +6,7 @@ use indexmap::IndexMap;
 use crate::descriptors::SearchPluginDescriptor;
 use crate::error::PluginRegistryError;
 use crate::registry::{RegisteredPlugin, SearchPlugin};
-use crate::types::SearchMode;
+use crate::search::SearchMode;
 
 use super::{CapabilityInstallContext, CapabilitySpecImpl};
 

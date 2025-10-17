@@ -7,8 +7,7 @@ use crate::{
         SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
         TableDescriptor,
     },
-    search::SearchStream,
-    types::{SearchData, SearchMode, SearchSelection},
+    search::{SearchData, SearchMode, SearchSelection, SearchStream},
 };
 use ratatui::{Frame, layout::Rect};
 

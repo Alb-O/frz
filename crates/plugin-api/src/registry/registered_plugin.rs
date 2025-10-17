@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     descriptors::{SearchPluginDataset, SearchPluginDescriptor},
-    types::SearchMode,
+    search::SearchMode,
 };
 
 use super::SearchPlugin;

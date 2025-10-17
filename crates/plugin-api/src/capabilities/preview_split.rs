@@ -5,7 +5,7 @@ use ratatui::{Frame, layout::Rect};
 
 use crate::descriptors::SearchPluginDescriptor;
 use crate::error::PluginRegistryError;
-use crate::types::{SearchData, SearchMode};
+use crate::search::{SearchData, SearchMode};
 
 use super::{CapabilityInstallContext, CapabilitySpecImpl};
 

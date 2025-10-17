@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicU64;
 
-use crate::types::SearchData;
+use crate::search::SearchData;
 
 /// Shared inputs provided to plugins when they are asked to stream search results.
 ///

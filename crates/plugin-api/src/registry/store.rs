@@ -7,7 +7,7 @@ use crate::capabilities::{
 use crate::descriptors::SearchPluginDescriptor;
 use crate::error::PluginRegistryError;
 use crate::registry::RegisteredPlugin;
-use crate::types::SearchMode;
+use crate::search::SearchMode;
 
 use super::SearchPlugin;
 

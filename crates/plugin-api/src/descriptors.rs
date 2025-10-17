@@ -1,7 +1,7 @@
 use frizbee::Options;
 use ratatui::{layout::Constraint, widgets::Row};
 
-use crate::types::SearchData;
+use crate::search::SearchData;
 
 /// Static metadata describing a plugin contributed to the search experience.
 pub struct SearchPluginDescriptor {

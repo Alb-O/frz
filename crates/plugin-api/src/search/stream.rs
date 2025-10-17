@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use crate::types::SearchMode;
+use super::SearchMode;
 
 /// Aggregated search results emitted back to the UI layer.
 #[derive(Debug, Clone)]

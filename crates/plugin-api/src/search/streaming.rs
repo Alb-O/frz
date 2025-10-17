@@ -2,10 +2,9 @@ use frizbee::match_list;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use super::{
-    EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, aggregator::ScoreAggregator,
+    EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, SearchData, aggregator::ScoreAggregator,
     alphabetical::AlphabeticalCollector, config::config_for_query, stream::SearchStream,
 };
-use crate::types::SearchData;
 
 /// Streams attribute matches for the given query back to the UI thread.
 pub fn stream_attributes(
@@ -178,7 +177,7 @@ mod tests {
     use super::*;
     use crate::{
         descriptors::{SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition},
-        types::{AttributeRow, FileRow},
+        search::{AttributeRow, FileRow},
     };
     use std::sync::mpsc::channel;
 

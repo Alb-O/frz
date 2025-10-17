@@ -1,3 +1,6 @@
+use std::collections::BTreeSet;
+use std::path::{Component, Path};
+
 /// Represents a row in the file results table.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FileRow {
@@ -70,6 +73,30 @@ pub enum TruncationStyle {
     Right,
 }
 
+/// Derive tags for a path relative to the search root.
+pub fn tags_for_relative_path(relative: &Path) -> Vec<String> {
+    let mut tags: BTreeSet<String> = BTreeSet::new();
+
+    if let Some(parent) = relative.parent() {
+        for component in parent.components() {
+            if let Component::Normal(part) = component {
+                let value = part.to_string_lossy().to_string();
+                if !value.is_empty() {
+                    tags.insert(value);
+                }
+            }
+        }
+    }
+
+    if let Some(ext) = relative.extension().and_then(|ext| ext.to_str())
+        && !ext.is_empty()
+    {
+        tags.insert(format!("*.{ext}"));
+    }
+
+    tags.into_iter().collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,5 +113,15 @@ mod tests {
     fn filesystem_rows_use_left_truncation() {
         let row = FileRow::filesystem("/tmp/file", Vec::<String>::new());
         assert_eq!(row.truncation_style(), TruncationStyle::Left);
+    }
+
+    #[test]
+    fn relative_path_tags_include_directories_and_extension() {
+        let path = Path::new("dir/sub/file.txt");
+        let tags = tags_for_relative_path(path);
+        assert_eq!(
+            tags,
+            vec!["*.txt".to_string(), "dir".to_string(), "sub".to_string()]
+        );
     }
 }

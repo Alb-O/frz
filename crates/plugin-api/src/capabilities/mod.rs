@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::descriptors::SearchPluginDescriptor;
 use crate::error::PluginRegistryError;
 use crate::registry::RegisteredPlugin;
-use crate::types::SearchMode;
+use crate::search::SearchMode;
 
 pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
 pub use search_tabs::SearchTabStore;

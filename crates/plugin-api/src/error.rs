@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::types::SearchMode;
+use crate::search::SearchMode;
 
 /// Errors that can occur when mutating the [`SearchPluginRegistry`](crate::SearchPluginRegistry).
 #[derive(Debug, Error, PartialEq, Eq)]
