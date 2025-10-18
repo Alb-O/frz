@@ -34,6 +34,7 @@ pub struct App<'a> {
     pub(crate) input_title: Option<String>,
     pub(crate) ui: UiConfig,
     pub theme: Theme,
+    pub(crate) bat_theme: Option<String>,
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
@@ -103,6 +104,7 @@ impl<'a> App<'a> {
             input_title: context_label,
             ui,
             theme: Theme::default(),
+            bat_theme: None,
             throbber_state: ThrobberState::default(),
             index_progress,
             tab_states,
@@ -115,7 +117,12 @@ impl<'a> App<'a> {
     }
 
     pub fn set_theme(&mut self, theme: Theme) {
+        self.set_theme_with_bat(theme, None);
+    }
+
+    pub fn set_theme_with_bat(&mut self, theme: Theme, bat_theme: Option<String>) {
         self.theme = theme;
+        self.bat_theme = bat_theme;
     }
 
     pub fn set_mode(&mut self, mode: SearchMode) {

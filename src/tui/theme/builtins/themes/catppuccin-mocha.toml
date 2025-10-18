@@ -1,0 +1,20 @@
+name = "catppuccin-mocha"
+bat_theme = "Catppuccin Mocha"
+
+[styles.header]
+fg = "#f5e0dc"
+bg = "#1e1e2e"
+
+[styles.row_highlight]
+fg = "#89b4fa"
+bg = "#9399b2"
+
+[styles.prompt]
+fg = "#fab387"
+
+[styles.empty]
+fg = "#9399b2"
+
+[styles.highlight]
+fg = "#89b4fa"
+modifiers = ["bold"]

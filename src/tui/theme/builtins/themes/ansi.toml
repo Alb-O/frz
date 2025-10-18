@@ -1,0 +1,20 @@
+name = "ansi"
+bat_theme = "ansi"
+
+[styles.header]
+fg = "ansi(14)"
+bg = "default"
+
+[styles.row_highlight]
+fg = "ansi(0)"
+bg = "ansi(12)"
+
+[styles.prompt]
+fg = "ansi(10)"
+
+[styles.empty]
+fg = "ansi(8)"
+
+[styles.highlight]
+fg = "ansi(11)"
+modifiers = ["bold"]

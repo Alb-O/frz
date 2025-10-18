@@ -124,6 +124,7 @@ impl<'a> App<'a> {
                 &state.scores,
                 selected,
                 query.as_str(),
+                self.bat_theme.as_deref(),
             );
             preview.render_preview(frame, preview_area, context);
         }

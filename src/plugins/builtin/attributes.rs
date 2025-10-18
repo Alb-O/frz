@@ -104,6 +104,7 @@ impl SearchPluginDataset for AttributeDataset {
             context.scores,
             &context.data.attributes,
             context.highlight,
+            context.highlight_style,
             Some(&column_widths),
         );
         TableDescriptor::new(headers, widths, rows)

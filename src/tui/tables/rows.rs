@@ -1,7 +1,10 @@
 use crate::plugins::api::{AttributeRow, FileRow, TruncationStyle};
 use frizbee::Options;
 use frizbee::match_indices;
-use ratatui::widgets::{Cell, Row};
+use ratatui::{
+    style::Style,
+    widgets::{Cell, Row},
+};
 
 use crate::tui::highlight::highlight_cell;
 
@@ -20,6 +23,7 @@ pub fn build_facet_rows<'a>(
     facet_scores: &'a [u16],
     attributes: &'a [AttributeRow],
     highlight_state: Option<(&'a str, Options)>,
+    highlight_style: Style,
     column_widths: Option<&[u16]>,
 ) -> Vec<Row<'a>> {
     filtered_attributes
@@ -37,6 +41,7 @@ pub fn build_facet_rows<'a>(
                     highlight,
                     name_width,
                     TruncationStyle::Right,
+                    highlight_style,
                 ),
                 Cell::from(attribute.count.to_string()),
                 Cell::from(score.to_string()),
@@ -51,6 +56,7 @@ pub fn build_file_rows<'a>(
     file_scores: &'a [u16],
     files: &'a [FileRow],
     highlight_state: Option<(&'a str, Options)>,
+    highlight_style: Style,
     column_widths: Option<&[u16]>,
 ) -> Vec<Row<'a>> {
     filtered_files
@@ -77,12 +83,14 @@ pub fn build_file_rows<'a>(
                     path_highlight,
                     path_width,
                     entry.truncation_style(),
+                    highlight_style,
                 ),
                 highlight_cell(
                     &entry.display_tags,
                     tag_highlight,
                     tag_width,
                     TruncationStyle::Right,
+                    highlight_style,
                 ),
                 Cell::from(score.to_string()),
             ]))

@@ -1,0 +1,20 @@
+name = "1337"
+bat_theme = "1337"
+
+[styles.header]
+fg = "#f8f8f0"
+bg = "#191919"
+
+[styles.row_highlight]
+fg = "#8cdaff"
+bg = "#515151"
+
+[styles.prompt]
+fg = "#ff5e5e"
+
+[styles.empty]
+fg = "#767570"
+
+[styles.highlight]
+fg = "#8cdaff"
+modifiers = ["bold"]

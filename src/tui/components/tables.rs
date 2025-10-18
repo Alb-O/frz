@@ -45,6 +45,7 @@ pub fn render_table(
         headers: context.headers,
         widths: context.widths,
         highlight: context.highlight,
+        highlight_style: theme.highlight_style(),
         selection_width,
         column_spacing: TABLE_COLUMN_SPACING,
         data: context.data,

@@ -1,0 +1,20 @@
+name = "catppuccin-macchiato"
+bat_theme = "Catppuccin Macchiato"
+
+[styles.header]
+fg = "#f4dbd6"
+bg = "#24273a"
+
+[styles.row_highlight]
+fg = "#6179ab"
+bg = "#939ab7"
+
+[styles.prompt]
+fg = "#f5a97f"
+
+[styles.empty]
+fg = "#939ab7"
+
+[styles.highlight]
+fg = "#8aadf4"
+modifiers = ["bold"]

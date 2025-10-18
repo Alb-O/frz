@@ -1,0 +1,20 @@
+name = "onehalflight"
+bat_theme = "OneHalfLight"
+
+[styles.header]
+fg = "#383a42"
+bg = "#fafafa"
+
+[styles.row_highlight]
+fg = "#0184bc"
+bg = "#bfceff"
+
+[styles.prompt]
+fg = "#a626a4"
+
+[styles.empty]
+fg = "#a0a1a7"
+
+[styles.highlight]
+fg = "#0184bc"
+modifiers = ["bold"]

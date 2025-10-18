@@ -11,14 +11,16 @@ struct ThemeEntry {
     display_name: String,
     theme: Theme,
     aliases: Vec<String>,
+    bat_theme: Option<String>,
 }
 
 impl ThemeEntry {
-    fn new(name: String, theme: Theme) -> Self {
+    fn new(name: String, theme: Theme, bat_theme: Option<String>) -> Self {
         Self {
             display_name: name,
             theme,
             aliases: Vec::new(),
+            bat_theme,
         }
     }
 }
@@ -35,6 +37,7 @@ impl ThemeRegistry {
             name,
             theme,
             aliases,
+            bat_theme,
         } = registration;
 
         let normalized = normalize_name(&name);
@@ -46,10 +49,13 @@ impl ThemeRegistry {
                 removed_aliases = std::mem::take(&mut entry.aliases);
                 entry.display_name = name.clone();
                 entry.theme = theme;
+                entry.bat_theme = bat_theme.clone();
             }
             None => {
-                self.canonical
-                    .insert(normalized.clone(), ThemeEntry::new(name.clone(), theme));
+                self.canonical.insert(
+                    normalized.clone(),
+                    ThemeEntry::new(name.clone(), theme, bat_theme.clone()),
+                );
                 report.inserted.push(name.clone());
             }
         }
@@ -121,8 +127,22 @@ impl ThemeRegistry {
                 name: entry.display_name.clone(),
                 aliases: entry.aliases.clone(),
                 theme: entry.theme,
+                bat_theme: entry.bat_theme.clone(),
             })
             .collect()
+    }
+
+    fn bat_theme(&self, name: &str) -> Option<String> {
+        let normalized = normalize_name(name);
+
+        if let Some(entry) = self.canonical.get(&normalized) {
+            return entry.bat_theme.clone();
+        }
+
+        let target = self.aliases.get(&normalized)?;
+        self.canonical
+            .get(target)
+            .and_then(|entry| entry.bat_theme.clone())
     }
 }
 
@@ -199,6 +219,12 @@ pub fn names() -> Vec<String> {
     names
 }
 
+/// Lookup the associated bat theme for a case-insensitive theme name.
+#[must_use]
+pub fn bat_theme(name: &str) -> Option<String> {
+    read_registry().bat_theme(name)
+}
+
 /// Produce detailed descriptors for every known theme.
 #[must_use]
 pub fn descriptors() -> Vec<ThemeDescriptor> {
@@ -229,19 +255,22 @@ mod tests {
     #[test]
     fn builtin_themes_are_registered() {
         let names = names();
-        assert!(names.iter().any(|name| name == "slate"));
-        assert!(by_name("slate").is_some());
+        assert!(names.iter().any(|name| name == "monokai-extended"));
+        assert!(by_name("monokai-extended").is_some());
     }
 
     #[test]
     fn registering_additional_theme_adds_aliases() {
         let report = register_additional([ThemeRegistration::new("test-theme", sample_theme())
+            .with_bat_theme("Test Bat")
             .aliases(["Test Theme", "test_theme"])]);
         assert!(report.alias_conflicts.is_empty());
 
         assert!(names().iter().any(|name| name == "test-theme"));
         assert!(by_name("test theme").is_some());
         assert!(by_name("TEST_THEME").is_some());
+
+        assert_eq!(super::bat_theme("test-theme").as_deref(), Some("Test Bat"));
 
         let descriptors = descriptors();
         let descriptor = descriptors
@@ -255,6 +284,7 @@ mod tests {
                 .iter()
                 .any(|alias| alias.eq_ignore_ascii_case("test theme"))
         );
+        assert_eq!(descriptor.bat_theme.as_deref(), Some("Test Bat"));
     }
 
     #[test]

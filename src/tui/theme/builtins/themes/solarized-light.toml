@@ -1,18 +1,19 @@
-name = "solarized"
+name = "solarized-light"
+bat_theme = "Solarized (light)"
 
 [styles.header]
-fg = "#fdf6e3"
-bg = "#073642"
+fg = "#073642"
+bg = "#fdf6e3"
 
 [styles.row_highlight]
 fg = "#b58900"
-bg = "#002b36"
+bg = "#eee8d5"
 
 [styles.prompt]
-fg = "#268bd2"
+fg = "#859900"
 
 [styles.empty]
-fg = "#586e75"
+fg = "#93a1a1"
 
 [styles.highlight]
 fg = "#b58900"

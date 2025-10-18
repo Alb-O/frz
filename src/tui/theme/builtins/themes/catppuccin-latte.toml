@@ -1,0 +1,20 @@
+name = "catppuccin-latte"
+bat_theme = "Catppuccin Latte"
+
+[styles.header]
+fg = "#dc8a78"
+bg = "#eff1f5"
+
+[styles.row_highlight]
+fg = "#1e66f5"
+bg = "#7c7f93"
+
+[styles.prompt]
+fg = "#fe640b"
+
+[styles.empty]
+fg = "#7c7f93"
+
+[styles.highlight]
+fg = "#1e66f5"
+modifiers = ["bold"]

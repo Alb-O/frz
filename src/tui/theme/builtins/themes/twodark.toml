@@ -1,0 +1,20 @@
+name = "twodark"
+bat_theme = "TwoDark"
+
+[styles.header]
+fg = "#528bff"
+bg = "#282c34"
+
+[styles.row_highlight]
+fg = "#61afef"
+bg = "#3d4350"
+
+[styles.prompt]
+fg = "#abb2bf"
+
+[styles.empty]
+fg = "#747369"
+
+[styles.highlight]
+fg = "#61afef"
+modifiers = ["bold"]

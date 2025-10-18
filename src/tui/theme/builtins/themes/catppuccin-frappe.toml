@@ -1,0 +1,20 @@
+name = "catppuccin-frappe"
+bat_theme = "Catppuccin Frappé"
+
+[styles.header]
+fg = "#f2d5cf"
+bg = "#303446"
+
+[styles.row_highlight]
+fg = "#6277a7"
+bg = "#949cbb"
+
+[styles.prompt]
+fg = "#ef9f76"
+
+[styles.empty]
+fg = "#949cbb"
+
+[styles.highlight]
+fg = "#8caaee"
+modifiers = ["bold"]

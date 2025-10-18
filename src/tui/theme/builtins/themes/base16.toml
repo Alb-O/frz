@@ -1,0 +1,20 @@
+name = "base16"
+bat_theme = "base16"
+
+[styles.header]
+fg = "ansi(14)"
+bg = "ansi(0)"
+
+[styles.row_highlight]
+fg = "ansi(0)"
+bg = "ansi(14)"
+
+[styles.prompt]
+fg = "ansi(13)"
+
+[styles.empty]
+fg = "ansi(8)"
+
+[styles.highlight]
+fg = "ansi(12)"
+modifiers = ["bold"]

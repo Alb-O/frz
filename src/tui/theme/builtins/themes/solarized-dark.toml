@@ -1,0 +1,20 @@
+name = "solarized-dark"
+bat_theme = "Solarized (dark)"
+
+[styles.header]
+fg = "#eee8d5"
+bg = "#002b36"
+
+[styles.row_highlight]
+fg = "#b58900"
+bg = "#2c4c55"
+
+[styles.prompt]
+fg = "#859900"
+
+[styles.empty]
+fg = "#586e75"
+
+[styles.highlight]
+fg = "#b58900"
+modifiers = ["bold"]

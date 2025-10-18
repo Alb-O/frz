@@ -1,0 +1,20 @@
+name = "coldark-cold"
+bat_theme = "Coldark-Cold"
+
+[styles.header]
+fg = "#111b27"
+bg = "#e3eaf2"
+
+[styles.row_highlight]
+fg = "#7c00aa"
+bg = "#d0dae7"
+
+[styles.prompt]
+fg = "#a04900"
+
+[styles.empty]
+fg = "#3c526d"
+
+[styles.highlight]
+fg = "#7c00aa"
+modifiers = ["bold"]

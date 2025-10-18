@@ -90,6 +90,7 @@ impl ThemeDefinition {
             name: self.name.to_owned(),
             theme: self.theme,
             aliases: self.aliases.iter().map(|alias| alias.to_string()).collect(),
+            bat_theme: None,
         }
     }
 }
@@ -100,6 +101,7 @@ pub struct ThemeRegistration {
     pub name: String,
     pub theme: Theme,
     pub aliases: Vec<String>,
+    pub bat_theme: Option<String>,
 }
 
 impl ThemeRegistration {
@@ -108,11 +110,17 @@ impl ThemeRegistration {
             name: name.into(),
             theme,
             aliases: Vec::new(),
+            bat_theme: None,
         }
     }
 
     pub fn alias(mut self, alias: impl Into<String>) -> Self {
         self.aliases.push(alias.into());
+        self
+    }
+
+    pub fn with_bat_theme(mut self, bat_theme: impl Into<String>) -> Self {
+        self.bat_theme = Some(bat_theme.into());
         self
     }
 
@@ -161,4 +169,5 @@ pub struct ThemeDescriptor {
     pub name: String,
     pub aliases: Vec<String>,
     pub theme: Theme,
+    pub bat_theme: Option<String>,
 }

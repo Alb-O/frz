@@ -1,0 +1,20 @@
+name = "base16-256"
+bat_theme = "base16-256"
+
+[styles.header]
+fg = "ansi(21)"
+bg = "ansi(0)"
+
+[styles.row_highlight]
+fg = "ansi(0)"
+bg = "ansi(20)"
+
+[styles.prompt]
+fg = "ansi(21)"
+
+[styles.empty]
+fg = "ansi(8)"
+
+[styles.highlight]
+fg = "ansi(19)"
+modifiers = ["bold"]

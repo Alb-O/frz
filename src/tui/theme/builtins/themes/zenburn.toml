@@ -1,0 +1,20 @@
+name = "zenburn"
+bat_theme = "zenburn"
+
+[styles.header]
+fg = "#d6d6d6"
+bg = "#3f3f3f"
+
+[styles.row_highlight]
+fg = "#fed6af"
+bg = "#838383"
+
+[styles.prompt]
+fg = "#568e4d"
+
+[styles.empty]
+fg = "#a5a5a5"
+
+[styles.highlight]
+fg = "#fed6af"
+modifiers = ["bold"]

@@ -1,0 +1,20 @@
+name = "nord"
+bat_theme = "Nord"
+
+[styles.header]
+fg = "#d8dee9"
+bg = "#2e3440"
+
+[styles.row_highlight]
+fg = "#88c0d0"
+bg = "#434c5e"
+
+[styles.prompt]
+fg = "#81a1c1"
+
+[styles.empty]
+fg = "#828997"
+
+[styles.highlight]
+fg = "#88c0d0"
+modifiers = ["bold"]

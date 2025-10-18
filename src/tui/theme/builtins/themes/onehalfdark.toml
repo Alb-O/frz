@@ -1,0 +1,20 @@
+name = "onehalfdark"
+bat_theme = "OneHalfDark"
+
+[styles.header]
+fg = "#a3b3cc"
+bg = "#282c34"
+
+[styles.row_highlight]
+fg = "#61afef"
+bg = "#474e5d"
+
+[styles.prompt]
+fg = "#c678dd"
+
+[styles.empty]
+fg = "#5c6370"
+
+[styles.highlight]
+fg = "#61afef"
+modifiers = ["bold"]

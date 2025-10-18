@@ -1,0 +1,20 @@
+name = "visual-studio-dark-plus"
+bat_theme = "Visual Studio Dark+"
+
+[styles.header]
+fg = "#dcdcdc"
+bg = "#1e1e1e"
+
+[styles.row_highlight]
+fg = "#dcdcaa"
+bg = "#264f78"
+
+[styles.prompt]
+fg = "#c586c0"
+
+[styles.empty]
+fg = "#ffffff"
+
+[styles.highlight]
+fg = "#dcdcaa"
+modifiers = ["bold"]

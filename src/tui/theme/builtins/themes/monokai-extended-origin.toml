@@ -1,0 +1,20 @@
+name = "monokai-extended-origin"
+bat_theme = "Monokai Extended Origin"
+
+[styles.header]
+fg = "#f8f8f0"
+bg = "#272822"
+
+[styles.row_highlight]
+fg = "#a6e22e"
+bg = "#49483e"
+
+[styles.prompt]
+fg = "#f92672"
+
+[styles.empty]
+fg = "#767570"
+
+[styles.highlight]
+fg = "#a6e22e"
+modifiers = ["bold"]

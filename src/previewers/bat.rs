@@ -17,11 +17,16 @@ use crate::plugins::api::{PreviewSplit, PreviewSplitContext};
 struct PreviewKey {
     path: PathBuf,
     width: u16,
+    bat_theme: Option<String>,
 }
 
 impl PreviewKey {
-    fn new(path: PathBuf, width: u16) -> Self {
-        Self { path, width }
+    fn new(path: PathBuf, width: u16, bat_theme: Option<&str>) -> Self {
+        Self {
+            path,
+            width,
+            bat_theme: bat_theme.map(ToString::to_string),
+        }
     }
 }
 
@@ -84,8 +89,9 @@ impl PreviewState {
         let (sender, receiver) = mpsc::channel();
         let path = key.path.clone();
         let width = key.width;
+        let bat_theme = key.bat_theme.clone();
         thread::spawn(move || {
-            let result = render_file(path, width);
+            let result = render_file(path, width, bat_theme.as_deref());
             let _ = sender.send(result);
         });
         self.pending = Some(PendingPreview { key, receiver });
@@ -116,7 +122,7 @@ impl PreviewSplit for FilePreviewer {
         };
 
         let path = context.data().resolve_file_path(file);
-        let key = PreviewKey::new(path.clone(), area.width);
+        let key = PreviewKey::new(path.clone(), area.width, context.bat_theme());
         let display_path = key.path.display().to_string();
 
         let mut state = self.state.lock().expect("preview state poisoned");
@@ -177,7 +183,7 @@ impl PreviewSplit for FilePreviewer {
     }
 }
 
-fn render_file(path: PathBuf, width: u16) -> Result<String, String> {
+fn render_file(path: PathBuf, width: u16, bat_theme: Option<&str>) -> Result<String, String> {
     if width == 0 {
         return Ok(String::new());
     }
@@ -191,6 +197,10 @@ fn render_file(path: PathBuf, width: u16) -> Result<String, String> {
         .grid(false)
         .line_numbers(true)
         .snip(false);
+
+    if let Some(theme) = bat_theme {
+        printer.theme(theme);
+    }
 
     let mut output = String::new();
     match printer.print_with_writer(Some(&mut output)) {

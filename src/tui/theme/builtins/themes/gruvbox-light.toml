@@ -1,0 +1,21 @@
+name = "gruvbox-light"
+bat_theme = "gruvbox-light"
+aliases = ["gruvbox-light-medium"]
+
+[styles.header]
+fg = "#7c6f64"
+bg = "#fbf1c7"
+
+[styles.row_highlight]
+fg = "#9d0006"
+bg = "#ebdbb2"
+
+[styles.prompt]
+fg = "#282828"
+
+[styles.empty]
+fg = "#3c3836"
+
+[styles.highlight]
+fg = "#9d0006"
+modifiers = ["bold"]

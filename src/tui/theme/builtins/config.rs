@@ -10,6 +10,8 @@ pub(super) struct ThemeConfig {
     pub(super) aliases: Vec<String>,
     #[serde(default)]
     pub(super) default: bool,
+    #[serde(default)]
+    pub(super) bat_theme: Option<String>,
     pub(super) styles: ThemeStylesConfig,
 }
 
@@ -17,15 +19,20 @@ impl ThemeConfig {
     pub(super) fn into_document(self, context: &str) -> Result<ThemeDocument> {
         let theme = self.styles.into_theme(&format!("{context}.styles"))?;
 
+        let mut registration = ThemeRegistration::new(self.name.clone(), theme);
+
+        if let Some(bat_theme) = self.bat_theme {
+            registration = registration.with_bat_theme(bat_theme);
+        }
+
         let registration = self
             .aliases
             .into_iter()
             .map(|alias| alias.trim().to_string())
             .filter(|alias| !alias.is_empty())
-            .fold(
-                ThemeRegistration::new(self.name.clone(), theme),
-                |registration, alias| registration.alias(alias),
-            );
+            .fold(registration, |registration, alias| {
+                registration.alias(alias)
+            });
 
         Ok(ThemeDocument {
             registration,

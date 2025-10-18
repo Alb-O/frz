@@ -16,6 +16,7 @@ pub struct PreviewSplitContext<'a> {
     scores: &'a [u16],
     selected: Option<usize>,
     query: &'a str,
+    bat_theme: Option<&'a str>,
 }
 
 impl<'a> PreviewSplitContext<'a> {
@@ -25,6 +26,7 @@ impl<'a> PreviewSplitContext<'a> {
         scores: &'a [u16],
         selected: Option<usize>,
         query: &'a str,
+        bat_theme: Option<&'a str>,
     ) -> Self {
         Self {
             data,
@@ -32,6 +34,7 @@ impl<'a> PreviewSplitContext<'a> {
             scores,
             selected,
             query,
+            bat_theme,
         }
     }
 
@@ -58,6 +61,10 @@ impl<'a> PreviewSplitContext<'a> {
 
     pub fn query(&self) -> &'a str {
         self.query
+    }
+
+    pub fn bat_theme(&self) -> Option<&'a str> {
+        self.bat_theme
     }
 }
 

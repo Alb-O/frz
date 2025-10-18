@@ -1,5 +1,5 @@
 use frizbee::Options;
-use ratatui::{layout::Constraint, widgets::Row};
+use ratatui::{layout::Constraint, style::Style, widgets::Row};
 
 use super::search::SearchData;
 
@@ -32,6 +32,7 @@ pub struct TableContext<'a> {
     pub headers: Option<&'a Vec<String>>,
     pub widths: Option<&'a Vec<Constraint>>,
     pub highlight: Option<(&'a str, Options)>,
+    pub highlight_style: Style,
     pub selection_width: u16,
     pub column_spacing: u16,
     pub data: &'a SearchData,

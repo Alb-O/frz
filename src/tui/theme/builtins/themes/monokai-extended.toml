@@ -1,0 +1,22 @@
+name = "monokai-extended"
+bat_theme = "Monokai Extended"
+aliases = ["default"]
+default = true
+
+[styles.header]
+fg = "#f8f8f0"
+bg = "#222222"
+
+[styles.row_highlight]
+fg = "#a6e22e"
+bg = "#444444"
+
+[styles.prompt]
+fg = "#f92672"
+
+[styles.empty]
+fg = "#767570"
+
+[styles.highlight]
+fg = "#a6e22e"
+modifiers = ["bold"]

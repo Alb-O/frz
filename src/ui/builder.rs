@@ -20,6 +20,7 @@ pub struct SearchUi {
     widths: HashMap<SearchMode, Vec<Constraint>>,
     ui_config: Option<UiConfig>,
     theme: Option<Theme>,
+    bat_theme: Option<String>,
     start_mode: Option<SearchMode>,
     plugins: SearchPluginRegistry,
     index_updates: Option<Receiver<IndexUpdate>>,
@@ -39,6 +40,7 @@ impl SearchUi {
             widths: HashMap::new(),
             ui_config: None,
             theme: None,
+            bat_theme: None,
             start_mode: None,
             plugins,
             index_updates: None,
@@ -90,12 +92,14 @@ impl SearchUi {
     pub fn with_theme_name(mut self, name: &str) -> Self {
         if let Some(theme) = crate::tui::theme::by_name(name) {
             self.theme = Some(theme);
+            self.bat_theme = crate::tui::theme::bat_theme(name);
         }
         self
     }
 
     pub fn with_theme(mut self, theme: Theme) -> Self {
         self.theme = Some(theme);
+        self.bat_theme = None;
         self
     }
 
@@ -137,7 +141,7 @@ impl SearchUi {
             app.ensure_tab_buffers();
         }
         if let Some(theme) = self.theme {
-            app.set_theme(theme);
+            app.set_theme_with_bat(theme, self.bat_theme.clone());
         }
         if let Some(mode) = self.start_mode {
             app.set_mode(mode);

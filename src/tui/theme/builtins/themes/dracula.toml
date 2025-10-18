@@ -1,0 +1,20 @@
+name = "dracula"
+bat_theme = "Dracula"
+
+[styles.header]
+fg = "#f8f8f0"
+bg = "#282a36"
+
+[styles.row_highlight]
+fg = "#50fa7b"
+bg = "#44475a"
+
+[styles.prompt]
+fg = "#ff79c6"
+
+[styles.empty]
+fg = "#767570"
+
+[styles.highlight]
+fg = "#50fa7b"
+modifiers = ["bold"]

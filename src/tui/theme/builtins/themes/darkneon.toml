@@ -1,0 +1,21 @@
+name = "darkneon"
+bat_theme = "DarkNeon"
+aliases = ["dark-neon"]
+
+[styles.header]
+fg = "#ffffff"
+bg = "#000000"
+
+[styles.row_highlight]
+fg = "#dad085"
+bg = "#333333"
+
+[styles.prompt]
+fg = "#66ccff"
+
+[styles.empty]
+fg = "#cae2fb"
+
+[styles.highlight]
+fg = "#dad085"
+modifiers = ["bold"]

@@ -7,14 +7,13 @@ use ratatui::widgets::Cell;
 use unicode_truncate::UnicodeTruncateStr;
 use unicode_width::UnicodeWidthStr;
 
-use crate::tui::theme::Theme;
-
 /// Build a table cell that highlights matching indices within `text`.
 pub fn highlight_cell(
     text: &str,
     indices: Option<Vec<usize>>,
     max_width: Option<u16>,
     truncation: TruncationStyle,
+    highlight_style: Style,
 ) -> Cell<'_> {
     let (display_text, indices) = if let Some(width) = max_width.map(usize::from) {
         truncate_with_highlight(text, indices, width, truncation)
@@ -30,8 +29,6 @@ pub fn highlight_cell(
     let mut buffer = String::new();
     let mut highlighted = false;
     let mut spans = Vec::new();
-    let theme = Theme::default();
-    let highlight_style = theme.highlight_style();
 
     for (idx, ch) in display_text.chars().enumerate() {
         let should_highlight = next.peek().copied() == Some(idx);

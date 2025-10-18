@@ -1,0 +1,20 @@
+name = "sublime-snazzy"
+bat_theme = "Sublime Snazzy"
+
+[styles.header]
+fg = "#97979b"
+bg = "#282a36"
+
+[styles.row_highlight]
+fg = "#9aedfe"
+bg = "#57c7ff"
+
+[styles.prompt]
+fg = "#ff5c57"
+
+[styles.empty]
+fg = "#686868"
+
+[styles.highlight]
+fg = "#9aedfe"
+modifiers = ["bold"]

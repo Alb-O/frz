@@ -105,6 +105,7 @@ impl SearchPluginDataset for FileDataset {
             context.scores,
             &context.data.files,
             context.highlight,
+            context.highlight_style,
             Some(&column_widths),
         );
         TableDescriptor::new(headers, widths, rows)

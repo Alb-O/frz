@@ -1,0 +1,20 @@
+name = "monokai-extended-light"
+bat_theme = "Monokai Extended Light"
+
+[styles.header]
+fg = "#666663"
+bg = "#fafafa"
+
+[styles.row_highlight]
+fg = "#679c00"
+bg = "#ccc9ad"
+
+[styles.prompt]
+fg = "#f9005a"
+
+[styles.empty]
+fg = "#3b3a32"
+
+[styles.highlight]
+fg = "#679c00"
+modifiers = ["bold"]
