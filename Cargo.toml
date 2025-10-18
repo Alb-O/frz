@@ -28,6 +28,8 @@ unicode-width = "0.2"
 tui-textarea = "0.7"
 unicode-truncate = "2"
 indexmap = "2"
+toml = "0.9"
+include_dir = "0.7"
 
 [dev-dependencies]
 insta = "1.43"

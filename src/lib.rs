@@ -18,7 +18,7 @@ pub use crate::plugins::api::{
 pub use crate::tui::components::{progress, tables, tabs};
 pub use crate::tui::input::SearchInput;
 pub use crate::tui::tables::rows as utils;
-pub use crate::tui::theme::{LIGHT, SLATE, SOLARIZED, Theme};
+pub use crate::tui::theme::{Theme, builtin_themes, default_theme};
 pub use systems::filesystem::FilesystemOptions;
 pub use systems::search::plugin::{self as search_system, SearchStream};
 pub use ui::run;

@@ -1,4 +1,4 @@
-use super::builtins::BUILT_IN_DEFINITIONS;
+use super::builtins;
 use super::types::{
     AliasConflict, Theme, ThemeDefinition, ThemeDescriptor, ThemeRegistration,
     ThemeRegistrationReport,
@@ -133,8 +133,8 @@ fn registry_lock() -> &'static RwLock<ThemeRegistry> {
         let mut registry = ThemeRegistry::default();
         let mut report = ThemeRegistrationReport::default();
 
-        for definition in BUILT_IN_DEFINITIONS {
-            registry.register(definition.to_registration(), &mut report);
+        for registration in builtins::registrations() {
+            registry.register(registration, &mut report);
         }
 
         debug_assert!(report.replaced.is_empty(), "duplicate built-in theme names");
