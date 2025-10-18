@@ -26,8 +26,12 @@ fn main() -> anyhow::Result<()> {
     match outcome.selection {
         Some(SearchSelection::File(file)) => println!("{}", file.path),
         Some(SearchSelection::Attribute(attribute)) => println!("attribute: {}", attribute.name),
-        Some(SearchSelection::Plugin(plugin)) => {
-            println!("Plugin selection: {} @ {}", plugin.mode.id(), plugin.index)
+        Some(SearchSelection::Extension(extension)) => {
+            println!(
+                "Extension selection: {} @ {}",
+                extension.mode.id(),
+                extension.index
+            )
         }
         None => println!("No selection"),
     }

@@ -10,8 +10,8 @@ use ratatui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::plugins::api::SearchData;
-use crate::plugins::api::descriptors::{FrzPluginDataset, TableContext, TableDescriptor};
+use crate::extensions::api::SearchData;
+use crate::extensions::api::descriptors::{ExtensionDataset, TableContext, TableDescriptor};
 
 const HIGHLIGHT_SYMBOL: &str = "▶ ";
 const TABLE_COLUMN_SPACING: u16 = 1;
@@ -27,12 +27,12 @@ pub struct TableRenderContext<'a> {
     pub data: &'a SearchData,
 }
 
-/// Render a plugin-backed table using the provided dataset definition.
+/// Render a extension-backed table using the provided dataset definition.
 pub fn render_table(
     frame: &mut Frame,
     area: Rect,
     table_state: &mut ratatui::widgets::TableState,
-    dataset: &'static dyn FrzPluginDataset,
+    dataset: &'static dyn ExtensionDataset,
     theme: &Theme,
     context: TableRenderContext<'_>,
 ) {

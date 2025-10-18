@@ -1,5 +1,5 @@
 use anyhow::Result;
-use frz::plugins::builtin::{attributes, files};
+use frz::extensions::builtin::{attributes, files};
 use frz::{FilesystemOptions, SearchMode, SearchOutcome, SearchUi, UiConfig};
 use std::path::PathBuf;
 

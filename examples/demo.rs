@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     let search_ui = SearchUi::new(data)
         .with_ui_config(UiConfig::tags_and_files())
         .with_input_title("workspace-prototype")
-        .with_start_mode(frz::plugins::builtin::attributes::mode());
+        .with_start_mode(frz::extensions::builtin::attributes::mode());
     let outcome = search_ui.run()?;
     println!("Accepted? {}", outcome.accepted);
     match outcome.selection {
@@ -29,8 +29,8 @@ fn main() -> anyhow::Result<()> {
         Some(SearchSelection::Attribute(attribute)) => {
             println!("Selected attribute: {}", attribute.name)
         }
-        Some(SearchSelection::Plugin(plugin)) => println!(
-            "Selected plugin result: {} @ {}",
+        Some(SearchSelection::Extension(plugin)) => println!(
+            "Selected extension result: {} @ {}",
             plugin.mode.id(),
             plugin.index
         ),

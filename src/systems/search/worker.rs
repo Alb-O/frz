@@ -4,14 +4,14 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult};
-use crate::plugins::api::{FrzPluginRegistry, PluginQueryContext, SearchData, SearchStream};
+use crate::extensions::api::{ExtensionCatalog, ExtensionQueryContext, SearchData, SearchStream};
 
 use crate::systems::filesystem::merge_update;
 
 /// Launches the background search worker thread and returns communication channels.
 pub(crate) fn spawn(
     mut data: SearchData,
-    plugins: FrzPluginRegistry,
+    catalog: ExtensionCatalog,
 ) -> (
     Sender<SearchCommand>,
     Receiver<SearchResult>,
@@ -22,20 +22,20 @@ pub(crate) fn spawn(
     let latest_query_id = Arc::new(AtomicU64::new(0));
     let thread_latest = Arc::clone(&latest_query_id);
 
-    thread::spawn(move || worker_loop(&mut data, &plugins, command_rx, result_tx, thread_latest));
+    thread::spawn(move || worker_loop(&mut data, &catalog, command_rx, result_tx, thread_latest));
 
     (command_tx, result_rx, latest_query_id)
 }
 
 fn worker_loop(
     data: &mut SearchData,
-    plugins: &FrzPluginRegistry,
+    catalog: &ExtensionCatalog,
     command_rx: Receiver<SearchCommand>,
     result_tx: Sender<SearchResult>,
     latest_query_id: Arc<AtomicU64>,
 ) {
     while let Ok(command) = command_rx.recv() {
-        if !handle_command(data, plugins, &result_tx, &latest_query_id, command) {
+        if !handle_command(data, catalog, &result_tx, &latest_query_id, command) {
             break;
         }
     }
@@ -43,17 +43,17 @@ fn worker_loop(
 
 fn handle_command(
     data: &mut SearchData,
-    plugins: &FrzPluginRegistry,
+    catalog: &ExtensionCatalog,
     result_tx: &Sender<SearchResult>,
     latest_query_id: &Arc<AtomicU64>,
     command: SearchCommand,
 ) -> bool {
     match command {
         SearchCommand::Query { id, query, mode } => {
-            if let Some(plugin) = plugins.plugin(mode) {
+            if let Some(module) = catalog.module(mode) {
                 let stream = SearchStream::new(result_tx, id, mode);
-                let context = PluginQueryContext::new(data, latest_query_id.as_ref());
-                plugin.stream(&query, stream, context)
+                let context = ExtensionQueryContext::new(data, latest_query_id.as_ref());
+                module.stream(&query, stream, context)
             } else {
                 true
             }
@@ -71,20 +71,20 @@ mod tests {
     use super::*;
     use std::time::Duration;
 
-    use crate::plugins::api::{
-        PluginSelectionContext, SearchData, SearchMode, SearchSelection,
+    use crate::extensions::api::{
+        ExtensionSelectionContext, SearchData, SearchMode, SearchSelection,
         descriptors::{
-            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
+            ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext,
             TableDescriptor,
         },
-        registry::FrzPlugin,
+        registry::ExtensionModule,
         search::FileRow,
         search::SearchStream,
     };
 
     struct DummyDataset;
 
-    impl FrzPluginDataset for DummyDataset {
+    impl ExtensionDataset for DummyDataset {
         fn key(&self) -> &'static str {
             "dummy"
         }
@@ -100,9 +100,9 @@ mod tests {
 
     static DATASET: DummyDataset = DummyDataset;
 
-    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "dummy",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Dummy",
             mode_title: "Dummy",
             hint: "",
@@ -117,10 +117,10 @@ mod tests {
     }
 
     #[derive(Clone)]
-    struct DummyPlugin;
+    struct DummyModule;
 
-    impl FrzPlugin for DummyPlugin {
-        fn descriptor(&self) -> &'static FrzPluginDescriptor {
+    impl ExtensionModule for DummyModule {
+        fn descriptor(&self) -> &'static ExtensionDescriptor {
             &DESCRIPTOR
         }
 
@@ -128,7 +128,7 @@ mod tests {
             &self,
             query: &str,
             stream: SearchStream<'_>,
-            context: PluginQueryContext<'_>,
+            context: ExtensionQueryContext<'_>,
         ) -> bool {
             let query = query.to_lowercase();
             let indices: Vec<usize> = context
@@ -150,7 +150,7 @@ mod tests {
 
         fn selection(
             &self,
-            context: PluginSelectionContext<'_>,
+            context: ExtensionSelectionContext<'_>,
             index: usize,
         ) -> Option<SearchSelection> {
             context
@@ -165,23 +165,25 @@ mod tests {
     #[test]
     fn shutdown_command_stops_worker() {
         let data = SearchData::default();
-        let plugins = FrzPluginRegistry::default();
-        let (tx, _rx, latest) = spawn(data, plugins);
+        let catalog = ExtensionCatalog::default();
+        let (tx, _rx, latest) = spawn(data, catalog);
         assert_eq!(latest.load(std::sync::atomic::Ordering::Relaxed), 0);
         tx.send(SearchCommand::Shutdown).unwrap();
     }
 
     #[test]
-    fn streaming_plugin_results_are_forwarded() {
+    fn streaming_module_results_are_forwarded() {
         let data = SearchData::new().with_files(vec![
             FileRow::new("src/lib.rs", Vec::<String>::new()),
             FileRow::new("README.md", Vec::<String>::new()),
         ]);
 
-        let mut registry = FrzPluginRegistry::empty();
-        registry.register(DummyPlugin).expect("register plugin");
+        let mut catalog = ExtensionCatalog::empty();
+        catalog
+            .register_module(DummyModule)
+            .expect("register module");
 
-        let (command_tx, result_rx, _) = spawn(data, registry);
+        let (command_tx, result_rx, _) = spawn(data, catalog);
         command_tx
             .send(SearchCommand::Query {
                 id: 1,

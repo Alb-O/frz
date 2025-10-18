@@ -1,20 +1,20 @@
 fn main() {
     use std::sync::atomic::Ordering;
 
-    use frz::plugins::api::{
-        Capability, FrzPlugin, FrzPluginRegistry, PluginBundle, PluginQueryContext,
-        PluginSelectionContext, SearchSelection, SearchStream,
+    use frz::extensions::api::{
+        Contribution, ExtensionCatalog, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
+        ExtensionSelectionContext, SearchSelection, SearchStream,
         descriptors::{
-            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
+            ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext,
             TableDescriptor,
         },
     };
     use ratatui::widgets::Row;
 
     static DATASET: DemoDataset = DemoDataset;
-    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "capability-demo",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Capability Demo",
             mode_title: "Capability Demo",
             hint: "Type to search",
@@ -26,12 +26,12 @@ fn main() {
 
     struct DemoDataset;
 
-    impl FrzPluginDataset for DemoDataset {
+    impl ExtensionDataset for DemoDataset {
         fn key(&self) -> &'static str {
             "capability-demo"
         }
 
-        fn total_count(&self, _data: &frz::plugins::api::SearchData) -> usize {
+        fn total_count(&self, _data: &frz::extensions::api::SearchData) -> usize {
             0
         }
 
@@ -44,10 +44,10 @@ fn main() {
         }
     }
 
-    struct DemoPlugin;
+    struct DemoModule;
 
-    impl FrzPlugin for DemoPlugin {
-        fn descriptor(&self) -> &'static FrzPluginDescriptor {
+    impl ExtensionModule for DemoModule {
+        fn descriptor(&self) -> &'static ExtensionDescriptor {
             &DESCRIPTOR
         }
 
@@ -55,7 +55,7 @@ fn main() {
             &self,
             query: &str,
             stream: SearchStream<'_>,
-            context: PluginQueryContext<'_>,
+            context: ExtensionQueryContext<'_>,
         ) -> bool {
             let latest_id = context.latest_query_id().load(Ordering::Relaxed);
             println!("received query: {query:?}, latest id: {latest_id}");
@@ -64,32 +64,32 @@ fn main() {
 
         fn selection(
             &self,
-            _context: PluginSelectionContext<'_>,
+            _context: ExtensionSelectionContext<'_>,
             _index: usize,
         ) -> Option<SearchSelection> {
             None
         }
     }
 
-    struct DemoBundle;
+    struct DemoPackage;
 
-    impl PluginBundle for DemoBundle {
-        type Capabilities<'a>
-            = std::iter::Once<Capability>
+    impl ExtensionPackage for DemoPackage {
+        type Contributions<'a>
+            = std::iter::Once<Contribution>
         where
             Self: 'a;
 
-        fn capabilities(&self) -> Self::Capabilities<'_> {
-            std::iter::once(Capability::search_tab(&DESCRIPTOR, DemoPlugin))
+        fn contributions(&self) -> Self::Contributions<'_> {
+            std::iter::once(Contribution::search_tab(&DESCRIPTOR, DemoModule))
         }
     }
 
-    let mut registry = FrzPluginRegistry::new();
-    registry
-        .register_bundle(DemoBundle)
-        .expect("demo bundle should register");
+    let mut catalog = ExtensionCatalog::new();
+    catalog
+        .register_package(DemoPackage)
+        .expect("demo package should register");
 
-    for descriptor in registry.descriptors() {
-        println!("Registered capability: {}", descriptor.id);
+    for descriptor in catalog.descriptors() {
+        println!("Registered contribution: {}", descriptor.id);
     }
 }

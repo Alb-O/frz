@@ -175,16 +175,16 @@ fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::api::{
+    use crate::extensions::api::{
         TableContext, TableDescriptor,
-        descriptors::{FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition},
+        descriptors::{ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition},
         search::{AttributeRow, FileRow, SearchMode},
     };
     use std::sync::mpsc::channel;
 
     struct NullDataset;
 
-    impl FrzPluginDataset for NullDataset {
+    impl ExtensionDataset for NullDataset {
         fn key(&self) -> &'static str {
             "stream"
         }
@@ -200,9 +200,9 @@ mod tests {
 
     static DATASET: NullDataset = NullDataset;
 
-    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "stream",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Stream",
             mode_title: "",
             hint: "",

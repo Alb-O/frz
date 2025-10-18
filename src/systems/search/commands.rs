@@ -1,5 +1,5 @@
-use crate::plugins::api::SearchMode;
-pub(crate) use crate::plugins::api::SearchResult;
+use crate::extensions::api::SearchMode;
+pub(crate) use crate::extensions::api::SearchResult;
 
 use crate::systems::filesystem::IndexUpdate;
 

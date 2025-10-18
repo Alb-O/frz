@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Clear, Paragraph},
 };
 
-use crate::plugins::api::PreviewSplitContext;
+use crate::extensions::api::PreviewSplitContext;
 use crate::systems::search;
 use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,

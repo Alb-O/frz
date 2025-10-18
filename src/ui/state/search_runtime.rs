@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use crate::plugins::api::SearchMode;
+use crate::extensions::api::SearchMode;
 
 use crate::systems::filesystem::IndexUpdate;
 use crate::systems::search::{SearchCommand, SearchResult};

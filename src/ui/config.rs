@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::plugins::api::{SearchMode, descriptors::FrzPluginDescriptor};
+use crate::extensions::api::{SearchMode, descriptors::ExtensionDescriptor};
 
 /// Human-readable labels and titles rendered within a single search pane.
 #[derive(Debug, Clone)]
@@ -77,8 +77,8 @@ impl Default for UiConfig {
             tabs: Vec::new(),
             index: HashMap::new(),
         };
-        for descriptor in crate::plugins::builtin::descriptors() {
-            config.register_plugin(descriptor);
+        for descriptor in crate::extensions::builtin::descriptors() {
+            config.register_extension(descriptor);
         }
         config
     }
@@ -95,7 +95,7 @@ impl UiConfig {
             index: HashMap::new(),
         };
 
-        let attributes = crate::plugins::builtin::attributes::mode();
+        let attributes = crate::extensions::builtin::attributes::mode();
         config.register_tab(TabUiConfig::new(
             attributes,
             "Tags",
@@ -107,7 +107,7 @@ impl UiConfig {
             ),
         ));
 
-        let files = crate::plugins::builtin::files::mode();
+        let files = crate::extensions::builtin::files::mode();
         config.register_tab(TabUiConfig::new(
             files,
             "Files",
@@ -135,8 +135,8 @@ impl UiConfig {
         }
     }
 
-    /// Register the default UI contributed by a plugin descriptor.
-    pub fn register_plugin(&mut self, descriptor: &'static FrzPluginDescriptor) {
+    /// Register the default UI contributed by an extension descriptor.
+    pub fn register_extension(&mut self, descriptor: &'static ExtensionDescriptor) {
         let mode = SearchMode::from_descriptor(descriptor);
         let pane = PaneUiConfig::new(
             descriptor.ui.mode_title,
@@ -148,7 +148,7 @@ impl UiConfig {
     }
 
     /// Return all registered tabs in the order they were added, preserving the
-    /// explicit registration order when plugins are loaded.
+    /// explicit registration order when extensions are loaded.
     #[must_use]
     pub fn tabs(&self) -> &[TabUiConfig] {
         &self.tabs
@@ -218,7 +218,7 @@ impl UiConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::builtin::{attributes, files};
+    use crate::extensions::builtin::{attributes, files};
 
     #[test]
     fn tags_and_files_registers_tabs() {

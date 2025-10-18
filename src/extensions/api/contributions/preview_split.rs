@@ -3,11 +3,11 @@ use std::sync::Arc;
 
 use ratatui::{Frame, layout::Rect};
 
-use crate::plugins::api::descriptors::FrzPluginDescriptor;
-use crate::plugins::api::error::PluginRegistryError;
-use crate::plugins::api::search::{SearchData, SearchMode};
+use crate::extensions::api::descriptors::ExtensionDescriptor;
+use crate::extensions::api::error::ExtensionCatalogError;
+use crate::extensions::api::search::{SearchData, SearchMode};
 
-use super::{CapabilityInstallContext, CapabilitySpecImpl};
+use super::{ContributionInstallContext, ContributionSpecImpl};
 
 /// Context provided to preview split renderers when drawing the preview area.
 pub struct PreviewSplitContext<'a> {
@@ -73,7 +73,7 @@ pub trait PreviewSplit: Send + Sync {
     fn render_preview(&self, frame: &mut Frame, area: Rect, context: PreviewSplitContext<'_>);
 }
 
-/// Storage for preview split renderers registered by plugins.
+/// Storage for preview split renderers registered by extensions.
 #[derive(Clone, Default)]
 pub struct PreviewSplitStore {
     splits: HashMap<SearchMode, Arc<dyn PreviewSplit>>,
@@ -84,9 +84,9 @@ impl PreviewSplitStore {
         &mut self,
         mode: SearchMode,
         preview: Arc<dyn PreviewSplit>,
-    ) -> Result<(), PluginRegistryError> {
+    ) -> Result<(), ExtensionCatalogError> {
         if self.splits.contains_key(&mode) {
-            return Err(PluginRegistryError::capability_conflict(
+            return Err(ExtensionCatalogError::contribution_conflict(
                 "preview split",
                 mode,
             ));
@@ -104,15 +104,15 @@ impl PreviewSplitStore {
     }
 }
 
-/// Capability describing a preview split renderer.
+/// Contribution describing a preview split renderer.
 #[derive(Clone)]
-pub struct PreviewSplitCapability {
-    descriptor: &'static FrzPluginDescriptor,
+pub struct PreviewSplitContribution {
+    descriptor: &'static ExtensionDescriptor,
     preview: Arc<dyn PreviewSplit>,
 }
 
-impl PreviewSplitCapability {
-    pub fn new<P>(descriptor: &'static FrzPluginDescriptor, preview: P) -> Self
+impl PreviewSplitContribution {
+    pub fn new<P>(descriptor: &'static ExtensionDescriptor, preview: P) -> Self
     where
         P: PreviewSplit + 'static,
     {
@@ -124,11 +124,11 @@ impl PreviewSplitCapability {
     }
 }
 
-impl CapabilitySpecImpl for PreviewSplitCapability {
+impl ContributionSpecImpl for PreviewSplitContribution {
     fn install(
         &self,
-        context: &mut CapabilityInstallContext<'_>,
-    ) -> Result<(), PluginRegistryError> {
+        context: &mut ContributionInstallContext<'_>,
+    ) -> Result<(), ExtensionCatalogError> {
         let mode = SearchMode::from_descriptor(self.descriptor);
         let store = context.storage_mut::<PreviewSplitStore>();
         store.register(mode, Arc::clone(&self.preview))?;

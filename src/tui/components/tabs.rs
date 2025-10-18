@@ -1,4 +1,4 @@
-use crate::plugins::api::SearchMode;
+use crate::extensions::api::SearchMode;
 use crate::tui::input::SearchInput;
 use crate::tui::theme::Theme;
 use ratatui::layout::Rect;
@@ -227,10 +227,10 @@ fn render_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::api::{
+    use crate::extensions::api::{
         SearchData, SearchMode,
         descriptors::{
-            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
+            ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext,
             TableDescriptor,
         },
     };
@@ -239,7 +239,7 @@ mod tests {
 
     struct DummyDataset;
 
-    impl FrzPluginDataset for DummyDataset {
+    impl ExtensionDataset for DummyDataset {
         fn key(&self) -> &'static str {
             "dummy"
         }
@@ -255,9 +255,9 @@ mod tests {
 
     static DATASET: DummyDataset = DummyDataset;
 
-    static TAG_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static TAG_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "attributes",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Tags",
             mode_title: "Tag search",
             hint: "",
@@ -267,9 +267,9 @@ mod tests {
         dataset: &DATASET,
     };
 
-    static FILE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static FILE_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "files",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Files",
             mode_title: "File search",
             hint: "",
@@ -279,9 +279,9 @@ mod tests {
         dataset: &DATASET,
     };
 
-    static OTHER_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static OTHER_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "other",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Other",
             mode_title: "Other search",
             hint: "",
@@ -291,7 +291,7 @@ mod tests {
         dataset: &DATASET,
     };
 
-    fn mode(descriptor: &'static FrzPluginDescriptor) -> SearchMode {
+    fn mode(descriptor: &'static ExtensionDescriptor) -> SearchMode {
         SearchMode::from_descriptor(descriptor)
     }
 

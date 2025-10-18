@@ -3,19 +3,19 @@ use ratatui::{layout::Constraint, style::Style, widgets::Row};
 
 use super::search::SearchData;
 
-/// Static metadata describing a plugin contributed to the search experience.
-pub struct FrzPluginDescriptor {
-    /// Stable identifier used to route queries to the plugin.
+/// Static metadata describing a extension contributed to the search experience.
+pub struct ExtensionDescriptor {
+    /// Stable identifier used to route queries to the extension.
     pub id: &'static str,
-    /// UI elements contributed by the plugin.
-    pub ui: FrzPluginUiDefinition,
+    /// UI elements contributed by the extension.
+    pub ui: ExtensionUiDefinition,
     /// Dataset definition powering tab rendering and progress accounting.
-    pub dataset: &'static dyn FrzPluginDataset,
+    pub dataset: &'static dyn ExtensionDataset,
 }
 
-/// Declarative description of the UI contributed by a plugin.
+/// Declarative description of the UI contributed by a extension.
 #[derive(Clone, Copy)]
-pub struct FrzPluginUiDefinition {
+pub struct ExtensionUiDefinition {
     pub tab_label: &'static str,
     pub mode_title: &'static str,
     pub hint: &'static str,
@@ -23,7 +23,7 @@ pub struct FrzPluginUiDefinition {
     pub count_label: &'static str,
 }
 
-/// Information required to render a plugin backed table.
+/// Information required to render a extension backed table.
 #[derive(Clone, Copy)]
 pub struct TableContext<'a> {
     pub area: ratatui::layout::Rect,
@@ -45,8 +45,8 @@ pub struct TableDescriptor<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
-/// Behavioural definition of a dataset served by a plugin.
-pub trait FrzPluginDataset: Send + Sync {
+/// Behavioural definition of a dataset served by a extension.
+pub trait ExtensionDataset: Send + Sync {
     /// Stable key describing the dataset. This is used when reporting indexing progress.
     fn key(&self) -> &'static str;
 

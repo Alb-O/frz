@@ -115,16 +115,16 @@ impl<'a> ScoreAggregator<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::api::{
+    use crate::extensions::api::{
         TableContext, TableDescriptor,
-        descriptors::{FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition},
+        descriptors::{ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition},
         search::{SearchData, SearchMode, SearchStream},
     };
     use std::sync::mpsc::channel;
 
     struct NullDataset;
 
-    impl FrzPluginDataset for NullDataset {
+    impl ExtensionDataset for NullDataset {
         fn key(&self) -> &'static str {
             "test"
         }
@@ -140,9 +140,9 @@ mod tests {
 
     static DATASET: NullDataset = NullDataset;
 
-    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+    static DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
         id: "agg",
-        ui: FrzPluginUiDefinition {
+        ui: ExtensionUiDefinition {
             tab_label: "Agg",
             mode_title: "",
             hint: "",

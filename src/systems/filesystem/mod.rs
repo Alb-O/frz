@@ -2,11 +2,11 @@ mod fs;
 
 use std::sync::Arc;
 
-use crate::plugins::api::{AttributeRow, FileRow, SearchData};
+use crate::extensions::api::{AttributeRow, FileRow, SearchData};
 
 pub use fs::FilesystemOptions;
 pub use fs::spawn_filesystem_index;
-pub mod plugin;
+pub mod extension;
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
 #[derive(Debug, Clone)]

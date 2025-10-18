@@ -6,8 +6,8 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::config::UiConfig;
-use crate::plugins::api::{
-    FrzPluginRegistry, PluginSelectionContext, PreviewSplit, SearchData, SearchMode,
+use crate::extensions::api::{
+    ExtensionCatalog, ExtensionSelectionContext, PreviewSplit, SearchData, SearchMode,
     SearchSelection,
 };
 use crate::systems::filesystem::IndexUpdate;
@@ -38,7 +38,7 @@ pub struct App<'a> {
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
-    plugins: FrzPluginRegistry,
+    extensions: ExtensionCatalog,
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search: SearchRuntime,
     pub(crate) initial_results_deadline: Option<Instant>,
@@ -55,43 +55,43 @@ pub(crate) struct TabBuffers {
 
 impl<'a> App<'a> {
     pub fn new(data: SearchData) -> Self {
-        let mut plugins = FrzPluginRegistry::default();
-        crate::plugins::builtin::register_builtin_plugins(&mut plugins)
-            .expect("builtin plugins must register successfully");
-        Self::with_plugins(data, plugins)
+        let mut extensions = ExtensionCatalog::default();
+        crate::extensions::builtin::register_builtin_extensions(&mut extensions)
+            .expect("builtin extensions must register successfully");
+        Self::with_extensions(data, extensions)
     }
 
-    pub fn with_plugins(data: SearchData, plugins: FrzPluginRegistry) -> Self {
+    pub fn with_extensions(data: SearchData, extensions: ExtensionCatalog) -> Self {
         let mut table_state = TableState::default();
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();
         let context_label = data.context_label.clone();
         let mut index_progress = IndexProgress::new();
-        let worker_plugins = plugins.clone();
+        let worker_extensions = extensions.clone();
         let (search_tx, search_rx, search_latest_query_id) =
-            search::spawn(data.clone(), worker_plugins);
+            search::spawn(data.clone(), worker_extensions);
         let search = SearchRuntime::new(search_tx, search_rx, search_latest_query_id);
         let mut tab_states = HashMap::new();
-        for plugin in plugins.iter() {
-            let mode = plugin.mode();
+        for module in extensions.modules() {
+            let mode = module.mode();
             tab_states.insert(mode, TabBuffers::default());
-            index_progress.register_dataset(plugin.descriptor().dataset.key());
+            index_progress.register_dataset(module.descriptor().dataset.key());
         }
         let mut ui = UiConfig::default();
-        for descriptor in plugins.descriptors() {
-            ui.register_plugin(descriptor);
+        for descriptor in extensions.descriptors() {
+            ui.register_extension(descriptor);
         }
-        let mode = plugins
-            .iter()
+        let mode = extensions
+            .modules()
             .next()
-            .map(|plugin| plugin.mode())
+            .map(|module| module.mode())
             .or_else(|| ui.tabs().first().map(|tab| tab.mode))
-            .unwrap_or_else(crate::plugins::builtin::attributes::mode);
+            .unwrap_or_else(crate::extensions::builtin::attributes::mode);
 
         index_progress.refresh_from_data(
             &data,
-            plugins.iter().map(|plugin| {
-                let dataset = plugin.dataset();
+            extensions.modules().map(|module| {
+                let dataset = module.dataset();
                 (dataset.key(), dataset.total_count(&data))
             }),
         );
@@ -108,7 +108,7 @@ impl<'a> App<'a> {
             throbber_state: ThrobberState::default(),
             index_progress,
             tab_states,
-            plugins,
+            extensions,
             index_updates: None,
             search,
             initial_results_deadline: None,
@@ -167,14 +167,14 @@ impl<'a> App<'a> {
         let selected = self.table_state.selected()?;
         let state = self.tab_states.get(&self.mode)?;
         let index = *state.filtered.get(selected)?;
-        let plugin = self.plugins.plugin(self.mode)?;
-        let context = PluginSelectionContext::new(&self.data);
-        plugin.selection(context, index)
+        let module = self.extensions.module(self.mode)?;
+        let context = ExtensionSelectionContext::new(&self.data);
+        module.selection(context, index)
     }
 
     pub(crate) fn ensure_tab_buffers(&mut self) {
-        for plugin in self.plugins.iter() {
-            self.tab_states.entry(plugin.mode()).or_default();
+        for module in self.extensions.modules() {
+            self.tab_states.entry(module.mode()).or_default();
         }
         for tab in self.ui.tabs() {
             self.tab_states.entry(tab.mode).or_default();
@@ -182,10 +182,10 @@ impl<'a> App<'a> {
     }
 
     pub(crate) fn dataset_totals(&self) -> Vec<(&'static str, usize)> {
-        self.plugins
-            .iter()
-            .map(|plugin| {
-                let dataset = plugin.dataset();
+        self.extensions
+            .modules()
+            .map(|module| {
+                let dataset = module.dataset();
                 (dataset.key(), dataset.total_count(&self.data))
             })
             .collect()
@@ -200,7 +200,7 @@ impl<'a> App<'a> {
     }
 
     pub(crate) fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
-        self.plugins.preview_split(mode)
+        self.extensions.preview_split(mode)
     }
 }
 
@@ -209,7 +209,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use crate::plugins::api::{AttributeRow, FileRow};
+    use crate::extensions::api::{AttributeRow, FileRow};
 
     fn sample_data() -> SearchData {
         let mut data = SearchData::new();
@@ -245,12 +245,12 @@ mod tests {
         prime_and_wait_for_results(&mut app);
         let attributes_ready = app
             .tab_states
-            .get(&crate::plugins::builtin::attributes::mode())
+            .get(&crate::extensions::builtin::attributes::mode())
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         let files_ready = app
             .tab_states
-            .get(&crate::plugins::builtin::files::mode())
+            .get(&crate::extensions::builtin::files::mode())
             .map(|state| !state.filtered.is_empty())
             .unwrap_or(false);
         assert!(

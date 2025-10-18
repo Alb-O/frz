@@ -1,13 +1,14 @@
-use crate::plugins::api::{
-    Capability, FrzPlugin, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData,
-    SearchMode, SearchSelection, SearchStream,
+use ratatui::layout::{Constraint, Layout, Rect};
+
+use crate::extensions::api::{
+    Contribution, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
+    ExtensionSelectionContext, SearchData, SearchMode, SearchSelection, SearchStream,
     descriptors::{
-        FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
+        ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
     },
     stream_attributes,
 };
 use crate::tui::tables::rows::build_facet_rows;
-use ratatui::layout::{Constraint, Layout, Rect};
 
 const DATASET_KEY: &str = "attributes";
 
@@ -15,15 +16,15 @@ pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
 }
 
-pub fn descriptor() -> &'static FrzPluginDescriptor {
+pub fn descriptor() -> &'static ExtensionDescriptor {
     &ATTRIBUTE_DESCRIPTOR
 }
 
 static ATTRIBUTE_DATASET: AttributeDataset = AttributeDataset;
 
-pub static ATTRIBUTE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+pub static ATTRIBUTE_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
     id: DATASET_KEY,
-    ui: FrzPluginUiDefinition {
+    ui: ExtensionUiDefinition {
         tab_label: "Tags",
         mode_title: "attribute search",
         hint: "Type to filter attribute.",
@@ -77,7 +78,7 @@ impl AttributeDataset {
     }
 }
 
-impl FrzPluginDataset for AttributeDataset {
+impl ExtensionDataset for AttributeDataset {
     fn key(&self) -> &'static str {
         DATASET_KEY
     }
@@ -110,10 +111,10 @@ impl FrzPluginDataset for AttributeDataset {
     }
 }
 
-pub struct AttributeFrzPlugin;
+pub struct AttributeModule;
 
-impl FrzPlugin for AttributeFrzPlugin {
-    fn descriptor(&self) -> &'static FrzPluginDescriptor {
+impl ExtensionModule for AttributeModule {
+    fn descriptor(&self) -> &'static ExtensionDescriptor {
         descriptor()
     }
 
@@ -121,14 +122,14 @@ impl FrzPlugin for AttributeFrzPlugin {
         &self,
         query: &str,
         stream: SearchStream<'_>,
-        context: PluginQueryContext<'_>,
+        context: ExtensionQueryContext<'_>,
     ) -> bool {
         stream_attributes(context.data(), query, stream, context.latest_query_id())
     }
 
     fn selection(
         &self,
-        context: PluginSelectionContext<'_>,
+        context: ExtensionSelectionContext<'_>,
         index: usize,
     ) -> Option<SearchSelection> {
         context
@@ -140,36 +141,36 @@ impl FrzPlugin for AttributeFrzPlugin {
     }
 }
 
-pub struct AttributePluginBundle {
-    capability: Capability,
+pub struct AttributePackage {
+    tab: Contribution,
 }
 
-impl AttributePluginBundle {
-    fn new_capability() -> Capability {
-        Capability::search_tab(descriptor(), AttributeFrzPlugin)
+impl AttributePackage {
+    fn new_tab() -> Contribution {
+        Contribution::search_tab(descriptor(), AttributeModule)
     }
 }
 
-impl Default for AttributePluginBundle {
+impl Default for AttributePackage {
     fn default() -> Self {
         Self {
-            capability: Self::new_capability(),
+            tab: Self::new_tab(),
         }
     }
 }
 
-impl PluginBundle for AttributePluginBundle {
-    type Capabilities<'a>
-        = std::iter::Once<Capability>
+impl ExtensionPackage for AttributePackage {
+    type Contributions<'a>
+        = std::iter::Once<Contribution>
     where
         Self: 'a;
 
-    fn capabilities(&self) -> Self::Capabilities<'_> {
-        std::iter::once(self.capability.clone())
+    fn contributions(&self) -> Self::Contributions<'_> {
+        std::iter::once(self.tab.clone())
     }
 }
 
 #[must_use]
-pub fn bundle() -> AttributePluginBundle {
-    AttributePluginBundle::default()
+pub fn bundle() -> AttributePackage {
+    AttributePackage::default()
 }

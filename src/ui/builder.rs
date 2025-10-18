@@ -6,7 +6,7 @@ use ratatui::layout::Constraint;
 
 use super::App;
 use super::config::UiConfig;
-use crate::plugins::api::{FrzPluginRegistry, SearchData, SearchMode, SearchOutcome};
+use crate::extensions::api::{ExtensionCatalog, SearchData, SearchMode, SearchOutcome};
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 pub use crate::tui::theme::Theme;
 
@@ -22,16 +22,16 @@ pub struct SearchUi {
     theme: Option<Theme>,
     bat_theme: Option<String>,
     start_mode: Option<SearchMode>,
-    plugins: FrzPluginRegistry,
+    extensions: ExtensionCatalog,
     index_updates: Option<Receiver<IndexUpdate>>,
 }
 
 impl SearchUi {
     /// Create a new search UI for the provided data.
     pub fn new(data: SearchData) -> Self {
-        let mut plugins = FrzPluginRegistry::default();
-        crate::plugins::builtin::register_builtin_plugins(&mut plugins)
-            .expect("builtin plugins must register successfully");
+        let mut extensions = ExtensionCatalog::default();
+        crate::extensions::builtin::register_builtin_extensions(&mut extensions)
+            .expect("builtin extensions must register successfully");
 
         Self {
             data,
@@ -42,7 +42,7 @@ impl SearchUi {
             theme: None,
             bat_theme: None,
             start_mode: None,
-            plugins,
+            extensions,
             index_updates: None,
         }
     }
@@ -59,7 +59,7 @@ impl SearchUi {
         let root = path.into();
         let (data, updates) = spawn_filesystem_index(root, options)?;
         let mut ui = Self::new(data);
-        ui.start_mode = Some(crate::plugins::builtin::files::mode());
+        ui.start_mode = Some(crate::extensions::builtin::files::mode());
         ui.index_updates = Some(updates);
         Ok(ui)
     }
@@ -108,25 +108,25 @@ impl SearchUi {
         self
     }
 
-    /// Replace the plugin registry driving the search worker.
-    pub fn with_plugin_registry(mut self, plugins: FrzPluginRegistry) -> Self {
-        self.plugins = plugins;
+    /// Replace the extension catalog driving the search worker.
+    pub fn with_extension_catalog(mut self, extensions: ExtensionCatalog) -> Self {
+        self.extensions = extensions;
         self
     }
 
-    /// Mutably configure the plugin registry.
-    pub fn configure_plugins<F>(mut self, configure: F) -> Self
+    /// Mutably configure the extension catalog.
+    pub fn configure_extensions<F>(mut self, configure: F) -> Self
     where
-        F: FnOnce(&mut FrzPluginRegistry),
+        F: FnOnce(&mut ExtensionCatalog),
     {
-        configure(&mut self.plugins);
+        configure(&mut self.extensions);
         self
     }
 
     /// Run the interactive search UI with the configured options.
     pub fn run(mut self) -> Result<SearchOutcome> {
         // Build an App and apply optional customizations, then run it.
-        let mut app = App::with_plugins(self.data, self.plugins);
+        let mut app = App::with_extensions(self.data, self.extensions);
         if let Some(title) = self.input_title {
             app.input_title = Some(title);
         }
@@ -162,19 +162,19 @@ impl SearchUi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::builtin::{attributes, files};
+    use crate::extensions::builtin::{attributes, files};
 
     #[test]
-    fn builder_registers_builtin_plugins() {
+    fn builder_registers_builtin_extensions() {
         let ui = SearchUi::new(SearchData::new());
 
         assert!(
-            ui.plugins.contains_mode(attributes::mode()),
-            "expected attributes plugin to be registered"
+            ui.extensions.contains_mode(attributes::mode()),
+            "expected attributes extension to be registered"
         );
         assert!(
-            ui.plugins.contains_mode(files::mode()),
-            "expected files plugin to be registered"
+            ui.extensions.contains_mode(files::mode()),
+            "expected files extension to be registered"
         );
     }
 }

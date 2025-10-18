@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde_json::json;
 
-use frz::{PluginSelection, SearchOutcome, SearchSelection};
+use frz::{ExtensionSelection, SearchOutcome, SearchSelection};
 
 /// Print a plain-text representation of the search outcome.
 pub(crate) fn print_plain(outcome: &SearchOutcome) {
@@ -13,8 +13,12 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
     match &outcome.selection {
         Some(SearchSelection::File(file)) => println!("{}", file.path),
         Some(SearchSelection::Attribute(attribute)) => println!("attribute: {}", attribute.name),
-        Some(SearchSelection::Plugin(plugin)) => {
-            println!("Plugin selection: {} @ {}", plugin.mode.id(), plugin.index)
+        Some(SearchSelection::Extension(selection)) => {
+            println!(
+                "Extension selection: {} @ {}",
+                selection.mode.id(),
+                selection.index
+            )
         }
         None => println!("No selection"),
     }
@@ -34,8 +38,8 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
             "name": attribute.name,
             "count": attribute.count,
         }),
-        Some(SearchSelection::Plugin(PluginSelection { mode, index })) => json!({
-            "type": "plugin",
+        Some(SearchSelection::Extension(ExtensionSelection { mode, index })) => json!({
+            "type": "extension",
             "mode": mode.id(),
             "index": index,
         }),
@@ -60,7 +64,7 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frz::plugins::builtin::files;
+    use frz::extensions::builtin::files;
     use frz::{AttributeRow, FileRow};
     use serde_json::Value;
 
@@ -98,11 +102,11 @@ mod tests {
     }
 
     #[test]
-    fn json_format_includes_plugin_selection() {
+    fn json_format_includes_extension_selection() {
         let outcome = SearchOutcome {
             accepted: true,
             query: "test".into(),
-            selection: Some(SearchSelection::Plugin(PluginSelection {
+            selection: Some(SearchSelection::Extension(ExtensionSelection {
                 mode: files::mode(),
                 index: 7,
             })),
@@ -110,7 +114,7 @@ mod tests {
 
         let json = format_outcome_json(&outcome).expect("json");
         let value: Value = serde_json::from_str(&json).expect("parse");
-        assert_eq!(value["selection"]["type"], "plugin");
+        assert_eq!(value["selection"]["type"], "extension");
         assert_eq!(value["selection"]["mode"], "files");
         assert_eq!(value["selection"]["index"], 7);
     }

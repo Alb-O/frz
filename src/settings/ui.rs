@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow, bail};
-use frz::plugins::api::{FrzPluginRegistry, SearchMode};
+use frz::extensions::api::{ExtensionCatalog, SearchMode};
 use frz::{PaneUiConfig, UiConfig};
 
 use super::raw::PaneSection;
@@ -45,8 +45,8 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
         bail!("start mode cannot be empty");
     }
     let id = trimmed.to_ascii_lowercase();
-    let mut registry = FrzPluginRegistry::new();
-    frz::plugins::builtin::register_builtin_plugins(&mut registry)?;
+    let mut registry = ExtensionCatalog::new();
+    frz::extensions::builtin::register_builtin_extensions(&mut registry)?;
     registry
         .mode_by_id(&id)
         .or_else(|| registry.mode_by_id(trimmed))
@@ -56,7 +56,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frz::plugins::builtin::{attributes, files};
+    use frz::extensions::builtin::{attributes, files};
 
     #[test]
     fn default_preset_is_returned_for_empty_input() {

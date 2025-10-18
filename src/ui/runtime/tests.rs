@@ -1,5 +1,5 @@
-use crate::plugins::api::{AttributeRow, FileRow, SearchData, search::Fs};
-use crate::plugins::builtin::files;
+use crate::extensions::api::{AttributeRow, FileRow, SearchData, search::Fs};
+use crate::extensions::builtin::files;
 use crate::systems::filesystem::{IndexUpdate, ProgressSnapshot};
 use crate::ui::App;
 use ratatui::{Terminal, backend::TestBackend};

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 
-use crate::plugins::api::{AttributeRow, FileRow};
+use crate::extensions::api::{AttributeRow, FileRow};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::MAX_BATCH_SIZE;

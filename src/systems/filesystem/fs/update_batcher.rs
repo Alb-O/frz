@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::mpsc::{self, Sender};
 use std::time::Instant;
 
-use crate::plugins::api::{AttributeRow, FileRow};
+use crate::extensions::api::{AttributeRow, FileRow};
 
 use super::super::IndexUpdate;
 use super::cache::CacheWriter;

@@ -17,7 +17,7 @@ pub struct SearchResult {
     pub complete: bool,
 }
 
-/// Handle used by plugins to stream search results back to the UI.
+/// Handle used by extensions to stream search results back to the UI.
 pub struct SearchStream<'a> {
     tx: &'a Sender<SearchResult>,
     id: u64,

@@ -1,6 +1,6 @@
 use std::mem;
 
-use crate::plugins::api::TruncationStyle;
+use crate::extensions::api::TruncationStyle;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;

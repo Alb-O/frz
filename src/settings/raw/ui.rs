@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use frz::plugins::builtin::{attributes, files};
+use frz::extensions::builtin::{attributes, files};
 use frz::{SearchMode, UiConfig};
 
 use crate::cli::CliArgs;

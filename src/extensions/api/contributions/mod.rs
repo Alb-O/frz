@@ -5,11 +5,11 @@ use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::plugins::api::descriptors::FrzPluginDescriptor;
-use crate::plugins::api::error::PluginRegistryError;
-use crate::plugins::api::registry::FrzPlugin;
-use crate::plugins::api::registry::RegisteredPlugin;
-use crate::plugins::api::search::SearchMode;
+use crate::extensions::api::descriptors::ExtensionDescriptor;
+use crate::extensions::api::error::ExtensionCatalogError;
+use crate::extensions::api::registry::ExtensionModule;
+use crate::extensions::api::registry::RegisteredModule;
+use crate::extensions::api::search::SearchMode;
 
 pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
 pub use search_tabs::SearchTabStore;
@@ -17,103 +17,103 @@ pub use search_tabs::SearchTabStore;
 type Cloner = fn(&dyn Any) -> Box<dyn Any + Send + Sync>;
 type CleanupHandler = Arc<dyn Fn(&mut dyn Any, SearchMode) + Send + Sync>;
 
-/// Trait implemented by concrete capability specifications.
-trait CapabilitySpec: Send + Sync {
-    /// Install the capability into the provided context.
+/// Trait implemented by concrete contribution specifications.
+trait ContributionSpec: Send + Sync {
+    /// Install the contribution into the provided context.
     fn install(
         &self,
-        context: &mut CapabilityInstallContext<'_>,
-    ) -> Result<(), PluginRegistryError>;
+        context: &mut ContributionInstallContext<'_>,
+    ) -> Result<(), ExtensionCatalogError>;
 
-    /// Clone the capability specification.
-    fn clone_spec(&self) -> Arc<dyn CapabilitySpec>;
+    /// Clone the contribution specification.
+    fn clone_spec(&self) -> Arc<dyn ContributionSpec>;
 }
 
-impl<T> CapabilitySpec for T
+impl<T> ContributionSpec for T
 where
-    T: CapabilitySpecImpl + Clone + 'static,
+    T: ContributionSpecImpl + Clone + 'static,
 {
     fn install(
         &self,
-        context: &mut CapabilityInstallContext<'_>,
-    ) -> Result<(), PluginRegistryError> {
-        <T as CapabilitySpecImpl>::install(self, context)
+        context: &mut ContributionInstallContext<'_>,
+    ) -> Result<(), ExtensionCatalogError> {
+        <T as ContributionSpecImpl>::install(self, context)
     }
 
-    fn clone_spec(&self) -> Arc<dyn CapabilitySpec> {
+    fn clone_spec(&self) -> Arc<dyn ContributionSpec> {
         Arc::new(self.clone())
     }
 }
 
-/// Internal trait implemented for each capability type.
-trait CapabilitySpecImpl: Send + Sync {
+/// Internal trait implemented for each contribution type.
+trait ContributionSpecImpl: Send + Sync {
     fn install(
         &self,
-        context: &mut CapabilityInstallContext<'_>,
-    ) -> Result<(), PluginRegistryError>;
+        context: &mut ContributionInstallContext<'_>,
+    ) -> Result<(), ExtensionCatalogError>;
 }
 
-/// A clonable capability contributed by a bundle.
+/// A clonable contribution provided by a package.
 #[derive(Clone)]
-pub struct Capability(Arc<dyn CapabilitySpec>);
+pub struct Contribution(Arc<dyn ContributionSpec>);
 
-impl Capability {
-    fn new(spec: Arc<dyn CapabilitySpec>) -> Self {
+impl Contribution {
+    fn new(spec: Arc<dyn ContributionSpec>) -> Self {
         Self(spec)
     }
 
-    /// Create a search tab capability.
-    pub fn search_tab<P>(descriptor: &'static FrzPluginDescriptor, plugin: P) -> Self
+    /// Create a search tab contribution.
+    pub fn search_tab<P>(descriptor: &'static ExtensionDescriptor, module: P) -> Self
     where
-        P: FrzPlugin + 'static,
+        P: ExtensionModule + 'static,
     {
-        Self::from_spec(search_tabs::SearchTabCapability::new(descriptor, plugin))
+        Self::from_spec(search_tabs::SearchTabContribution::new(descriptor, module))
     }
 
-    /// Create a preview split capability.
-    pub fn preview_split<P>(descriptor: &'static FrzPluginDescriptor, preview: P) -> Self
+    /// Create a preview split contribution.
+    pub fn preview_split<P>(descriptor: &'static ExtensionDescriptor, preview: P) -> Self
     where
         P: preview_split::PreviewSplit + 'static,
     {
-        Self::from_spec(preview_split::PreviewSplitCapability::new(
+        Self::from_spec(preview_split::PreviewSplitContribution::new(
             descriptor, preview,
         ))
     }
 
     fn from_spec<T>(spec: T) -> Self
     where
-        T: CapabilitySpec + 'static,
+        T: ContributionSpec + 'static,
     {
         Self::new(spec.clone_spec())
     }
 
     pub(crate) fn install(
         &self,
-        context: &mut CapabilityInstallContext<'_>,
-    ) -> Result<(), PluginRegistryError> {
+        context: &mut ContributionInstallContext<'_>,
+    ) -> Result<(), ExtensionCatalogError> {
         self.0.install(context)
     }
 }
 
-/// Collection of capability implementations contributed by a plugin bundle.
-pub trait PluginBundle: Send + Sync {
-    type Capabilities<'a>: IntoIterator<Item = Capability>
+/// Collection of contributions provided by an extension package.
+pub trait ExtensionPackage: Send + Sync {
+    type Contributions<'a>: IntoIterator<Item = Contribution>
     where
         Self: 'a;
 
-    fn capabilities(&self) -> Self::Capabilities<'_>;
+    fn contributions(&self) -> Self::Contributions<'_>;
 }
 
-/// Mutable view into the registry used while installing capabilities.
-pub struct CapabilityInstallContext<'a> {
+/// Mutable view into the catalog used while installing contributions.
+pub struct ContributionInstallContext<'a> {
     search_tabs: &'a mut SearchTabStore,
-    registry: &'a mut CapabilityRegistry,
+    registry: &'a mut ContributionRegistry,
 }
 
-impl<'a> CapabilityInstallContext<'a> {
+impl<'a> ContributionInstallContext<'a> {
     pub(crate) fn new(
         search_tabs: &'a mut SearchTabStore,
-        registry: &'a mut CapabilityRegistry,
+        registry: &'a mut ContributionRegistry,
     ) -> Self {
         Self {
             search_tabs,
@@ -124,22 +124,22 @@ impl<'a> CapabilityInstallContext<'a> {
     /// Ensure the provided descriptor can be registered.
     pub fn ensure_mode_available(
         &self,
-        descriptor: &'static FrzPluginDescriptor,
-    ) -> Result<(), PluginRegistryError> {
+        descriptor: &'static ExtensionDescriptor,
+    ) -> Result<(), ExtensionCatalogError> {
         self.search_tabs.ensure_available(descriptor)
     }
 
     /// Register a search tab implementation.
     pub fn register_search_tab(
         &mut self,
-        plugin: RegisteredPlugin,
-    ) -> Result<(), PluginRegistryError> {
-        self.search_tabs.ensure_available(plugin.descriptor())?;
-        self.search_tabs.insert(plugin);
+        module: RegisteredModule,
+    ) -> Result<(), ExtensionCatalogError> {
+        self.search_tabs.ensure_available(module.descriptor())?;
+        self.search_tabs.insert(module);
         Ok(())
     }
 
-    /// Access a capability-specific store, creating it on-demand.
+    /// Access contribution-specific storage, creating it on-demand.
     pub fn storage_mut<T>(&mut self) -> &mut T
     where
         T: Default + Clone + Send + Sync + 'static,
@@ -147,7 +147,7 @@ impl<'a> CapabilityInstallContext<'a> {
         self.registry.storage_mut::<T>()
     }
 
-    /// Access a capability-specific store if present.
+    /// Access contribution-specific storage if present.
     pub fn storage<T>(&self) -> Option<&T>
     where
         T: Clone + Send + Sync + 'static,
@@ -155,7 +155,7 @@ impl<'a> CapabilityInstallContext<'a> {
         self.registry.storage::<T>()
     }
 
-    /// Register cleanup logic invoked when a mode is removed from the registry.
+    /// Register cleanup logic invoked when a mode is removed from the catalog.
     pub fn register_cleanup<T, F>(&mut self, cleanup: F)
     where
         T: Default + Clone + Send + Sync + 'static,
@@ -171,18 +171,18 @@ where
 {
     let value = data
         .downcast_ref::<T>()
-        .expect("capability store clone type mismatch");
+        .expect("contribution store clone type mismatch");
     Box::new(value.clone())
 }
 
 #[derive(Default)]
-pub struct CapabilityRegistry {
+pub struct ContributionRegistry {
     stores: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
     cloners: HashMap<TypeId, Cloner>,
     cleanup: HashMap<TypeId, CleanupHandler>,
 }
 
-impl CapabilityRegistry {
+impl ContributionRegistry {
     pub fn new() -> Self {
         Self::default()
     }
@@ -199,7 +199,7 @@ impl CapabilityRegistry {
         self.stores
             .get_mut(&type_id)
             .and_then(|store| store.as_mut().downcast_mut::<T>())
-            .expect("capability store type mismatch")
+            .expect("contribution store type mismatch")
     }
 
     pub fn storage<T>(&self) -> Option<&T>
@@ -241,14 +241,14 @@ impl CapabilityRegistry {
     }
 }
 
-impl Clone for CapabilityRegistry {
+impl Clone for ContributionRegistry {
     fn clone(&self) -> Self {
         let mut stores = HashMap::new();
         for (type_id, store) in &self.stores {
             let cloner = self
                 .cloners
                 .get(type_id)
-                .expect("missing cloner for capability store");
+                .expect("missing cloner for contribution store");
             stores.insert(*type_id, cloner(store.as_ref()));
         }
         Self {

@@ -2,18 +2,18 @@ use std::sync::atomic::AtomicU64;
 
 use super::search::SearchData;
 
-/// Shared inputs provided to plugins when they are asked to stream search results.
+/// Shared inputs provided to extensions when they are asked to stream search results.
 ///
 /// Wrapping the shared state in a context struct makes it easier to extend the
-/// available data in the future without forcing every plugin implementation to
+/// available data in the future without forcing every extension implementation to
 /// adjust their method signatures. This keeps the public trait surface area more
-/// stable for external plugin authors.
-pub struct PluginQueryContext<'a> {
+/// stable for external extension authors.
+pub struct ExtensionQueryContext<'a> {
     data: &'a SearchData,
     latest_query_id: &'a AtomicU64,
 }
 
-impl<'a> PluginQueryContext<'a> {
+impl<'a> ExtensionQueryContext<'a> {
     /// Create a new query context describing the current search invocation.
     #[must_use]
     pub fn new(data: &'a SearchData, latest_query_id: &'a AtomicU64) -> Self {
@@ -37,22 +37,22 @@ impl<'a> PluginQueryContext<'a> {
 
     /// Construct a selection context sharing this query context's state.
     #[must_use]
-    pub fn selection_context(&self) -> PluginSelectionContext<'a> {
-        PluginSelectionContext::new(self.data)
+    pub fn selection_context(&self) -> ExtensionSelectionContext<'a> {
+        ExtensionSelectionContext::new(self.data)
     }
 }
 
-/// Shared inputs provided to plugins when they are asked to convert an index
+/// Shared inputs provided to extensions when they are asked to convert an index
 /// into a [`SearchSelection`](crate::SearchSelection).
 ///
 /// This lightweight wrapper keeps data access orthogonal to the rest of the
-/// plugin registry so that additional metadata can be introduced later without
-/// impacting plugin call sites.
-pub struct PluginSelectionContext<'a> {
+/// extension registry so that additional metadata can be introduced later without
+/// impacting extension call sites.
+pub struct ExtensionSelectionContext<'a> {
     data: &'a SearchData,
 }
 
-impl<'a> PluginSelectionContext<'a> {
+impl<'a> ExtensionSelectionContext<'a> {
     /// Create a new selection context referencing the shared [`SearchData`].
     #[must_use]
     pub fn new(data: &'a SearchData) -> Self {

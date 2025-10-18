@@ -1,14 +1,15 @@
-use crate::plugins::api::{
-    Capability, FrzPlugin, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData,
-    SearchMode, SearchSelection, SearchStream,
+use ratatui::layout::{Constraint, Layout, Rect};
+
+use crate::extensions::api::{
+    Contribution, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
+    ExtensionSelectionContext, SearchData, SearchMode, SearchSelection, SearchStream,
     descriptors::{
-        FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
+        ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
     },
     stream_files,
 };
 use crate::previewers::bat::FilePreviewer;
 use crate::tui::tables::rows::build_file_rows;
-use ratatui::layout::{Constraint, Layout, Rect};
 
 const DATASET_KEY: &str = "files";
 
@@ -16,15 +17,15 @@ pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
 }
 
-pub fn descriptor() -> &'static FrzPluginDescriptor {
+pub fn descriptor() -> &'static ExtensionDescriptor {
     &FILE_DESCRIPTOR
 }
 
 static FILE_DATASET: FileDataset = FileDataset;
 
-pub static FILE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
+pub static FILE_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
     id: DATASET_KEY,
-    ui: FrzPluginUiDefinition {
+    ui: ExtensionUiDefinition {
         tab_label: "Files",
         mode_title: "File search",
         hint: "Type to filter files.",
@@ -78,7 +79,7 @@ impl FileDataset {
     }
 }
 
-impl FrzPluginDataset for FileDataset {
+impl ExtensionDataset for FileDataset {
     fn key(&self) -> &'static str {
         DATASET_KEY
     }
@@ -111,10 +112,10 @@ impl FrzPluginDataset for FileDataset {
     }
 }
 
-pub struct FileFrzPlugin;
+pub struct FileModule;
 
-impl FrzPlugin for FileFrzPlugin {
-    fn descriptor(&self) -> &'static FrzPluginDescriptor {
+impl ExtensionModule for FileModule {
+    fn descriptor(&self) -> &'static ExtensionDescriptor {
         descriptor()
     }
 
@@ -122,14 +123,14 @@ impl FrzPlugin for FileFrzPlugin {
         &self,
         query: &str,
         stream: SearchStream<'_>,
-        context: PluginQueryContext<'_>,
+        context: ExtensionQueryContext<'_>,
     ) -> bool {
         stream_files(context.data(), query, stream, context.latest_query_id())
     }
 
     fn selection(
         &self,
-        context: PluginSelectionContext<'_>,
+        context: ExtensionSelectionContext<'_>,
         index: usize,
     ) -> Option<SearchSelection> {
         context
@@ -141,38 +142,38 @@ impl FrzPlugin for FileFrzPlugin {
     }
 }
 
-pub struct FilePluginBundle {
-    capabilities: [Capability; 2],
+pub struct FilePackage {
+    contributions: [Contribution; 2],
 }
 
-impl FilePluginBundle {
-    fn new_capabilities() -> [Capability; 2] {
+impl FilePackage {
+    fn new_contributions() -> [Contribution; 2] {
         [
-            Capability::search_tab(descriptor(), FileFrzPlugin),
-            Capability::preview_split(descriptor(), FilePreviewer::default()),
+            Contribution::search_tab(descriptor(), FileModule),
+            Contribution::preview_split(descriptor(), FilePreviewer::default()),
         ]
     }
 }
 
-impl Default for FilePluginBundle {
+impl Default for FilePackage {
     fn default() -> Self {
         Self {
-            capabilities: Self::new_capabilities(),
+            contributions: Self::new_contributions(),
         }
     }
 }
 
-impl PluginBundle for FilePluginBundle {
-    type Capabilities<'a> = std::array::IntoIter<Capability, 2>;
+impl ExtensionPackage for FilePackage {
+    type Contributions<'a> = std::array::IntoIter<Contribution, 2>;
 
-    fn capabilities(&self) -> Self::Capabilities<'_> {
-        self.capabilities.clone().into_iter()
+    fn contributions(&self) -> Self::Contributions<'_> {
+        self.contributions.clone().into_iter()
     }
 }
 
 #[must_use]
-pub fn bundle() -> FilePluginBundle {
-    FilePluginBundle::default()
+pub fn bundle() -> FilePackage {
+    FilePackage::default()
 }
 
 #[cfg(test)]

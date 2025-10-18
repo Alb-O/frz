@@ -7,7 +7,7 @@ use std::time::Duration;
 use anyhow::Result;
 use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
 
-use crate::plugins::api::{AttributeRow, FileRow, SearchData, tags_for_relative_path};
+use crate::extensions::api::{AttributeRow, FileRow, SearchData, tags_for_relative_path};
 
 use super::super::{IndexUpdate, ProgressSnapshot};
 use super::FilesystemOptions;

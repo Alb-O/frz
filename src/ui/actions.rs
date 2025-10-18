@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
-use crate::plugins::api::SearchOutcome;
+use crate::extensions::api::SearchOutcome;
 
 use super::App;
 

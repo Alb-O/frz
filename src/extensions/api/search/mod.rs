@@ -16,7 +16,7 @@ pub use data::SearchData;
 pub use file::{FileRow, TruncationStyle, tags_for_relative_path};
 pub use fs::{Fs, FsIter, OsFs};
 pub use mode::SearchMode;
-pub use outcome::{PluginSelection, SearchOutcome, SearchSelection};
+pub use outcome::{ExtensionSelection, SearchOutcome, SearchSelection};
 pub use stream::{SearchResult, SearchStream};
 pub use streaming::{stream_attributes, stream_files};
 

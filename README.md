@@ -14,18 +14,18 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 
 ## Architecture
 
-frz is split into three layers: infrastructure systems, plugins, and the TUI
-application. `crates/plugin-api/` defines the stable plugin surface, including
-descriptors and the `FrzPlugin` trait. `crates/tui/` offers reusable widgets
-and helpers for rendering plugin output. The binary crate in `src/` wires these
-pieces together, initialises background systems, and registers built-in plugins
-via [`register_builtin_plugins`](src/plugins/builtin/mod.rs).
+frz is split into three layers: infrastructure systems, extensions, and the TUI
+application. `src/extensions/api/` defines the stable extension surface, including
+descriptors and the `ExtensionModule` trait. `crates/tui/` offers reusable widgets
+and helpers for rendering extension output. The binary crate in `src/` wires these
+pieces together, initialises background systems, and registers built-in extensions
+via [`register_builtin_extensions`](src/extensions/builtin/mod.rs).
 
 ## Quick example
 
 ```rust
 use frz::{SearchData, SearchUi, UiConfig};
-use frz::plugins::builtin::files;
+use frz::extensions::builtin::files;
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)
@@ -83,8 +83,8 @@ You can inspect the resolved configuration before launching the TUI via
 `--print-config`, list available themes with `--list-themes`, or emit the final
 selection as pretty JSON using `--output json`.
 
-## Extending via plugins
+## Extending via extensions
 
-- Plugins can register new tabs by implementing [`FrzPlugin`](https://docs.rs/frz/latest/frz/trait.FrzPlugin.html) and adding them to a [`FrzPluginRegistry`](https://docs.rs/frz/latest/frz/struct.FrzPluginRegistry.html). Each plugin exposes a [`FrzPluginDescriptor`](https://docs.rs/frz/latest/frz/plugins/descriptors/struct.FrzPluginDescriptor.html) that advertises UI copy, table layout metadata, and an associated [`FrzPluginDataset`](https://docs.rs/frz/latest/frz/plugins/descriptors/trait.FrzPluginDataset.html) implementation; the dataset abstraction lets plugins describe how to render their tables, report aggregate counts, and contribute progress information, enabling the registry to treat every plugin uniformly regardless of how many are registered.
-- Registries preserve insertion order, making it easy to deterministically compose built-in and custom tabs. They also expose helpers such as [`FrzPluginRegistry::deregister`](https://docs.rs/frz/latest/frz/struct.FrzPluginRegistry.html#method.deregister) and [`FrzPluginRegistry::plugin_by_id`](https://docs.rs/frz/latest/frz/struct.FrzPluginRegistry.html#method.plugin_by_id) so applications can swap out built-in implementations or target plugins by their identifier without having to manage bookkeeping themselves.
-- Reusable background capabilities live under the `plugins::systems` module. The search worker is available via [`plugins::systems::search`](https://docs.rs/frz/latest/frz/plugins/systems/search/), which exposes the [`SearchStream`](https://docs.rs/frz/latest/frz/plugins/systems/search/struct.SearchStream.html) type and helpers for streaming attributes and files using the built-in matching pipeline. The filesystem indexer is exposed through [`plugins::systems::filesystem`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/), which provides [`FilesystemOptions`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/struct.FilesystemOptions.html), [`spawn_filesystem_index`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/fn.spawn_filesystem_index.html), and the [`merge_update`](https://docs.rs/frz/latest/frz/plugins/systems/filesystem/fn.merge_update.html) helper for applying incremental results to `SearchData`.
+- Extensions can register new tabs by implementing [`ExtensionModule`](https://docs.rs/frz/latest/frz/trait.ExtensionModule.html) and adding them to an [`ExtensionCatalog`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html). Each module exposes an [`ExtensionDescriptor`](https://docs.rs/frz/latest/frz/extensions/descriptors/struct.ExtensionDescriptor.html) that advertises UI copy, table layout metadata, and an associated [`ExtensionDataset`](https://docs.rs/frz/latest/frz/extensions/descriptors/trait.ExtensionDataset.html) implementation; the dataset abstraction lets modules describe how to render their tables, report aggregate counts, and contribute progress information, enabling the catalog to treat every extension uniformly regardless of how many are registered.
+- Catalogs preserve insertion order, making it easy to deterministically compose built-in and custom tabs. They also expose helpers such as [`ExtensionCatalog::remove`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html#method.remove) and [`ExtensionCatalog::module_by_id`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html#method.module_by_id) so applications can swap out built-in implementations or target modules by their identifier without having to manage bookkeeping themselves.
+- Reusable background services live under the `extensions::systems` module. The search worker is available via [`extensions::systems::search`](https://docs.rs/frz/latest/frz/extensions/systems/search/), which exposes the [`SearchStream`](https://docs.rs/frz/latest/frz/extensions/systems/search/struct.SearchStream.html) type and helpers for streaming attributes and files using the built-in matching pipeline. The filesystem indexer is exposed through [`extensions::systems::filesystem`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/), which provides [`FilesystemOptions`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/struct.FilesystemOptions.html), [`spawn_filesystem_index`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/fn.spawn_filesystem_index.html), and the [`merge_update`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/fn.merge_update.html) helper for applying incremental results to `SearchData`.

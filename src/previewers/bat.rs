@@ -11,7 +11,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Clear, Paragraph, Wrap};
 
-use crate::plugins::api::{PreviewSplit, PreviewSplitContext};
+use crate::extensions::api::{PreviewSplit, PreviewSplitContext};
 
 #[derive(Clone, PartialEq, Eq)]
 struct PreviewKey {

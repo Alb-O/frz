@@ -15,12 +15,12 @@ pub struct SearchOutcome {
 pub enum SearchSelection {
     Attribute(AttributeRow),
     File(FileRow),
-    Plugin(PluginSelection),
+    Extension(ExtensionSelection),
 }
 
-/// Selection metadata returned by custom plugins.
+/// Selection metadata returned by custom extensions.
 #[derive(Debug, Clone)]
-pub struct PluginSelection {
+pub struct ExtensionSelection {
     pub mode: SearchMode,
     pub index: usize,
 }
@@ -44,11 +44,11 @@ impl SearchOutcome {
         }
     }
 
-    /// Return metadata describing a plugin-provided selection.
+    /// Return metadata describing a extension-provided selection.
     #[must_use]
-    pub fn selected_plugin(&self) -> Option<&PluginSelection> {
+    pub fn selected_extension(&self) -> Option<&ExtensionSelection> {
         match self.selection {
-            Some(SearchSelection::Plugin(ref plugin)) => Some(plugin),
+            Some(SearchSelection::Extension(ref extension)) => Some(extension),
             _ => None,
         }
     }

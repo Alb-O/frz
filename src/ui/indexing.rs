@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 // `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
 // yield back to drawing and input handling.
 
-use crate::plugins::api::SearchData;
+use crate::extensions::api::SearchData;
 use crate::systems::filesystem::{IndexUpdate, merge_update};
 
 use super::App;
@@ -120,8 +120,8 @@ impl<'a> App<'a> {
         }
 
         let progress = update.progress;
-        let attributes_key = crate::plugins::builtin::attributes::descriptor().id;
-        let files_key = crate::plugins::builtin::files::descriptor().id;
+        let attributes_key = crate::extensions::builtin::attributes::descriptor().id;
+        let files_key = crate::extensions::builtin::files::descriptor().id;
         self.index_progress.record_indexed(&[
             (attributes_key, progress.indexed_attributes),
             (files_key, progress.indexed_files),
@@ -171,7 +171,7 @@ impl<'a> App<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::api::{AttributeRow, FileRow, SearchData};
+    use crate::extensions::api::{AttributeRow, FileRow, SearchData};
     use crate::systems::filesystem::ProgressSnapshot;
     use std::time::{Duration, Instant};
 

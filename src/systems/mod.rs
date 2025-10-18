@@ -1,4 +1,4 @@
-//! Long-lived background systems that plugins can opt into.
+//! Long-lived background systems that extensions can opt into.
 
 pub mod filesystem;
 pub mod search;

@@ -1,4 +1,4 @@
-use crate::plugins::api::{AttributeRow, FileRow, TruncationStyle};
+use crate::extensions::api::{AttributeRow, FileRow, TruncationStyle};
 use frizbee::Options;
 use frizbee::match_indices;
 use ratatui::{
