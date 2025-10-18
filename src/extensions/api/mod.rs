@@ -6,7 +6,11 @@ pub mod registry;
 pub mod search;
 
 pub use context::{ExtensionQueryContext, ExtensionSelectionContext};
-pub use contributions::{Contribution, ExtensionPackage, PreviewSplit, PreviewSplitContext};
+pub use contributions::{
+    Contribution, ContributionScope, ContributionStores, ExtensionPackage, Icon, IconProvider,
+    IconResource, IconStore, PreviewSplit, PreviewSplitContext, PreviewSplitStore,
+    ScopedContribution,
+};
 pub use descriptors::{
     ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
 };

@@ -1,6 +1,7 @@
 use frizbee::Options;
 use ratatui::{layout::Constraint, style::Style, widgets::Row};
 
+use super::contributions::ContributionScope;
 use super::search::SearchData;
 
 /// Static metadata describing a extension contributed to the search experience.
@@ -24,7 +25,7 @@ pub struct ExtensionUiDefinition {
 }
 
 /// Information required to render a extension backed table.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct TableContext<'a> {
     pub area: ratatui::layout::Rect,
     pub filtered: &'a [usize],
@@ -35,6 +36,7 @@ pub struct TableContext<'a> {
     pub highlight_style: Style,
     pub selection_width: u16,
     pub column_spacing: u16,
+    pub scope: ContributionScope,
     pub data: &'a SearchData,
 }
 

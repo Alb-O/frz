@@ -10,8 +10,8 @@ use ratatui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use crate::extensions::api::SearchData;
 use crate::extensions::api::descriptors::{ExtensionDataset, TableContext, TableDescriptor};
+use crate::extensions::api::{ContributionScope, SearchData};
 
 const HIGHLIGHT_SYMBOL: &str = "▶ ";
 const TABLE_COLUMN_SPACING: u16 = 1;
@@ -24,6 +24,7 @@ pub struct TableRenderContext<'a> {
     pub headers: Option<&'a Vec<String>>,
     pub widths: Option<&'a Vec<Constraint>>,
     pub highlight: Option<(&'a str, Options)>,
+    pub scope: ContributionScope,
     pub data: &'a SearchData,
 }
 
@@ -48,6 +49,7 @@ pub fn render_table(
         highlight_style: theme.highlight_style(),
         selection_width,
         column_spacing: TABLE_COLUMN_SPACING,
+        scope: context.scope,
         data: context.data,
     });
     render_configured_table(

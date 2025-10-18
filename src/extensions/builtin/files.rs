@@ -2,7 +2,8 @@ use ratatui::layout::{Constraint, Layout, Rect};
 
 use crate::extensions::api::{
     Contribution, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
-    ExtensionSelectionContext, SearchData, SearchMode, SearchSelection, SearchStream,
+    ExtensionSelectionContext, Icon, IconProvider, IconResource, IconStore, SearchData, SearchMode,
+    SearchSelection, SearchStream,
     descriptors::{
         ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
     },
@@ -100,6 +101,7 @@ impl ExtensionDataset for FileDataset {
             .headers
             .cloned()
             .unwrap_or_else(Self::default_headers);
+        let icon_provider = context.scope.resolve::<IconStore>();
         let rows = build_file_rows(
             context.filtered,
             context.scores,
@@ -107,6 +109,7 @@ impl ExtensionDataset for FileDataset {
             context.highlight,
             context.highlight_style,
             Some(&column_widths),
+            icon_provider,
         );
         TableDescriptor::new(headers, widths, rows)
     }
@@ -143,14 +146,15 @@ impl ExtensionModule for FileModule {
 }
 
 pub struct FilePackage {
-    contributions: [Contribution; 2],
+    contributions: [Contribution; 3],
 }
 
 impl FilePackage {
-    fn new_contributions() -> [Contribution; 2] {
+    fn new_contributions() -> [Contribution; 3] {
         [
             Contribution::search_tab(descriptor(), FileModule),
             Contribution::preview_split(descriptor(), FilePreviewer::default()),
+            Contribution::icons(descriptor(), FileIcons),
         ]
     }
 }
@@ -164,7 +168,7 @@ impl Default for FilePackage {
 }
 
 impl ExtensionPackage for FilePackage {
-    type Contributions<'a> = std::array::IntoIter<Contribution, 2>;
+    type Contributions<'a> = std::array::IntoIter<Contribution, 3>;
 
     fn contributions(&self) -> Self::Contributions<'_> {
         self.contributions.clone().into_iter()
@@ -176,12 +180,47 @@ pub fn bundle() -> FilePackage {
     FilePackage::default()
 }
 
+// Use the Font Awesome file glyph for entries without a devicon match.
+const GENERIC_FILE_ICON: char = '\u{f016}';
+
+#[derive(Clone, Copy)]
+struct FileIcons;
+
+impl IconProvider for FileIcons {
+    fn icon_for(&self, resource: IconResource<'_>) -> Option<Icon> {
+        match resource {
+            IconResource::File(row) => {
+                let icon = devicons::FileIcon::from(row.path.as_str());
+                let glyph = if icon.icon == '*' {
+                    GENERIC_FILE_ICON
+                } else {
+                    icon.icon
+                };
+                Some(Icon::from_hex(glyph, icon.color))
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::extensions::api::search::FileRow;
 
     #[test]
     fn dataset_key() {
         assert_eq!(FILE_DATASET.key(), DATASET_KEY);
+    }
+
+    #[test]
+    fn unknown_extensions_use_generic_file_icon() {
+        let provider = FileIcons;
+        let row = FileRow::filesystem("file.zzz", Vec::<String>::new());
+
+        let icon = provider
+            .icon_for(IconResource::File(&row))
+            .expect("file icons should exist");
+
+        assert_eq!(icon, Icon::from_hex(GENERIC_FILE_ICON, "#7e8ea8"));
     }
 }

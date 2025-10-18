@@ -1,4 +1,6 @@
-use crate::extensions::api::{AttributeRow, FileRow, TruncationStyle};
+use std::sync::Arc;
+
+use crate::extensions::api::{AttributeRow, FileRow, IconProvider, IconResource, TruncationStyle};
 use frizbee::Options;
 use frizbee::match_indices;
 use ratatui::{
@@ -6,7 +8,7 @@ use ratatui::{
     widgets::{Cell, Row},
 };
 
-use crate::tui::highlight::highlight_cell;
+use crate::tui::highlight::{highlight_cell, highlight_cell_with_prefix};
 
 /// Create match indices for the provided needle and configuration.
 #[must_use]
@@ -58,6 +60,7 @@ pub fn build_file_rows<'a>(
     highlight_state: Option<(&'a str, Options)>,
     highlight_style: Style,
     column_widths: Option<&[u16]>,
+    icon_provider: Option<Arc<dyn IconProvider>>,
 ) -> Vec<Row<'a>> {
     filtered_files
         .iter()
@@ -77,13 +80,19 @@ pub fn build_file_rows<'a>(
                     (path, tags)
                 })
                 .unwrap_or((None, None));
+            let icon_spans = icon_provider.as_ref().and_then(|provider| {
+                provider
+                    .icon_for(IconResource::File(entry))
+                    .map(|icon| vec![icon.to_padded_span()])
+            });
             Some(Row::new([
-                highlight_cell(
+                highlight_cell_with_prefix(
                     &entry.path,
                     path_highlight,
                     path_width,
                     entry.truncation_style(),
                     highlight_style,
+                    icon_spans,
                 ),
                 highlight_cell(
                     &entry.display_tags,

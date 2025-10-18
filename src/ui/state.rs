@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{Arc, mpsc::Receiver};
+use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
 
 use ratatui::widgets::TableState;
@@ -7,7 +7,7 @@ use throbber_widgets_tui::ThrobberState;
 
 use super::config::UiConfig;
 use crate::extensions::api::{
-    ExtensionCatalog, ExtensionSelectionContext, PreviewSplit, SearchData, SearchMode,
+    ContributionStores, ExtensionCatalog, ExtensionSelectionContext, SearchData, SearchMode,
     SearchSelection,
 };
 use crate::systems::filesystem::IndexUpdate;
@@ -199,8 +199,8 @@ impl<'a> App<'a> {
         self.tab_states.entry(mode).or_default().widths = Some(widths);
     }
 
-    pub(crate) fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
-        self.extensions.preview_split(mode)
+    pub(crate) fn contributions(&self) -> ContributionStores {
+        self.extensions.contributions()
     }
 }
 

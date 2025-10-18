@@ -1,3 +1,4 @@
+mod icons;
 mod preview_split;
 mod search_tabs;
 
@@ -11,11 +12,19 @@ use crate::extensions::api::registry::ExtensionModule;
 use crate::extensions::api::registry::RegisteredModule;
 use crate::extensions::api::search::SearchMode;
 
+pub use icons::{Icon, IconProvider, IconResource, IconStore};
 pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
 pub use search_tabs::SearchTabStore;
 
 type Cloner = fn(&dyn Any) -> Box<dyn Any + Send + Sync>;
 type CleanupHandler = Arc<dyn Fn(&mut dyn Any, SearchMode) + Send + Sync>;
+
+/// Trait implemented by contribution stores that resolve data for a search mode.
+pub trait ScopedContribution: Clone + Send + Sync + 'static {
+    type Output;
+
+    fn resolve(&self, mode: SearchMode) -> Option<Self::Output>;
+}
 
 /// Trait implemented by concrete contribution specifications.
 trait ContributionSpec: Send + Sync {
@@ -78,6 +87,14 @@ impl Contribution {
         Self::from_spec(preview_split::PreviewSplitContribution::new(
             descriptor, preview,
         ))
+    }
+
+    /// Create an icon provider contribution.
+    pub fn icons<P>(descriptor: &'static ExtensionDescriptor, provider: P) -> Self
+    where
+        P: icons::IconProvider + 'static,
+    {
+        Self::from_spec(icons::IconContribution::new(descriptor, provider))
     }
 
     fn from_spec<T>(spec: T) -> Self
@@ -238,6 +255,61 @@ impl ContributionRegistry {
                 handler(store.as_mut(), mode);
             }
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct ContributionStores {
+    registry: Arc<ContributionRegistry>,
+}
+
+impl ContributionStores {
+    pub(crate) fn new(registry: Arc<ContributionRegistry>) -> Self {
+        Self { registry }
+    }
+
+    pub fn get<T>(&self) -> Option<&T>
+    where
+        T: Clone + Send + Sync + 'static,
+    {
+        self.registry.storage::<T>()
+    }
+
+    pub fn resolve<T>(&self, mode: SearchMode) -> Option<T::Output>
+    where
+        T: ScopedContribution,
+    {
+        self.get::<T>().and_then(|store| store.resolve(mode))
+    }
+
+    pub fn scope(&self, mode: SearchMode) -> ContributionScope {
+        ContributionScope {
+            stores: self.clone(),
+            mode,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct ContributionScope {
+    stores: ContributionStores,
+    mode: SearchMode,
+}
+
+impl ContributionScope {
+    pub fn mode(&self) -> SearchMode {
+        self.mode
+    }
+
+    pub fn resolve<T>(&self) -> Option<T::Output>
+    where
+        T: ScopedContribution,
+    {
+        self.stores.resolve::<T>(self.mode)
+    }
+
+    pub fn stores(&self) -> &ContributionStores {
+        &self.stores
     }
 }
 

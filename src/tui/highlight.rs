@@ -15,14 +15,45 @@ pub fn highlight_cell(
     truncation: TruncationStyle,
     highlight_style: Style,
 ) -> Cell<'_> {
-    let (display_text, indices) = if let Some(width) = max_width.map(usize::from) {
+    highlight_cell_with_prefix(text, indices, max_width, truncation, highlight_style, None)
+}
+
+pub fn highlight_cell_with_prefix<'a>(
+    text: &'a str,
+    indices: Option<Vec<usize>>,
+    max_width: Option<u16>,
+    truncation: TruncationStyle,
+    highlight_style: Style,
+    prefix: Option<Vec<Span<'a>>>,
+) -> Cell<'a> {
+    let mut prefix_spans = prefix.unwrap_or_default();
+    let prefix_width: usize = prefix_spans.iter().map(Span::width).sum();
+    let adjusted_width = max_width.and_then(|width| {
+        let prefix_width_u16: u16 = prefix_width.try_into().unwrap_or(u16::MAX);
+        width.checked_sub(prefix_width_u16)
+    });
+
+    let (display_text, indices) = if let Some(width) = adjusted_width.map(usize::from) {
         truncate_with_highlight(text, indices, width, truncation)
+    } else if max_width.is_some() {
+        (String::new(), None)
     } else {
         (text.to_string(), indices)
     };
 
+    if display_text.is_empty() {
+        if prefix_spans.is_empty() {
+            return Cell::from(display_text);
+        }
+        return Cell::from(Text::from(Line::from(prefix_spans)));
+    }
+
     let Some(mut sorted_indices) = indices.filter(|indices| !indices.is_empty()) else {
-        return Cell::from(display_text);
+        if prefix_spans.is_empty() {
+            return Cell::from(display_text);
+        }
+        prefix_spans.push(Span::raw(display_text));
+        return Cell::from(Text::from(Line::from(prefix_spans)));
     };
     sorted_indices.sort_unstable();
     let mut next = sorted_indices.into_iter().peekable();
@@ -58,7 +89,12 @@ pub fn highlight_cell(
         spans.push(Span::styled(buffer, style));
     }
 
-    Cell::from(Text::from(Line::from(spans)))
+    if prefix_spans.is_empty() {
+        Cell::from(Text::from(Line::from(spans)))
+    } else {
+        prefix_spans.extend(spans);
+        Cell::from(Text::from(Line::from(prefix_spans)))
+    }
 }
 
 fn truncate_with_highlight(

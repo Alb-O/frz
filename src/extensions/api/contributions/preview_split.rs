@@ -7,7 +7,7 @@ use crate::extensions::api::descriptors::ExtensionDescriptor;
 use crate::extensions::api::error::ExtensionCatalogError;
 use crate::extensions::api::search::{SearchData, SearchMode};
 
-use super::{ContributionInstallContext, ContributionSpecImpl};
+use super::{ContributionInstallContext, ContributionSpecImpl, ScopedContribution};
 
 /// Context provided to preview split renderers when drawing the preview area.
 pub struct PreviewSplitContext<'a> {
@@ -101,6 +101,14 @@ impl PreviewSplitStore {
 
     pub fn remove(&mut self, mode: SearchMode) {
         self.splits.remove(&mode);
+    }
+}
+
+impl ScopedContribution for PreviewSplitStore {
+    type Output = Arc<dyn PreviewSplit>;
+
+    fn resolve(&self, mode: SearchMode) -> Option<Self::Output> {
+        self.get(mode)
     }
 }
 

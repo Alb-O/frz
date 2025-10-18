@@ -1,6 +1,7 @@
 use super::*;
 use crate::extensions::api::contributions::{
-    Contribution, ExtensionPackage, PreviewSplit, PreviewSplitContext,
+    Contribution, ExtensionPackage, Icon, IconProvider, IconResource, IconStore, PreviewSplit,
+    PreviewSplitContext, PreviewSplitStore,
 };
 use crate::extensions::api::{
     context::{ExtensionQueryContext, ExtensionSelectionContext},
@@ -11,6 +12,7 @@ use crate::extensions::api::{
     search::{SearchData, SearchMode, SearchSelection, SearchStream},
 };
 use ratatui::{Frame, layout::Rect};
+use std::sync::Arc;
 
 struct TestDataset;
 
@@ -136,6 +138,17 @@ impl PreviewSplit for TestPreview {
     fn render_preview(&self, _frame: &mut Frame, _area: Rect, _context: PreviewSplitContext<'_>) {}
 }
 
+#[derive(Clone, Copy)]
+struct TestIcons;
+
+impl IconProvider for TestIcons {
+    fn icon_for(&self, resource: IconResource<'_>) -> Option<Icon> {
+        match resource {
+            IconResource::File(_) => Some(Icon::new('x', None)),
+        }
+    }
+}
+
 #[derive(Clone)]
 struct TestBundle {
     contributions: Vec<Contribution>,
@@ -147,6 +160,7 @@ impl TestBundle {
             contributions: vec![
                 Contribution::search_tab(&TEST_DESCRIPTOR, TestModule),
                 Contribution::preview_split(&TEST_DESCRIPTOR, TestPreview),
+                Contribution::icons(&TEST_DESCRIPTOR, TestIcons),
             ],
         }
     }
@@ -154,6 +168,12 @@ impl TestBundle {
     fn preview_only() -> Self {
         Self {
             contributions: vec![Contribution::preview_split(&TEST_DESCRIPTOR, TestPreview)],
+        }
+    }
+
+    fn icons_only() -> Self {
+        Self {
+            contributions: vec![Contribution::icons(&TEST_DESCRIPTOR, TestIcons)],
         }
     }
 }
@@ -167,6 +187,20 @@ impl ExtensionPackage for TestBundle {
     fn contributions(&self) -> Self::Contributions<'_> {
         self.contributions.clone().into_iter()
     }
+}
+
+fn preview_split_for(
+    catalog: &ExtensionCatalog,
+    mode: SearchMode,
+) -> Option<Arc<dyn PreviewSplit>> {
+    catalog.contributions().resolve::<PreviewSplitStore>(mode)
+}
+
+fn icon_provider_for(
+    catalog: &ExtensionCatalog,
+    mode: SearchMode,
+) -> Option<Arc<dyn IconProvider>> {
+    catalog.contributions().resolve::<IconStore>(mode)
 }
 
 #[test]
@@ -202,7 +236,8 @@ fn deregister_removes_module_and_updates_indexes() {
     );
     assert!(registry.mode_by_id(TEST_DESCRIPTOR.id).is_none());
     assert!(registry.module_by_id(TEST_DESCRIPTOR.id).is_none());
-    assert!(registry.preview_split(test_mode()).is_none());
+    assert!(preview_split_for(&registry, test_mode()).is_none());
+    assert!(icon_provider_for(&registry, test_mode()).is_none());
 }
 
 #[test]
@@ -217,7 +252,8 @@ fn deregister_by_id_removes_module() {
         .expect("module removed by id");
     assert_eq!(removed.descriptor().id, TEST_DESCRIPTOR.id);
     assert!(registry.is_empty());
-    assert!(registry.preview_split(test_mode()).is_none());
+    assert!(preview_split_for(&registry, test_mode()).is_none());
+    assert!(icon_provider_for(&registry, test_mode()).is_none());
 }
 
 #[test]
@@ -256,7 +292,17 @@ fn register_package_registers_preview_split() {
         .register_package(TestBundle::search_with_preview())
         .expect("register package");
 
-    assert!(registry.preview_split(test_mode()).is_some());
+    assert!(preview_split_for(&registry, test_mode()).is_some());
+}
+
+#[test]
+fn register_package_registers_icons() {
+    let mut registry = ExtensionCatalog::empty();
+    registry
+        .register_package(TestBundle::search_with_preview())
+        .expect("register package");
+
+    assert!(icon_provider_for(&registry, test_mode()).is_some());
 }
 
 #[test]
@@ -273,5 +319,22 @@ fn duplicate_preview_split_returns_error() {
         error,
         ExtensionCatalogError::ContributionConflict { contribution, .. }
             if contribution == "preview split"
+    ));
+}
+
+#[test]
+fn duplicate_icons_returns_error() {
+    let mut registry = ExtensionCatalog::empty();
+    registry
+        .register_package(TestBundle::icons_only())
+        .expect("register icon bundle");
+
+    let error = registry
+        .register_package(TestBundle::icons_only())
+        .expect_err("expected duplicate icons to fail");
+    assert!(matches!(
+        error,
+        ExtensionCatalogError::ContributionConflict { contribution, .. }
+            if contribution == "icons"
     ));
 }

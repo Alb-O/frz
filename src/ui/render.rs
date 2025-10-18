@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Clear, Paragraph},
 };
 
-use crate::extensions::api::PreviewSplitContext;
+use crate::extensions::api::{PreviewSplitContext, PreviewSplitStore};
 use crate::systems::search;
 use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
@@ -82,7 +82,8 @@ impl<'a> App<'a> {
     fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
         let descriptor = self.mode.descriptor();
         let dataset = descriptor.dataset;
-        let preview_split = self.preview_split(self.mode);
+        let scope = self.contributions().scope(self.mode);
+        let preview_split = scope.resolve::<PreviewSplitStore>();
         let query = self.search_input.text().to_string();
 
         let (table_area, preview_area) = if preview_split.is_some() {
@@ -112,6 +113,7 @@ impl<'a> App<'a> {
                 headers: state.headers.as_ref(),
                 widths: state.widths.as_ref(),
                 highlight: highlight_state,
+                scope: scope.clone(),
                 data: &self.data,
             },
         );

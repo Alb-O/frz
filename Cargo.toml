@@ -30,6 +30,7 @@ unicode-truncate = "2"
 indexmap = "2"
 toml = "0.9"
 include_dir = "0.7"
+devicons = "0.6.12"
 
 [dev-dependencies]
 insta = "1.43"

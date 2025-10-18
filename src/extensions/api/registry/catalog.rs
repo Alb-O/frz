@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::extensions::api::contributions::{
-    Contribution, ContributionInstallContext, ContributionRegistry, ExtensionPackage, PreviewSplit,
-    PreviewSplitStore, SearchTabStore,
+    Contribution, ContributionInstallContext, ContributionRegistry, ContributionStores,
+    ExtensionPackage, SearchTabStore,
 };
 use crate::extensions::api::descriptors::ExtensionDescriptor;
 use crate::extensions::api::error::ExtensionCatalogError;
@@ -15,7 +15,7 @@ use super::ExtensionModule;
 #[derive(Clone)]
 pub struct ExtensionCatalog {
     search_tabs: SearchTabStore,
-    contributions: ContributionRegistry,
+    contributions: Arc<ContributionRegistry>,
 }
 
 impl ExtensionCatalog {
@@ -23,7 +23,7 @@ impl ExtensionCatalog {
     pub fn empty() -> Self {
         Self {
             search_tabs: SearchTabStore::default(),
-            contributions: ContributionRegistry::new(),
+            contributions: Arc::new(ContributionRegistry::new()),
         }
     }
 
@@ -36,8 +36,8 @@ impl ExtensionCatalog {
         &mut self,
         contribution: &Contribution,
     ) -> Result<(), ExtensionCatalogError> {
-        let mut context =
-            ContributionInstallContext::new(&mut self.search_tabs, &mut self.contributions);
+        let registry = Arc::make_mut(&mut self.contributions);
+        let mut context = ContributionInstallContext::new(&mut self.search_tabs, registry);
         contribution.install(&mut context)
     }
 
@@ -90,7 +90,7 @@ impl ExtensionCatalog {
     pub fn remove(&mut self, mode: SearchMode) -> Option<RegisteredModule> {
         let removed = self.search_tabs.remove(mode);
         if removed.is_some() {
-            self.contributions.remove_mode(mode);
+            Arc::make_mut(&mut self.contributions).remove_mode(mode);
         }
         removed
     }
@@ -98,7 +98,7 @@ impl ExtensionCatalog {
     /// Remove the module registered for the provided identifier.
     pub fn remove_by_id(&mut self, id: &str) -> Option<RegisteredModule> {
         let (mode, module) = self.search_tabs.remove_by_id(id)?;
-        self.contributions.remove_mode(mode);
+        Arc::make_mut(&mut self.contributions).remove_mode(mode);
         Some(module)
     }
 
@@ -117,11 +117,9 @@ impl ExtensionCatalog {
         self.search_tabs.contains_mode(mode)
     }
 
-    /// Lookup the preview split renderer registered for the requested mode.
-    pub fn preview_split(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
-        self.contributions
-            .storage::<PreviewSplitStore>()
-            .and_then(|store| store.get(mode))
+    /// Access registered contribution stores.
+    pub fn contributions(&self) -> ContributionStores {
+        ContributionStores::new(Arc::clone(&self.contributions))
     }
 }
 
