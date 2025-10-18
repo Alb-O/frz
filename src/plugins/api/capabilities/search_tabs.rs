@@ -3,9 +3,9 @@ use std::sync::Arc;
 
 use indexmap::IndexMap;
 
-use crate::plugins::api::descriptors::SearchPluginDescriptor;
+use crate::plugins::api::descriptors::FrzPluginDescriptor;
 use crate::plugins::api::error::PluginRegistryError;
-use crate::plugins::api::registry::{RegisteredPlugin, SearchPlugin};
+use crate::plugins::api::registry::{FrzPlugin, RegisteredPlugin};
 use crate::plugins::api::search::SearchMode;
 
 use super::{CapabilityInstallContext, CapabilitySpecImpl};
@@ -20,7 +20,7 @@ pub struct SearchTabStore {
 impl SearchTabStore {
     pub fn ensure_available(
         &self,
-        descriptor: &'static SearchPluginDescriptor,
+        descriptor: &'static FrzPluginDescriptor,
     ) -> Result<(), PluginRegistryError> {
         let mode = SearchMode::from_descriptor(descriptor);
         if self.plugins.contains_key(&mode) {
@@ -41,7 +41,7 @@ impl SearchTabStore {
         debug_assert!(previous.is_none(), "plugin identifiers should be unique");
     }
 
-    pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn SearchPlugin>> {
+    pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn FrzPlugin>> {
         self.plugins.get(&mode).map(|plugin| plugin.plugin())
     }
 
@@ -49,7 +49,7 @@ impl SearchTabStore {
         self.plugins.values()
     }
 
-    pub fn descriptors(&self) -> impl Iterator<Item = &'static SearchPluginDescriptor> + '_ {
+    pub fn descriptors(&self) -> impl Iterator<Item = &'static FrzPluginDescriptor> + '_ {
         self.plugins.values().map(|plugin| plugin.descriptor())
     }
 
@@ -57,7 +57,7 @@ impl SearchTabStore {
         self.id_index.get(id).copied()
     }
 
-    pub fn plugin_by_id(&self, id: &str) -> Option<Arc<dyn SearchPlugin>> {
+    pub fn plugin_by_id(&self, id: &str) -> Option<Arc<dyn FrzPlugin>> {
         self.mode_by_id(id).and_then(|mode| self.plugin(mode))
     }
 
@@ -91,16 +91,16 @@ impl SearchTabStore {
 /// Capability describing a search tab implementation.
 #[derive(Clone)]
 pub struct SearchTabCapability {
-    descriptor: &'static SearchPluginDescriptor,
-    plugin: Arc<dyn SearchPlugin>,
+    descriptor: &'static FrzPluginDescriptor,
+    plugin: Arc<dyn FrzPlugin>,
 }
 
 impl SearchTabCapability {
-    pub fn new<P>(descriptor: &'static SearchPluginDescriptor, plugin: P) -> Self
+    pub fn new<P>(descriptor: &'static FrzPluginDescriptor, plugin: P) -> Self
     where
-        P: SearchPlugin + 'static,
+        P: FrzPlugin + 'static,
     {
-        let plugin: Arc<dyn SearchPlugin> = Arc::new(plugin);
+        let plugin: Arc<dyn FrzPlugin> = Arc::new(plugin);
         Self { descriptor, plugin }
     }
 }

@@ -1,9 +1,9 @@
-use crate::plugins::api::descriptors::SearchPluginDescriptor;
+use crate::plugins::api::descriptors::FrzPluginDescriptor;
 
 /// Identifies a single tab contributed to the search UI.
 #[derive(Clone, Copy)]
 pub struct SearchMode {
-    descriptor: &'static SearchPluginDescriptor,
+    descriptor: &'static FrzPluginDescriptor,
 }
 
 impl std::fmt::Debug for SearchMode {
@@ -22,14 +22,14 @@ impl Eq for SearchMode {}
 
 impl std::hash::Hash for SearchMode {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        std::hash::Hash::hash(&(self.descriptor as *const SearchPluginDescriptor), state);
+        std::hash::Hash::hash(&(self.descriptor as *const FrzPluginDescriptor), state);
     }
 }
 
 impl SearchMode {
     /// Create a search mode identifier backed by a plugin descriptor.
     #[must_use]
-    pub const fn from_descriptor(descriptor: &'static SearchPluginDescriptor) -> Self {
+    pub const fn from_descriptor(descriptor: &'static FrzPluginDescriptor) -> Self {
         Self { descriptor }
     }
 
@@ -41,7 +41,7 @@ impl SearchMode {
 
     /// Access the plugin descriptor backing this mode.
     #[must_use]
-    pub const fn descriptor(self) -> &'static SearchPluginDescriptor {
+    pub const fn descriptor(self) -> &'static FrzPluginDescriptor {
         self.descriptor
     }
 }

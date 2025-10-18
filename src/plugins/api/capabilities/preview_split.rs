@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use ratatui::{Frame, layout::Rect};
 
-use crate::plugins::api::descriptors::SearchPluginDescriptor;
+use crate::plugins::api::descriptors::FrzPluginDescriptor;
 use crate::plugins::api::error::PluginRegistryError;
 use crate::plugins::api::search::{SearchData, SearchMode};
 
@@ -107,12 +107,12 @@ impl PreviewSplitStore {
 /// Capability describing a preview split renderer.
 #[derive(Clone)]
 pub struct PreviewSplitCapability {
-    descriptor: &'static SearchPluginDescriptor,
+    descriptor: &'static FrzPluginDescriptor,
     preview: Arc<dyn PreviewSplit>,
 }
 
 impl PreviewSplitCapability {
-    pub fn new<P>(descriptor: &'static SearchPluginDescriptor, preview: P) -> Self
+    pub fn new<P>(descriptor: &'static FrzPluginDescriptor, preview: P) -> Self
     where
         P: PreviewSplit + 'static,
     {

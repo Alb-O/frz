@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::plugins::api::{SearchMode, descriptors::SearchPluginDescriptor};
+use crate::plugins::api::{SearchMode, descriptors::FrzPluginDescriptor};
 
 /// Human-readable labels and titles rendered within a single search pane.
 #[derive(Debug, Clone)]
@@ -136,7 +136,7 @@ impl UiConfig {
     }
 
     /// Register the default UI contributed by a plugin descriptor.
-    pub fn register_plugin(&mut self, descriptor: &'static SearchPluginDescriptor) {
+    pub fn register_plugin(&mut self, descriptor: &'static FrzPluginDescriptor) {
         let mode = SearchMode::from_descriptor(descriptor);
         let pane = PaneUiConfig::new(
             descriptor.ui.mode_title,

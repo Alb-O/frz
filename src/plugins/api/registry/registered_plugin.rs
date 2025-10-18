@@ -1,22 +1,22 @@
 use std::sync::Arc;
 
 use crate::plugins::api::{
-    descriptors::{SearchPluginDataset, SearchPluginDescriptor},
+    descriptors::{FrzPluginDataset, FrzPluginDescriptor},
     search::SearchMode,
 };
 
-use super::SearchPlugin;
+use super::FrzPlugin;
 
 /// Metadata and implementation pair stored by the registry.
 #[derive(Clone)]
 pub struct RegisteredPlugin {
-    descriptor: &'static SearchPluginDescriptor,
-    plugin: Arc<dyn SearchPlugin>,
+    descriptor: &'static FrzPluginDescriptor,
+    plugin: Arc<dyn FrzPlugin>,
 }
 
 impl RegisteredPlugin {
     #[must_use]
-    pub fn new(descriptor: &'static SearchPluginDescriptor, plugin: Arc<dyn SearchPlugin>) -> Self {
+    pub fn new(descriptor: &'static FrzPluginDescriptor, plugin: Arc<dyn FrzPlugin>) -> Self {
         Self { descriptor, plugin }
     }
 
@@ -26,17 +26,17 @@ impl RegisteredPlugin {
     }
 
     #[must_use]
-    pub fn descriptor(&self) -> &'static SearchPluginDescriptor {
+    pub fn descriptor(&self) -> &'static FrzPluginDescriptor {
         self.descriptor
     }
 
     #[must_use]
-    pub fn dataset(&self) -> &'static dyn SearchPluginDataset {
+    pub fn dataset(&self) -> &'static dyn FrzPluginDataset {
         self.descriptor.dataset
     }
 
     #[must_use]
-    pub fn plugin(&self) -> Arc<dyn SearchPlugin> {
+    pub fn plugin(&self) -> Arc<dyn FrzPlugin> {
         Arc::clone(&self.plugin)
     }
 }

@@ -125,14 +125,14 @@ mod tests {
     use super::*;
     use crate::plugins::api::{
         TableContext, TableDescriptor,
-        descriptors::{SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition},
+        descriptors::{FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition},
         search::{SearchData, SearchMode, SearchStream},
     };
     use std::sync::mpsc::channel;
 
     struct NullDataset;
 
-    impl SearchPluginDataset for NullDataset {
+    impl FrzPluginDataset for NullDataset {
         fn key(&self) -> &'static str {
             "alpha"
         }
@@ -148,9 +148,9 @@ mod tests {
 
     static DATASET: NullDataset = NullDataset;
 
-    static DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "alpha",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Alpha",
             mode_title: "",
             hint: "",

@@ -2,9 +2,9 @@ mod plugin;
 mod registered_plugin;
 mod store;
 
-pub use plugin::SearchPlugin;
+pub use plugin::FrzPlugin;
 pub use registered_plugin::RegisteredPlugin;
-pub use store::SearchPluginRegistry;
+pub use store::FrzPluginRegistry;
 
 #[cfg(test)]
 mod tests;

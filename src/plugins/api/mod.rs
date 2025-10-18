@@ -8,11 +8,10 @@ pub mod search;
 pub use capabilities::{Capability, PluginBundle, PreviewSplit, PreviewSplitContext};
 pub use context::{PluginQueryContext, PluginSelectionContext};
 pub use descriptors::{
-    SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
-    TableDescriptor,
+    FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
 };
 pub use error::PluginRegistryError;
-pub use registry::{RegisteredPlugin, SearchPlugin, SearchPluginRegistry};
+pub use registry::{FrzPlugin, FrzPluginRegistry, RegisteredPlugin};
 pub use search::{
     AttributeRow, FileRow, MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD, PluginSelection,
     SearchData, SearchMode, SearchOutcome, SearchResult, SearchSelection, SearchStream,

@@ -7,7 +7,7 @@ use throbber_widgets_tui::ThrobberState;
 
 use super::config::UiConfig;
 use crate::plugins::api::{
-    PluginSelectionContext, PreviewSplit, SearchData, SearchMode, SearchPluginRegistry,
+    FrzPluginRegistry, PluginSelectionContext, PreviewSplit, SearchData, SearchMode,
     SearchSelection,
 };
 use crate::systems::filesystem::IndexUpdate;
@@ -38,7 +38,7 @@ pub struct App<'a> {
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
-    plugins: SearchPluginRegistry,
+    plugins: FrzPluginRegistry,
     pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
     pub(super) search: SearchRuntime,
     pub(crate) initial_results_deadline: Option<Instant>,
@@ -55,13 +55,13 @@ pub(crate) struct TabBuffers {
 
 impl<'a> App<'a> {
     pub fn new(data: SearchData) -> Self {
-        let mut plugins = SearchPluginRegistry::default();
+        let mut plugins = FrzPluginRegistry::default();
         crate::plugins::builtin::register_builtin_plugins(&mut plugins)
             .expect("builtin plugins must register successfully");
         Self::with_plugins(data, plugins)
     }
 
-    pub fn with_plugins(data: SearchData, plugins: SearchPluginRegistry) -> Self {
+    pub fn with_plugins(data: SearchData, plugins: FrzPluginRegistry) -> Self {
         let mut table_state = TableState::default();
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();

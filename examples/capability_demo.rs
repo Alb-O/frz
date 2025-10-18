@@ -2,19 +2,19 @@ fn main() {
     use std::sync::atomic::Ordering;
 
     use frz::plugins::api::{
-        Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchPlugin,
-        SearchPluginRegistry, SearchSelection, SearchStream,
+        Capability, FrzPlugin, FrzPluginRegistry, PluginBundle, PluginQueryContext,
+        PluginSelectionContext, SearchSelection, SearchStream,
         descriptors::{
-            SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
+            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
             TableDescriptor,
         },
     };
     use ratatui::widgets::Row;
 
     static DATASET: DemoDataset = DemoDataset;
-    static DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "capability-demo",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Capability Demo",
             mode_title: "Capability Demo",
             hint: "Type to search",
@@ -26,7 +26,7 @@ fn main() {
 
     struct DemoDataset;
 
-    impl SearchPluginDataset for DemoDataset {
+    impl FrzPluginDataset for DemoDataset {
         fn key(&self) -> &'static str {
             "capability-demo"
         }
@@ -46,8 +46,8 @@ fn main() {
 
     struct DemoPlugin;
 
-    impl SearchPlugin for DemoPlugin {
-        fn descriptor(&self) -> &'static SearchPluginDescriptor {
+    impl FrzPlugin for DemoPlugin {
+        fn descriptor(&self) -> &'static FrzPluginDescriptor {
             &DESCRIPTOR
         }
 
@@ -84,7 +84,7 @@ fn main() {
         }
     }
 
-    let mut registry = SearchPluginRegistry::new();
+    let mut registry = FrzPluginRegistry::new();
     registry
         .register_bundle(DemoBundle)
         .expect("demo bundle should register");

@@ -6,7 +6,7 @@ use ratatui::layout::Constraint;
 
 use super::App;
 use super::config::UiConfig;
-use crate::plugins::api::{SearchData, SearchMode, SearchOutcome, SearchPluginRegistry};
+use crate::plugins::api::{FrzPluginRegistry, SearchData, SearchMode, SearchOutcome};
 use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
 pub use crate::tui::theme::Theme;
 
@@ -22,14 +22,14 @@ pub struct SearchUi {
     theme: Option<Theme>,
     bat_theme: Option<String>,
     start_mode: Option<SearchMode>,
-    plugins: SearchPluginRegistry,
+    plugins: FrzPluginRegistry,
     index_updates: Option<Receiver<IndexUpdate>>,
 }
 
 impl SearchUi {
     /// Create a new search UI for the provided data.
     pub fn new(data: SearchData) -> Self {
-        let mut plugins = SearchPluginRegistry::default();
+        let mut plugins = FrzPluginRegistry::default();
         crate::plugins::builtin::register_builtin_plugins(&mut plugins)
             .expect("builtin plugins must register successfully");
 
@@ -109,7 +109,7 @@ impl SearchUi {
     }
 
     /// Replace the plugin registry driving the search worker.
-    pub fn with_plugin_registry(mut self, plugins: SearchPluginRegistry) -> Self {
+    pub fn with_plugin_registry(mut self, plugins: FrzPluginRegistry) -> Self {
         self.plugins = plugins;
         self
     }
@@ -117,7 +117,7 @@ impl SearchUi {
     /// Mutably configure the plugin registry.
     pub fn configure_plugins<F>(mut self, configure: F) -> Self
     where
-        F: FnOnce(&mut SearchPluginRegistry),
+        F: FnOnce(&mut FrzPluginRegistry),
     {
         configure(&mut self.plugins);
         self

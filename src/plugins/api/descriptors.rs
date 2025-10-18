@@ -4,18 +4,18 @@ use ratatui::{layout::Constraint, style::Style, widgets::Row};
 use super::search::SearchData;
 
 /// Static metadata describing a plugin contributed to the search experience.
-pub struct SearchPluginDescriptor {
+pub struct FrzPluginDescriptor {
     /// Stable identifier used to route queries to the plugin.
     pub id: &'static str,
     /// UI elements contributed by the plugin.
-    pub ui: SearchPluginUiDefinition,
+    pub ui: FrzPluginUiDefinition,
     /// Dataset definition powering tab rendering and progress accounting.
-    pub dataset: &'static dyn SearchPluginDataset,
+    pub dataset: &'static dyn FrzPluginDataset,
 }
 
 /// Declarative description of the UI contributed by a plugin.
 #[derive(Clone, Copy)]
-pub struct SearchPluginUiDefinition {
+pub struct FrzPluginUiDefinition {
     pub tab_label: &'static str,
     pub mode_title: &'static str,
     pub hint: &'static str,
@@ -46,7 +46,7 @@ pub struct TableDescriptor<'a> {
 }
 
 /// Behavioural definition of a dataset served by a plugin.
-pub trait SearchPluginDataset: Send + Sync {
+pub trait FrzPluginDataset: Send + Sync {
     /// Stable key describing the dataset. This is used when reporting indexing progress.
     fn key(&self) -> &'static str;
 

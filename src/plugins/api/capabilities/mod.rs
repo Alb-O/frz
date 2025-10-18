@@ -5,10 +5,10 @@ use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::plugins::api::descriptors::SearchPluginDescriptor;
+use crate::plugins::api::descriptors::FrzPluginDescriptor;
 use crate::plugins::api::error::PluginRegistryError;
+use crate::plugins::api::registry::FrzPlugin;
 use crate::plugins::api::registry::RegisteredPlugin;
-use crate::plugins::api::registry::SearchPlugin;
 use crate::plugins::api::search::SearchMode;
 
 pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
@@ -63,15 +63,15 @@ impl Capability {
     }
 
     /// Create a search tab capability.
-    pub fn search_tab<P>(descriptor: &'static SearchPluginDescriptor, plugin: P) -> Self
+    pub fn search_tab<P>(descriptor: &'static FrzPluginDescriptor, plugin: P) -> Self
     where
-        P: SearchPlugin + 'static,
+        P: FrzPlugin + 'static,
     {
         Self::from_spec(search_tabs::SearchTabCapability::new(descriptor, plugin))
     }
 
     /// Create a preview split capability.
-    pub fn preview_split<P>(descriptor: &'static SearchPluginDescriptor, preview: P) -> Self
+    pub fn preview_split<P>(descriptor: &'static FrzPluginDescriptor, preview: P) -> Self
     where
         P: preview_split::PreviewSplit + 'static,
     {
@@ -124,7 +124,7 @@ impl<'a> CapabilityInstallContext<'a> {
     /// Ensure the provided descriptor can be registered.
     pub fn ensure_mode_available(
         &self,
-        descriptor: &'static SearchPluginDescriptor,
+        descriptor: &'static FrzPluginDescriptor,
     ) -> Result<(), PluginRegistryError> {
         self.search_tabs.ensure_available(descriptor)
     }

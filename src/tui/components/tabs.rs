@@ -230,7 +230,7 @@ mod tests {
     use crate::plugins::api::{
         SearchData, SearchMode,
         descriptors::{
-            SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
+            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
             TableDescriptor,
         },
     };
@@ -239,7 +239,7 @@ mod tests {
 
     struct DummyDataset;
 
-    impl SearchPluginDataset for DummyDataset {
+    impl FrzPluginDataset for DummyDataset {
         fn key(&self) -> &'static str {
             "dummy"
         }
@@ -255,9 +255,9 @@ mod tests {
 
     static DATASET: DummyDataset = DummyDataset;
 
-    static TAG_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static TAG_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "attributes",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Tags",
             mode_title: "Tag search",
             hint: "",
@@ -267,9 +267,9 @@ mod tests {
         dataset: &DATASET,
     };
 
-    static FILE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static FILE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "files",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Files",
             mode_title: "File search",
             hint: "",
@@ -279,9 +279,9 @@ mod tests {
         dataset: &DATASET,
     };
 
-    static OTHER_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static OTHER_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "other",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Other",
             mode_title: "Other search",
             hint: "",
@@ -291,7 +291,7 @@ mod tests {
         dataset: &DATASET,
     };
 
-    fn mode(descriptor: &'static SearchPluginDescriptor) -> SearchMode {
+    fn mode(descriptor: &'static FrzPluginDescriptor) -> SearchMode {
         SearchMode::from_descriptor(descriptor)
     }
 

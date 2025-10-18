@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow, bail};
-use frz::plugins::api::{SearchMode, SearchPluginRegistry};
+use frz::plugins::api::{FrzPluginRegistry, SearchMode};
 use frz::{PaneUiConfig, UiConfig};
 
 use super::raw::PaneSection;
@@ -45,7 +45,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
         bail!("start mode cannot be empty");
     }
     let id = trimmed.to_ascii_lowercase();
-    let mut registry = SearchPluginRegistry::new();
+    let mut registry = FrzPluginRegistry::new();
     frz::plugins::builtin::register_builtin_plugins(&mut registry)?;
     registry
         .mode_by_id(&id)

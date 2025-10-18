@@ -4,14 +4,14 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult};
-use crate::plugins::api::{PluginQueryContext, SearchData, SearchPluginRegistry, SearchStream};
+use crate::plugins::api::{FrzPluginRegistry, PluginQueryContext, SearchData, SearchStream};
 
 use crate::systems::filesystem::merge_update;
 
 /// Launches the background search worker thread and returns communication channels.
 pub(crate) fn spawn(
     mut data: SearchData,
-    plugins: SearchPluginRegistry,
+    plugins: FrzPluginRegistry,
 ) -> (
     Sender<SearchCommand>,
     Receiver<SearchResult>,
@@ -29,7 +29,7 @@ pub(crate) fn spawn(
 
 fn worker_loop(
     data: &mut SearchData,
-    plugins: &SearchPluginRegistry,
+    plugins: &FrzPluginRegistry,
     command_rx: Receiver<SearchCommand>,
     result_tx: Sender<SearchResult>,
     latest_query_id: Arc<AtomicU64>,
@@ -43,7 +43,7 @@ fn worker_loop(
 
 fn handle_command(
     data: &mut SearchData,
-    plugins: &SearchPluginRegistry,
+    plugins: &FrzPluginRegistry,
     result_tx: &Sender<SearchResult>,
     latest_query_id: &Arc<AtomicU64>,
     command: SearchCommand,
@@ -74,17 +74,17 @@ mod tests {
     use crate::plugins::api::{
         PluginSelectionContext, SearchData, SearchMode, SearchSelection,
         descriptors::{
-            SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
+            FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext,
             TableDescriptor,
         },
-        registry::SearchPlugin,
+        registry::FrzPlugin,
         search::FileRow,
         search::SearchStream,
     };
 
     struct DummyDataset;
 
-    impl SearchPluginDataset for DummyDataset {
+    impl FrzPluginDataset for DummyDataset {
         fn key(&self) -> &'static str {
             "dummy"
         }
@@ -100,9 +100,9 @@ mod tests {
 
     static DATASET: DummyDataset = DummyDataset;
 
-    static DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+    static DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
         id: "dummy",
-        ui: SearchPluginUiDefinition {
+        ui: FrzPluginUiDefinition {
             tab_label: "Dummy",
             mode_title: "Dummy",
             hint: "",
@@ -119,8 +119,8 @@ mod tests {
     #[derive(Clone)]
     struct DummyPlugin;
 
-    impl SearchPlugin for DummyPlugin {
-        fn descriptor(&self) -> &'static SearchPluginDescriptor {
+    impl FrzPlugin for DummyPlugin {
+        fn descriptor(&self) -> &'static FrzPluginDescriptor {
             &DESCRIPTOR
         }
 
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn shutdown_command_stops_worker() {
         let data = SearchData::default();
-        let plugins = SearchPluginRegistry::default();
+        let plugins = FrzPluginRegistry::default();
         let (tx, _rx, latest) = spawn(data, plugins);
         assert_eq!(latest.load(std::sync::atomic::Ordering::Relaxed), 0);
         tx.send(SearchCommand::Shutdown).unwrap();
@@ -178,7 +178,7 @@ mod tests {
             FileRow::new("README.md", Vec::<String>::new()),
         ]);
 
-        let mut registry = SearchPluginRegistry::empty();
+        let mut registry = FrzPluginRegistry::empty();
         registry.register(DummyPlugin).expect("register plugin");
 
         let (command_tx, result_rx, _) = spawn(data, registry);

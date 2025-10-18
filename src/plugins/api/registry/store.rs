@@ -4,21 +4,21 @@ use crate::plugins::api::capabilities::{
     Capability, CapabilityInstallContext, CapabilityRegistry, PluginBundle, PreviewSplit,
     PreviewSplitStore, SearchTabStore,
 };
-use crate::plugins::api::descriptors::SearchPluginDescriptor;
+use crate::plugins::api::descriptors::FrzPluginDescriptor;
 use crate::plugins::api::error::PluginRegistryError;
 use crate::plugins::api::registry::RegisteredPlugin;
 use crate::plugins::api::search::SearchMode;
 
-use super::SearchPlugin;
+use super::FrzPlugin;
 
 /// Registry of all search plugins contributing to the current UI.
 #[derive(Clone)]
-pub struct SearchPluginRegistry {
+pub struct FrzPluginRegistry {
     search_tabs: SearchTabStore,
     capabilities: CapabilityRegistry,
 }
 
-impl SearchPluginRegistry {
+impl FrzPluginRegistry {
     /// Create an empty registry without any plugins registered.
     pub fn empty() -> Self {
         Self {
@@ -41,7 +41,7 @@ impl SearchPluginRegistry {
     /// Register a plugin implementation for its declared mode.
     pub fn register<P>(&mut self, plugin: P) -> Result<(), PluginRegistryError>
     where
-        P: SearchPlugin + 'static,
+        P: FrzPlugin + 'static,
     {
         let capability = Capability::search_tab(plugin.descriptor(), plugin);
         self.install_capability(&capability)
@@ -59,7 +59,7 @@ impl SearchPluginRegistry {
     }
 
     /// Lookup a plugin servicing the requested mode.
-    pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn SearchPlugin>> {
+    pub fn plugin(&self, mode: SearchMode) -> Option<Arc<dyn FrzPlugin>> {
         self.search_tabs.plugin(mode)
     }
 
@@ -69,7 +69,7 @@ impl SearchPluginRegistry {
     }
 
     /// Iterate over registered plugin descriptors.
-    pub fn descriptors(&self) -> impl Iterator<Item = &'static SearchPluginDescriptor> + '_ {
+    pub fn descriptors(&self) -> impl Iterator<Item = &'static FrzPluginDescriptor> + '_ {
         self.search_tabs.descriptors()
     }
 
@@ -79,7 +79,7 @@ impl SearchPluginRegistry {
     }
 
     /// Attempt to resolve a mode identifier to a registered plugin implementation.
-    pub fn plugin_by_id(&self, id: &str) -> Option<Arc<dyn SearchPlugin>> {
+    pub fn plugin_by_id(&self, id: &str) -> Option<Arc<dyn FrzPlugin>> {
         self.search_tabs.plugin_by_id(id)
     }
 
@@ -122,7 +122,7 @@ impl SearchPluginRegistry {
     }
 }
 
-impl Default for SearchPluginRegistry {
+impl Default for FrzPluginRegistry {
     fn default() -> Self {
         Self::new()
     }

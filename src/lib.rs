@@ -12,8 +12,8 @@ pub mod tui;
 pub mod ui;
 
 pub use crate::plugins::api::{
-    AttributeRow, FileRow, PluginSelection, SearchData, SearchMode, SearchOutcome, SearchPlugin,
-    SearchPluginRegistry, SearchSelection, TruncationStyle,
+    AttributeRow, FileRow, FrzPlugin, FrzPluginRegistry, PluginSelection, SearchData, SearchMode,
+    SearchOutcome, SearchSelection, TruncationStyle,
 };
 pub use crate::tui::components::{progress, tables, tabs};
 pub use crate::tui::input::SearchInput;

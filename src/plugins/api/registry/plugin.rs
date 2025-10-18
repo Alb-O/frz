@@ -1,6 +1,6 @@
 use crate::plugins::api::{
     context::{PluginQueryContext, PluginSelectionContext},
-    descriptors::SearchPluginDescriptor,
+    descriptors::FrzPluginDescriptor,
     search::{SearchMode, SearchSelection, SearchStream},
 };
 
@@ -10,9 +10,9 @@ use crate::plugins::api::{
 /// functionality such as [`SearchStream`](crate::plugins::api::SearchStream) and the built-in
 /// streaming helpers for common data sets. You can also opt into the filesystem
 /// indexer to populate [`SearchData`](crate::plugins::api::SearchData) instances.
-pub trait SearchPlugin: Send + Sync {
+pub trait FrzPlugin: Send + Sync {
     /// Static descriptor advertising plugin metadata.
-    fn descriptor(&self) -> &'static SearchPluginDescriptor;
+    fn descriptor(&self) -> &'static FrzPluginDescriptor;
 
     /// Identifier describing which tab this plugin services.
     fn mode(&self) -> SearchMode {

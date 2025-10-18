@@ -1,9 +1,8 @@
 use crate::plugins::api::{
-    Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData, SearchMode,
-    SearchPlugin, SearchSelection, SearchStream,
+    Capability, FrzPlugin, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData,
+    SearchMode, SearchSelection, SearchStream,
     descriptors::{
-        SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
-        TableDescriptor,
+        FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
     },
     stream_attributes,
 };
@@ -16,18 +15,18 @@ pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
 }
 
-pub fn descriptor() -> &'static SearchPluginDescriptor {
+pub fn descriptor() -> &'static FrzPluginDescriptor {
     &ATTRIBUTE_DESCRIPTOR
 }
 
 static ATTRIBUTE_DATASET: AttributeDataset = AttributeDataset;
 
-pub static ATTRIBUTE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+pub static ATTRIBUTE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
     id: DATASET_KEY,
-    ui: SearchPluginUiDefinition {
+    ui: FrzPluginUiDefinition {
         tab_label: "Tags",
         mode_title: "attribute search",
-        hint: "Type to filter attributes. Press Tab to view files.",
+        hint: "Type to filter attribute.",
         table_title: "Matching attributes",
         count_label: "attributes",
     },
@@ -78,7 +77,7 @@ impl AttributeDataset {
     }
 }
 
-impl SearchPluginDataset for AttributeDataset {
+impl FrzPluginDataset for AttributeDataset {
     fn key(&self) -> &'static str {
         DATASET_KEY
     }
@@ -111,10 +110,10 @@ impl SearchPluginDataset for AttributeDataset {
     }
 }
 
-pub struct AttributeSearchPlugin;
+pub struct AttributeFrzPlugin;
 
-impl SearchPlugin for AttributeSearchPlugin {
-    fn descriptor(&self) -> &'static SearchPluginDescriptor {
+impl FrzPlugin for AttributeFrzPlugin {
+    fn descriptor(&self) -> &'static FrzPluginDescriptor {
         descriptor()
     }
 
@@ -147,7 +146,7 @@ pub struct AttributePluginBundle {
 
 impl AttributePluginBundle {
     fn new_capability() -> Capability {
-        Capability::search_tab(descriptor(), AttributeSearchPlugin)
+        Capability::search_tab(descriptor(), AttributeFrzPlugin)
     }
 }
 

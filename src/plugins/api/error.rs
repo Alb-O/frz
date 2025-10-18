@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use super::search::SearchMode;
 
-/// Errors that can occur when mutating the [`SearchPluginRegistry`](crate::SearchPluginRegistry).
+/// Errors that can occur when mutating the [`FrzPluginRegistry`](crate::FrzPluginRegistry).
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum PluginRegistryError {
     /// A plugin attempted to register an identifier that already exists in the registry.

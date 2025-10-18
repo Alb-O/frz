@@ -1,9 +1,8 @@
 use crate::plugins::api::{
-    Capability, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData, SearchMode,
-    SearchPlugin, SearchSelection, SearchStream,
+    Capability, FrzPlugin, PluginBundle, PluginQueryContext, PluginSelectionContext, SearchData,
+    SearchMode, SearchSelection, SearchStream,
     descriptors::{
-        SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
-        TableDescriptor,
+        FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
     },
     stream_files,
 };
@@ -17,18 +16,18 @@ pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
 }
 
-pub fn descriptor() -> &'static SearchPluginDescriptor {
+pub fn descriptor() -> &'static FrzPluginDescriptor {
     &FILE_DESCRIPTOR
 }
 
 static FILE_DATASET: FileDataset = FileDataset;
 
-pub static FILE_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+pub static FILE_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
     id: DATASET_KEY,
-    ui: SearchPluginUiDefinition {
+    ui: FrzPluginUiDefinition {
         tab_label: "Files",
         mode_title: "File search",
-        hint: "Type to filter files. Press Tab to view attributes.",
+        hint: "Type to filter files.",
         table_title: "Matching files",
         count_label: "Files",
     },
@@ -79,7 +78,7 @@ impl FileDataset {
     }
 }
 
-impl SearchPluginDataset for FileDataset {
+impl FrzPluginDataset for FileDataset {
     fn key(&self) -> &'static str {
         DATASET_KEY
     }
@@ -112,10 +111,10 @@ impl SearchPluginDataset for FileDataset {
     }
 }
 
-pub struct FileSearchPlugin;
+pub struct FileFrzPlugin;
 
-impl SearchPlugin for FileSearchPlugin {
-    fn descriptor(&self) -> &'static SearchPluginDescriptor {
+impl FrzPlugin for FileFrzPlugin {
+    fn descriptor(&self) -> &'static FrzPluginDescriptor {
         descriptor()
     }
 
@@ -149,7 +148,7 @@ pub struct FilePluginBundle {
 impl FilePluginBundle {
     fn new_capabilities() -> [Capability; 2] {
         [
-            Capability::search_tab(descriptor(), FileSearchPlugin),
+            Capability::search_tab(descriptor(), FileFrzPlugin),
             Capability::preview_split(descriptor(), FilePreviewer::default()),
         ]
     }

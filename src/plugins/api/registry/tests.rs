@@ -5,8 +5,7 @@ use crate::plugins::api::capabilities::{
 use crate::plugins::api::{
     context::{PluginQueryContext, PluginSelectionContext},
     descriptors::{
-        SearchPluginDataset, SearchPluginDescriptor, SearchPluginUiDefinition, TableContext,
-        TableDescriptor,
+        FrzPluginDataset, FrzPluginDescriptor, FrzPluginUiDefinition, TableContext, TableDescriptor,
     },
     error::PluginRegistryError,
     search::{SearchData, SearchMode, SearchSelection, SearchStream},
@@ -15,7 +14,7 @@ use ratatui::{Frame, layout::Rect};
 
 struct TestDataset;
 
-impl SearchPluginDataset for TestDataset {
+impl FrzPluginDataset for TestDataset {
     fn key(&self) -> &'static str {
         "test"
     }
@@ -31,9 +30,9 @@ impl SearchPluginDataset for TestDataset {
 
 static TEST_DATASET: TestDataset = TestDataset;
 
-static TEST_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+static TEST_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
     id: "test",
-    ui: SearchPluginUiDefinition {
+    ui: FrzPluginUiDefinition {
         tab_label: "Test",
         mode_title: "Test Mode",
         hint: "",
@@ -49,7 +48,7 @@ fn test_mode() -> SearchMode {
 
 struct AlternateDataset;
 
-impl SearchPluginDataset for AlternateDataset {
+impl FrzPluginDataset for AlternateDataset {
     fn key(&self) -> &'static str {
         "alt"
     }
@@ -65,9 +64,9 @@ impl SearchPluginDataset for AlternateDataset {
 
 static ALT_DATASET: AlternateDataset = AlternateDataset;
 
-static ALT_DESCRIPTOR: SearchPluginDescriptor = SearchPluginDescriptor {
+static ALT_DESCRIPTOR: FrzPluginDescriptor = FrzPluginDescriptor {
     id: "alt",
-    ui: SearchPluginUiDefinition {
+    ui: FrzPluginUiDefinition {
         tab_label: "Alt",
         mode_title: "Alt Mode",
         hint: "",
@@ -83,8 +82,8 @@ fn alt_mode() -> SearchMode {
 
 struct TestPlugin;
 
-impl SearchPlugin for TestPlugin {
-    fn descriptor(&self) -> &'static SearchPluginDescriptor {
+impl FrzPlugin for TestPlugin {
+    fn descriptor(&self) -> &'static FrzPluginDescriptor {
         &TEST_DESCRIPTOR
     }
 
@@ -108,8 +107,8 @@ impl SearchPlugin for TestPlugin {
 
 struct AlternatePlugin;
 
-impl SearchPlugin for AlternatePlugin {
-    fn descriptor(&self) -> &'static SearchPluginDescriptor {
+impl FrzPlugin for AlternatePlugin {
+    fn descriptor(&self) -> &'static FrzPluginDescriptor {
         &ALT_DESCRIPTOR
     }
 
@@ -172,7 +171,7 @@ impl PluginBundle for TestBundle {
 
 #[test]
 fn registers_plugins_in_insertion_order() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry.register(TestPlugin).expect("register test plugin");
     registry
         .register(AlternatePlugin)
@@ -183,7 +182,7 @@ fn registers_plugins_in_insertion_order() {
 
 #[test]
 fn deregister_removes_plugin_and_updates_indexes() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry
         .register_bundle(TestBundle::search_with_preview())
         .expect("register bundle with preview");
@@ -206,7 +205,7 @@ fn deregister_removes_plugin_and_updates_indexes() {
 
 #[test]
 fn deregister_by_id_removes_plugin() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry
         .register_bundle(TestBundle::search_with_preview())
         .expect("register bundle with preview");
@@ -221,7 +220,7 @@ fn deregister_by_id_removes_plugin() {
 
 #[test]
 fn plugin_by_id_returns_plugin() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry.register(TestPlugin).expect("register test plugin");
 
     let plugin = registry
@@ -232,7 +231,7 @@ fn plugin_by_id_returns_plugin() {
 
 #[test]
 fn duplicate_registration_returns_error() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry.register(TestPlugin).expect("register test plugin");
 
     let error = registry
@@ -246,7 +245,7 @@ fn duplicate_registration_returns_error() {
 
 #[test]
 fn register_bundle_registers_preview_split() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry
         .register_bundle(TestBundle::search_with_preview())
         .expect("register bundle");
@@ -256,7 +255,7 @@ fn register_bundle_registers_preview_split() {
 
 #[test]
 fn duplicate_preview_split_returns_error() {
-    let mut registry = SearchPluginRegistry::empty();
+    let mut registry = FrzPluginRegistry::empty();
     registry
         .register_bundle(TestBundle::preview_only())
         .expect("register preview bundle");

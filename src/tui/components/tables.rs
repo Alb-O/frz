@@ -11,7 +11,7 @@ use ratatui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::plugins::api::SearchData;
-use crate::plugins::api::descriptors::{SearchPluginDataset, TableContext, TableDescriptor};
+use crate::plugins::api::descriptors::{FrzPluginDataset, TableContext, TableDescriptor};
 
 const HIGHLIGHT_SYMBOL: &str = "▶ ";
 const TABLE_COLUMN_SPACING: u16 = 1;
@@ -32,7 +32,7 @@ pub fn render_table(
     frame: &mut Frame,
     area: Rect,
     table_state: &mut ratatui::widgets::TableState,
-    dataset: &'static dyn SearchPluginDataset,
+    dataset: &'static dyn FrzPluginDataset,
     theme: &Theme,
     context: TableRenderContext<'_>,
 ) {
