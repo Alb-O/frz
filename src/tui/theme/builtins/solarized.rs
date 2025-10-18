@@ -1,5 +1,7 @@
-use super::Theme;
+use crate::tui::theme::{Theme, ThemeDefinition};
 use ratatui::style::{Color, Modifier, Style};
+
+pub const NAME: &str = "solarized";
 
 pub const SOLARIZED: Theme = Theme {
     header: Style::new()
@@ -14,3 +16,5 @@ pub const SOLARIZED: Theme = Theme {
         .fg(Color::Rgb(181, 137, 0))
         .add_modifier(Modifier::BOLD),
 };
+
+pub const DEFINITION: ThemeDefinition = ThemeDefinition::new(NAME, SOLARIZED);

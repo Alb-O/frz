@@ -1,5 +1,7 @@
-use super::Theme;
+use crate::tui::theme::{Theme, ThemeDefinition};
 use ratatui::style::{Color, Modifier, Style};
+
+pub const NAME: &str = "slate";
 
 pub const SLATE: Theme = Theme {
     header: Style::new()
@@ -10,7 +12,7 @@ pub const SLATE: Theme = Theme {
         .fg(Color::Rgb(250, 204, 21)),
     prompt: Style::new().fg(Color::LightCyan),
     empty: Style::new().fg(Color::DarkGray),
-    highlight: Style::new()
-        .fg(Color::Yellow)
-        .add_modifier(Modifier::BOLD),
+    highlight: Style::new().fg(Color::Yellow).add_modifier(Modifier::BOLD),
 };
+
+pub const DEFINITION: ThemeDefinition = ThemeDefinition::new(NAME, SLATE);

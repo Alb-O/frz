@@ -138,9 +138,31 @@ impl PreviewSplit for FilePreviewer {
             return;
         }
 
-        let previous_result = state.cached_output();
+        let mut previous_result = state.cached_output();
 
-        state.ensure_request(key);
+        state.ensure_request(key.clone());
+        state.poll_pending();
+
+        if let Some(result) = state.cached_result(&key) {
+            drop(state);
+            match result {
+                Ok(output) => {
+                    let text = ansi_to_text(&output);
+                    let paragraph = Paragraph::new(text).wrap(Wrap { trim: false });
+                    frame.render_widget(paragraph, area);
+                }
+                Err(error) => {
+                    let message = format!("Unable to preview {}: {error}", display_path);
+                    render_message(frame, area, &message);
+                }
+            }
+            return;
+        }
+
+        if previous_result.is_none() {
+            previous_result = state.cached_output();
+        }
+
         drop(state);
 
         if let Some(Ok(output)) = previous_result {

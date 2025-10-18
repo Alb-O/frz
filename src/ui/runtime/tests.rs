@@ -6,6 +6,24 @@ use ratatui::{Terminal, backend::TestBackend};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
+
+fn capture_view(app: &mut App, terminal: &mut Terminal<TestBackend>) -> String {
+    let deadline = Instant::now() + Duration::from_secs(1);
+
+    loop {
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+
+        let view = terminal.backend().to_string();
+
+        if !view.contains("Loading preview for") || Instant::now() >= deadline {
+            return view;
+        }
+
+        thread::sleep(Duration::from_millis(25));
+    }
+}
 
 fn sample_index_update() -> IndexUpdate {
     IndexUpdate {
@@ -47,12 +65,7 @@ fn initial_files_tab_render_captures_missing_results() {
     app.pump_search_results();
 
     let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
-    terminal.draw(|frame| app.draw(frame)).unwrap();
-
-    let view = {
-        let backend = terminal.backend();
-        backend.to_string()
-    };
+    let view = capture_view(&mut app, &mut terminal);
     insta::assert_snapshot!("initial_files_tab_render_captures_missing_results", view);
 
     assert!(
@@ -156,12 +169,7 @@ fn massive_filesystem_initial_load_shows_preview_snapshot() {
     app.throbber_state.calc_next();
 
     let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
-    terminal.draw(|frame| app.draw(frame)).unwrap();
-
-    let view = {
-        let backend = terminal.backend();
-        backend.to_string()
-    };
+    let view = capture_view(&mut app, &mut terminal);
 
     insta::assert_snapshot!(
         "massive_filesystem_initial_load_shows_preview_snapshot",
