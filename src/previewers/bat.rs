@@ -11,7 +11,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Clear, Paragraph, Wrap};
 
-use crate::extensions::api::{PreviewSplit, PreviewSplitContext};
+use crate::extensions::api::{Icon, PreviewSplit, PreviewSplitContext};
 
 #[derive(Clone, PartialEq, Eq)]
 struct PreviewKey {
@@ -180,6 +180,10 @@ impl PreviewSplit for FilePreviewer {
 
         let message = format!("Loading preview for {}", display_path);
         render_message(frame, area, &message);
+    }
+
+    fn header_icon(&self) -> Option<Icon> {
+        Some(Icon::from_hex('󰍉', "#61afef"))
     }
 }
 

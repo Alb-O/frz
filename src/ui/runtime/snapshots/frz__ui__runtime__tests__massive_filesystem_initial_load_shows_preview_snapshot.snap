@@ -4,9 +4,9 @@ assertion_line: 174
 expression: view
 ---
 " File search >                 ⠯ Indexed attributes: 246 • Indexed Files: 512/125000  Tags   Files  "
-"   Path                    Tags           Score   Unable to preview dir_0000/file_000000.txt:       "
-"  ─────────────────────────────────────────────── 'dir_0000/file_000000.txt': No such file or       "
-" ▶ 󰈙 …0000/file_000000.txt *.txt, dir_00… 0       directory (os error 2)                            "
+"   Path                    Tags           Score                   󰍉 Matching files                  "
+"  ────────────────────────────────────────────────────────────────────────────────────────────────  "
+" ▶ 󰈙 …0000/file_000000.txt *.txt, dir_00… 0                                                         "
 "   󰈙 …0000/file_000001.txt *.txt, dir_00… 0                                                         "
 "   󰈙 …0000/file_000002.txt *.txt, dir_00… 0                                                         "
 "   󰈙 …0000/file_000003.txt *.txt, dir_00… 0                                                         "

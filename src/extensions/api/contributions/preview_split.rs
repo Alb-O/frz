@@ -7,7 +7,7 @@ use crate::extensions::api::descriptors::ExtensionDescriptor;
 use crate::extensions::api::error::ExtensionCatalogError;
 use crate::extensions::api::search::{SearchData, SearchMode};
 
-use super::{ContributionInstallContext, ContributionSpecImpl, ScopedContribution};
+use super::{ContributionInstallContext, ContributionSpecImpl, Icon, ScopedContribution};
 
 /// Context provided to preview split renderers when drawing the preview area.
 pub struct PreviewSplitContext<'a> {
@@ -71,6 +71,10 @@ impl<'a> PreviewSplitContext<'a> {
 /// Behaviour implemented by preview split renderers.
 pub trait PreviewSplit: Send + Sync {
     fn render_preview(&self, frame: &mut Frame, area: Rect, context: PreviewSplitContext<'_>);
+
+    fn header_icon(&self) -> Option<Icon> {
+        None
+    }
 }
 
 /// Storage for preview split renderers registered by extensions.

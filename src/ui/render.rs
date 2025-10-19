@@ -1,10 +1,12 @@
 use ratatui::{
     Frame,
-    layout::{Alignment, Constraint, Direction, Layout, Margin},
+    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
+    style::Style,
+    text::{Line, Span, Text},
     widgets::{Clear, Paragraph},
 };
 
-use crate::extensions::api::{PreviewSplitContext, PreviewSplitStore};
+use crate::extensions::api::{Icon, PreviewSplitContext, PreviewSplitStore};
 use crate::systems::search;
 use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
@@ -84,6 +86,7 @@ impl<'a> App<'a> {
         let dataset = descriptor.dataset;
         let scope = self.contributions().scope(self.mode);
         let preview_split = scope.resolve::<PreviewSplitStore>();
+        let preview_icon = preview_split.as_ref().and_then(|split| split.header_icon());
         let query = self.search_input.text().to_string();
 
         let (table_area, preview_area) = if preview_split.is_some() {
@@ -95,40 +98,96 @@ impl<'a> App<'a> {
             (area, None)
         };
 
+        const HEADER_HEIGHT: u16 = 1;
+        let capability_title = self.ui.mode_table_title(self.mode).to_string();
+        let mut preview_header_area = None;
+        let mut preview_content_area = preview_area;
+        if let Some(area) = preview_area
+            && area.height > 0
+        {
+            let header_height = HEADER_HEIGHT.min(area.height);
+            preview_header_area = Some(Rect {
+                x: area.x,
+                y: area.y,
+                width: area.width,
+                height: header_height,
+            });
+
+            let total_width = area
+                .x
+                .saturating_add(area.width)
+                .saturating_sub(table_area.x);
+            let header_rect = Rect {
+                x: table_area.x,
+                y: table_area.y,
+                width: total_width,
+                height: header_height,
+            };
+
+            render_split_header_background(frame, header_rect, &self.theme);
+
+            let content_height = area.height.saturating_sub(header_height);
+            if content_height > 0 {
+                preview_content_area = Some(Rect {
+                    x: area.x,
+                    y: area.y + header_height,
+                    width: area.width,
+                    height: content_height,
+                });
+            } else {
+                preview_content_area = None;
+            }
+        }
+
         let highlight_owned = self.highlight_for_query(dataset.total_count(&self.data));
         let highlight_state = highlight_owned
             .as_ref()
             .map(|(text, config)| (text.as_str(), *config));
-        let state = self.tab_states.entry(self.mode).or_default();
-        render_table(
-            frame,
-            table_area,
-            &mut self.table_state,
-            dataset,
-            &self.theme,
-            TableRenderContext {
-                area: table_area,
-                filtered: &state.filtered,
-                scores: &state.scores,
-                headers: state.headers.as_ref(),
-                widths: state.widths.as_ref(),
-                highlight: highlight_state,
-                scope: scope.clone(),
-                data: &self.data,
-            },
-        );
-
-        if let (Some(preview), Some(preview_area)) = (preview_split, preview_area) {
-            let selected = self.table_state.selected();
-            let context = PreviewSplitContext::new(
-                &self.data,
-                &state.filtered,
-                &state.scores,
-                selected,
-                query.as_str(),
-                self.bat_theme.as_deref(),
+        {
+            let state = self.tab_states.entry(self.mode).or_default();
+            render_table(
+                frame,
+                table_area,
+                &mut self.table_state,
+                dataset,
+                &self.theme,
+                TableRenderContext {
+                    area: table_area,
+                    filtered: &state.filtered,
+                    scores: &state.scores,
+                    headers: state.headers.as_ref(),
+                    widths: state.widths.as_ref(),
+                    highlight: highlight_state,
+                    scope: scope.clone(),
+                    data: &self.data,
+                },
             );
-            preview.render_preview(frame, preview_area, context);
+
+            if let (Some(preview), Some(preview_area)) =
+                (preview_split.clone(), preview_content_area)
+            {
+                let selected = self.table_state.selected();
+                let context = PreviewSplitContext::new(
+                    &self.data,
+                    &state.filtered,
+                    &state.scores,
+                    selected,
+                    query.as_str(),
+                    self.bat_theme.as_deref(),
+                );
+                preview.render_preview(frame, preview_area, context);
+            }
+        }
+
+        if let Some(header_area) = preview_header_area {
+            render_split_header_title(
+                frame,
+                header_area,
+                &self.theme,
+                &capability_title,
+                preview_icon,
+            );
+            render_split_header_separator(frame, table_area, header_area, &self.theme);
         }
     }
 
@@ -140,4 +199,92 @@ impl<'a> App<'a> {
         let config = search::config_for_query(query, dataset_len);
         Some((query.to_string(), config))
     }
+}
+
+fn render_split_header_background(frame: &mut Frame, header_rect: Rect, theme: &Theme) {
+    if header_rect.width == 0 || header_rect.height == 0 {
+        return;
+    }
+
+    let fill = " ".repeat(header_rect.width as usize);
+    let background = Paragraph::new(fill).style(Style::new().bg(theme.header_bg()));
+    frame.render_widget(background, header_rect);
+}
+
+fn render_split_header_separator(
+    frame: &mut Frame,
+    table_area: Rect,
+    preview_header_area: Rect,
+    theme: &Theme,
+) {
+    let separator_y = table_area.y.saturating_add(1);
+    if separator_y >= table_area.y.saturating_add(table_area.height) {
+        return;
+    }
+
+    let width = preview_header_area
+        .x
+        .saturating_add(preview_header_area.width)
+        .saturating_sub(table_area.x);
+    if width == 0 {
+        return;
+    }
+
+    let separator_rect = Rect {
+        x: table_area.x,
+        y: separator_y,
+        width,
+        height: 1,
+    };
+
+    let header_bg = theme.header_bg();
+    let base_style = Style::new().bg(header_bg);
+    let width_usize = separator_rect.width as usize;
+    if width_usize <= 2 {
+        let line = " ".repeat(width_usize);
+        let para = Paragraph::new(line).style(base_style);
+        frame.render_widget(para, separator_rect);
+        return;
+    }
+
+    let middle = "─".repeat(width_usize - 2);
+    let middle_style = Style::new().bg(header_bg).fg(theme.header_fg());
+    let spans = vec![
+        Span::styled(" ", base_style),
+        Span::styled(middle, middle_style),
+        Span::styled(" ", base_style),
+    ];
+    let para = Paragraph::new(Text::from(Line::from(spans)));
+    frame.render_widget(para, separator_rect);
+}
+
+fn render_split_header_title(
+    frame: &mut Frame,
+    header_area: Rect,
+    theme: &Theme,
+    capability: &str,
+    icon: Option<Icon>,
+) {
+    if (capability.is_empty() && icon.is_none())
+        || header_area.width == 0
+        || header_area.height == 0
+    {
+        return;
+    }
+
+    let mut spans = Vec::new();
+    if let Some(icon) = icon {
+        let mut span = icon.to_padded_span();
+        span.style = span.style.bg(theme.header_bg());
+        spans.push(span);
+    }
+
+    if !capability.is_empty() {
+        spans.push(Span::styled(capability.to_owned(), theme.header_style()));
+    }
+
+    let title = Paragraph::new(Text::from(Line::from(spans)))
+        .alignment(Alignment::Center)
+        .style(theme.header_style());
+    frame.render_widget(title, header_area);
 }
