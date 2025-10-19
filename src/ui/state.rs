@@ -38,6 +38,7 @@ pub struct App<'a> {
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
+    pub(crate) row_id_maps: HashMap<SearchMode, HashMap<u64, usize>>,
     extensions: ExtensionCatalog,
     pub(crate) index_updates: Option<Receiver<IndexResult>>,
     pub(super) search: SearchRuntime,
@@ -96,7 +97,7 @@ impl<'a> App<'a> {
             }),
         );
 
-        Self {
+        let mut app = Self {
             data,
             mode,
             search_input: SearchInput::new(initial_query),
@@ -108,12 +109,15 @@ impl<'a> App<'a> {
             throbber_state: ThrobberState::default(),
             index_progress,
             tab_states,
+            row_id_maps: HashMap::new(),
             extensions,
             index_updates: None,
             search,
             initial_results_deadline: None,
             initial_results_timeout: Some(Duration::from_millis(250)),
-        }
+        };
+        app.rebuild_row_id_maps();
+        app
     }
 
     pub fn set_theme(&mut self, theme: Theme) {
@@ -175,10 +179,59 @@ impl<'a> App<'a> {
     pub(crate) fn ensure_tab_buffers(&mut self) {
         for module in self.extensions.modules() {
             self.tab_states.entry(module.mode()).or_default();
+            self.row_id_maps.entry(module.mode()).or_default();
         }
         for tab in self.ui.tabs() {
             self.tab_states.entry(tab.mode).or_default();
+            self.row_id_maps.entry(tab.mode).or_default();
         }
+    }
+
+    pub(crate) fn rebuild_row_id_maps(&mut self) {
+        self.row_id_maps.clear();
+        for module in self.extensions.modules() {
+            let mode = module.mode();
+            if let Some(map) = self
+                .data
+                .id_map_for_dataset(module.descriptor().dataset.key())
+            {
+                self.row_id_maps.insert(mode, map);
+            }
+        }
+    }
+
+    pub(crate) fn apply_match_batch(
+        &mut self,
+        mode: SearchMode,
+        indices: Vec<usize>,
+        ids: Option<Vec<u64>>,
+        scores: Vec<u16>,
+    ) {
+        self.ensure_tab_buffers();
+        let entry = self.tab_states.entry(mode).or_default();
+        let filtered = if let Some(ids) = ids {
+            let ids_len = ids.len();
+            let map = self.row_id_maps.get(&mode);
+            let mut resolved: Vec<usize> = ids
+                .into_iter()
+                .enumerate()
+                .filter_map(|(offset, id)| {
+                    map.and_then(|lookup| lookup.get(&id).copied())
+                        .or_else(|| indices.get(offset).copied())
+                })
+                .collect();
+            if ids_len < indices.len() {
+                resolved.extend(indices.into_iter().skip(ids_len));
+            }
+            resolved
+        } else {
+            indices
+        };
+        entry.filtered = filtered;
+        entry.scores = scores;
+        let has_results = !entry.filtered.is_empty();
+        self.settle_initial_results(has_results);
+        self.ensure_selection();
     }
 
     pub(crate) fn dataset_totals(&self) -> Vec<(&'static str, usize)> {
@@ -209,7 +262,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use crate::extensions::api::{AttributeRow, FileRow};
+    use crate::extensions::api::{AttributeRow, FileRow, MatchBatch, SearchViewV2};
 
     fn sample_data() -> SearchData {
         let mut data = SearchData::new();
@@ -257,5 +310,44 @@ mod tests {
             attributes_ready || files_ready,
             "expected initial search results to populate"
         );
+    }
+
+    #[test]
+    fn stable_ids_survive_reordering() {
+        let mut data = sample_data();
+        let files_mode = crate::extensions::builtin::files::mode();
+        let original_id = data.files[1].id.expect("expected stable id");
+
+        let mut app = App::new(data.clone());
+        assert_eq!(
+            app.row_id_maps
+                .get(&files_mode)
+                .and_then(|map| map.get(&original_id))
+                .copied(),
+            Some(1),
+            "id map should point at the original index"
+        );
+
+        let moved = data.files.remove(1);
+        data.files.insert(0, moved);
+        app.data = data;
+        app.rebuild_row_id_maps();
+        assert_eq!(
+            app.row_id_maps
+                .get(&files_mode)
+                .and_then(|map| map.get(&original_id))
+                .copied(),
+            Some(0),
+            "id map should reflect reordered rows"
+        );
+
+        let batch = MatchBatch {
+            indices: vec![1],
+            ids: Some(vec![original_id]),
+            scores: vec![42],
+        };
+        app.replace_matches_v2(files_mode, batch);
+        let state = app.tab_states.get(&files_mode).expect("tab state");
+        assert_eq!(state.filtered, vec![0]);
     }
 }

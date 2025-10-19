@@ -4,6 +4,22 @@ use crate::extensions::api::{DataStream, StreamEnvelope, ViewAction, ViewTarget}
 
 use super::SearchMode;
 
+/// Batch of search matches emitted by a producer.
+#[derive(Clone)]
+pub struct MatchBatch {
+    pub indices: Vec<usize>,
+    pub ids: Option<Vec<u64>>,
+    pub scores: Vec<u16>,
+}
+
+impl MatchBatch {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        let ids_empty = self.ids.as_ref().map_or(true, |ids| ids.is_empty());
+        self.indices.is_empty() && self.scores.is_empty() && ids_empty
+    }
+}
+
 /// Consumer responsible for applying streamed search updates.
 pub trait SearchView {
     /// Replace the rendered matches for the given mode.
@@ -14,6 +30,17 @@ pub trait SearchView {
 
     /// Observe the completion state of the stream for the given mode.
     fn record_completion(&mut self, mode: SearchMode, complete: bool);
+
+    /// Attempt to upgrade to the V2 search view if supported.
+    fn as_v2(&mut self) -> Option<&mut dyn SearchViewV2> {
+        None
+    }
+}
+
+/// Optional extension for [`SearchView`] implementors that understand stable
+/// row identifiers.
+pub trait SearchViewV2 {
+    fn replace_matches_v2(&mut self, mode: SearchMode, batch: MatchBatch);
 }
 
 pub struct SearchViewTarget;
@@ -61,6 +88,29 @@ impl<'a> SearchStream<'a> {
                 if empty {
                     view.clear_matches(mode);
                 } else {
+                    view.replace_matches(mode, indices, scores);
+                }
+                view.record_completion(mode, complete);
+            },
+            complete,
+        )
+    }
+
+    /// Send a batch of search results to the UI thread using the new
+    /// identifier-aware path when available.
+    pub fn send_batch(&self, batch: MatchBatch, complete: bool) -> bool {
+        let mode = self.mode();
+        let empty = batch.is_empty();
+        self.send_with(
+            move |view| {
+                if empty {
+                    view.clear_matches(mode);
+                } else if let Some(view2) = view.as_v2() {
+                    view2.replace_matches_v2(mode, batch);
+                } else {
+                    let MatchBatch {
+                        indices, scores, ..
+                    } = batch;
                     view.replace_matches(mode, indices, scores);
                 }
                 view.record_completion(mode, complete);

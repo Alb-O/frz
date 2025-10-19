@@ -235,10 +235,10 @@ Expose `bat_theme` resolution more explicitly at `App` construction time and thr
 ## Task Backlog (Markdown Checklists)
 
 ### Identity and Selection
-- [ ] Add optional `id: u64` to `FileRow` and `AttributeRow` keyed by stable content.
-- [ ] Maintain per-mode `id -> index` map in `App` updated by index ingest.
-- [ ] Introduce `MatchBatch` and `SearchStream::send_batch` (keep existing `send`).
-- [ ] Add optional `SearchViewV2` that consumes `MatchBatch`; default to legacy.
+- [x] Add optional `id: u64` to `FileRow` and `AttributeRow` keyed by stable content.
+- [x] Maintain per-mode `id -> index` map in `App` updated by index ingest.
+- [x] Introduce `MatchBatch` and `SearchStream::send_batch` (keep existing `send`).
+- [x] Add optional `SearchViewV2` that consumes `MatchBatch`; default to legacy.
 
 ### Dataset-Agnostic Streaming
 - [x] Introduce `Dataset` trait with `len` and `key_for(index)`.
@@ -252,7 +252,7 @@ Expose `bat_theme` resolution more explicitly at `App` construction time and thr
 - [ ] Implement a file resolver and update `FilePreviewer` to use it when available.
 
 ### Streaming and Envelope UX
-- [ ] Add a tiny `EnvelopeSink` adapter for easier testing of action execution.
+- [x] Add a tiny `EnvelopeSink` adapter for easier testing of action execution.
 - [ ] Consolidate batch size/threshold constants into a config/tuning module.
 - [ ] Clarify and test “complete” semantics across search and index paths.
 

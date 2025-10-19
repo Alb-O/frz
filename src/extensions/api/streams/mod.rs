@@ -55,6 +55,17 @@ impl<M, T: ?Sized> StreamEnvelope<M, StreamAction<T>> {
     }
 }
 
+/// Sink that can consume [`StreamAction`] payloads.
+pub trait EnvelopeSink<T: ?Sized> {
+    fn apply(&mut self, action: StreamAction<T>);
+}
+
+impl<T: ?Sized> EnvelopeSink<T> for T {
+    fn apply(&mut self, action: StreamAction<T>) {
+        action.apply(self);
+    }
+}
+
 impl<T: ?Sized> fmt::Debug for StreamAction<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("StreamAction(..)")

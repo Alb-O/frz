@@ -75,6 +75,7 @@ impl<'a> App<'a> {
                 self.table_state.select(None);
                 self.index_progress
                     .refresh_from_data(&self.data, self.dataset_totals());
+                self.rebuild_row_id_maps();
                 self.mark_query_dirty();
                 changed = true;
             }
@@ -92,6 +93,7 @@ impl<'a> App<'a> {
                     update.reset || !update.files.is_empty() || !update.attributes.is_empty();
                 if update_changed {
                     merge_update(&mut self.data, &update);
+                    self.rebuild_row_id_maps();
                     self.mark_query_dirty();
                     changed = true;
                 }

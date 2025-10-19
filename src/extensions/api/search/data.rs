@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -22,6 +22,33 @@ impl SearchData {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Build a lookup table from stable row identifiers to their current
+    /// positions for the requested dataset key.
+    #[must_use]
+    pub fn id_map_for_dataset(&self, key: &str) -> Option<HashMap<u64, usize>> {
+        match key {
+            crate::extensions::builtin::files::DATASET_KEY => {
+                let mut map = HashMap::new();
+                for (index, row) in self.files.iter().enumerate() {
+                    if let Some(id) = row.id {
+                        map.insert(id, index);
+                    }
+                }
+                Some(map)
+            }
+            crate::extensions::builtin::attributes::DATASET_KEY => {
+                let mut map = HashMap::new();
+                for (index, row) in self.attributes.iter().enumerate() {
+                    if let Some(id) = row.id {
+                        map.insert(id, index);
+                    }
+                }
+                Some(map)
+            }
+            _ => None,
+        }
     }
 
     /// Add a label describing the current search context.

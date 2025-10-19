@@ -4,6 +4,8 @@ use std::path::{Component, Path};
 /// Represents a row in the file results table.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FileRow {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u64>,
     pub path: String,
     pub tags: Vec<String>,
     pub display_tags: String,
@@ -56,7 +58,9 @@ impl FileRow {
         } else {
             format!("{path} {display_tags}")
         };
+        let id = Some(super::identity::stable_hash64(&path));
         Self {
+            id,
             path,
             tags: tags_sorted,
             display_tags,
@@ -104,6 +108,7 @@ mod tests {
     #[test]
     fn tags_are_sorted_and_displayed() {
         let row = FileRow::new("file.txt", vec!["b", "a"]);
+        assert!(row.id.is_some());
         assert_eq!(row.tags, vec!["a", "b"]);
         assert_eq!(row.display_tags, "a, b");
         assert_eq!(row.search_text(), "file.txt a, b");

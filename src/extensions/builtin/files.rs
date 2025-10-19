@@ -12,7 +12,7 @@ use crate::extensions::api::{
 use crate::previewers::bat::FilePreviewer;
 use crate::tui::tables::rows::build_file_rows;
 
-const DATASET_KEY: &str = "files";
+pub const DATASET_KEY: &str = "files";
 
 pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())

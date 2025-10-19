@@ -10,7 +10,7 @@ use crate::extensions::api::{
 };
 use crate::tui::tables::rows::build_facet_rows;
 
-const DATASET_KEY: &str = "attributes";
+pub const DATASET_KEY: &str = "attributes";
 
 pub fn mode() -> SearchMode {
     SearchMode::from_descriptor(descriptor())
