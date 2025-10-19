@@ -4,6 +4,7 @@ use crate::extensions::api::{
     Contribution, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
     ExtensionSelectionContext, Icon, IconProvider, IconResource, IconStore, SearchData, SearchMode,
     SearchSelection, SearchStream,
+    contributions::{PreviewResource, SelectionResolver},
     descriptors::{
         ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
     },
@@ -146,15 +147,16 @@ impl ExtensionModule for FileModule {
 }
 
 pub struct FilePackage {
-    contributions: [Contribution; 3],
+    contributions: [Contribution; 4],
 }
 
 impl FilePackage {
-    fn new_contributions() -> [Contribution; 3] {
+    fn new_contributions() -> [Contribution; 4] {
         [
             Contribution::search_tab(descriptor(), FileModule),
             Contribution::preview_split(descriptor(), FilePreviewer::default()),
             Contribution::icons(descriptor(), FileIcons),
+            Contribution::selection_resolver(descriptor(), FileSelectionResolver),
         ]
     }
 }
@@ -168,7 +170,7 @@ impl Default for FilePackage {
 }
 
 impl ExtensionPackage for FilePackage {
-    type Contributions<'a> = std::array::IntoIter<Contribution, 3>;
+    type Contributions<'a> = std::array::IntoIter<Contribution, 4>;
 
     fn contributions(&self) -> Self::Contributions<'_> {
         self.contributions.clone().into_iter()
@@ -199,6 +201,22 @@ impl IconProvider for FileIcons {
                 Some(Icon::from_hex(glyph, icon.color))
             }
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct FileSelectionResolver;
+
+impl SelectionResolver for FileSelectionResolver {
+    fn resolve<'a>(
+        &self,
+        data: &'a SearchData,
+        filtered: &'a [usize],
+        selected: Option<usize>,
+    ) -> Option<PreviewResource<'a>> {
+        let index = selected?;
+        let row_index = filtered.get(index).copied()?;
+        data.files.get(row_index).map(PreviewResource::File)
     }
 }
 

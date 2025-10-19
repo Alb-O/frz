@@ -7,7 +7,9 @@ use crate::extensions::api::descriptors::ExtensionDescriptor;
 use crate::extensions::api::error::ExtensionCatalogError;
 use crate::extensions::api::search::{SearchData, SearchMode};
 
-use super::{ContributionInstallContext, ContributionSpecImpl, Icon, ScopedContribution};
+use super::{
+    ContributionInstallContext, ContributionSpecImpl, Icon, PreviewResource, ScopedContribution,
+};
 
 /// Context provided to preview split renderers when drawing the preview area.
 pub struct PreviewSplitContext<'a> {
@@ -17,6 +19,7 @@ pub struct PreviewSplitContext<'a> {
     selected: Option<usize>,
     query: &'a str,
     bat_theme: Option<&'a str>,
+    selection: Option<PreviewResource<'a>>,
 }
 
 impl<'a> PreviewSplitContext<'a> {
@@ -25,6 +28,7 @@ impl<'a> PreviewSplitContext<'a> {
         filtered: &'a [usize],
         scores: &'a [u16],
         selected: Option<usize>,
+        selection: Option<PreviewResource<'a>>,
         query: &'a str,
         bat_theme: Option<&'a str>,
     ) -> Self {
@@ -33,6 +37,7 @@ impl<'a> PreviewSplitContext<'a> {
             filtered,
             scores,
             selected,
+            selection,
             query,
             bat_theme,
         }
@@ -57,6 +62,10 @@ impl<'a> PreviewSplitContext<'a> {
     pub fn selected_row_index(&self) -> Option<usize> {
         self.selected
             .and_then(|index| self.filtered.get(index).copied())
+    }
+
+    pub fn selection(&self) -> Option<&PreviewResource<'a>> {
+        self.selection.as_ref()
     }
 
     pub fn query(&self) -> &'a str {
@@ -146,5 +155,28 @@ impl ContributionSpecImpl for PreviewSplitContribution {
         store.register(mode, Arc::clone(&self.preview))?;
         context.register_cleanup::<PreviewSplitStore, _>(PreviewSplitStore::remove);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::extensions::api::search::{AttributeRow, FileRow};
+
+    #[test]
+    fn context_exposes_selection_resource() {
+        let data = SearchData::new()
+            .with_files(vec![FileRow::new("a.rs", Vec::<String>::new())])
+            .with_attributes(vec![AttributeRow::new("alpha", 1)]);
+        let selection = Some(PreviewResource::File(&data.files[0]));
+        let context =
+            PreviewSplitContext::new(&data, &[0], &[100], Some(0), selection, "query", None);
+        let resource = context.selection().expect("selection present");
+        match resource {
+            PreviewResource::File(file) => assert_eq!(file.path, "a.rs"),
+            PreviewResource::Attribute(_) => panic!("unexpected attribute"),
+        }
+        assert_eq!(context.selected_row_index(), Some(0));
     }
 }

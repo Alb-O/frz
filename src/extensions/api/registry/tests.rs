@@ -1,7 +1,8 @@
 use super::*;
 use crate::extensions::api::contributions::{
-    Contribution, ExtensionPackage, Icon, IconProvider, IconResource, IconStore, PreviewSplit,
-    PreviewSplitContext, PreviewSplitStore,
+    Contribution, ExtensionPackage, Icon, IconProvider, IconResource, IconStore, PreviewResource,
+    PreviewSplit, PreviewSplitContext, PreviewSplitStore, SelectionResolver,
+    SelectionResolverStore,
 };
 use crate::extensions::api::{
     context::{ExtensionQueryContext, ExtensionSelectionContext},
@@ -149,6 +150,22 @@ impl IconProvider for TestIcons {
     }
 }
 
+#[derive(Clone, Copy)]
+struct TestResolver;
+
+impl SelectionResolver for TestResolver {
+    fn resolve<'a>(
+        &self,
+        data: &'a SearchData,
+        filtered: &'a [usize],
+        selected: Option<usize>,
+    ) -> Option<PreviewResource<'a>> {
+        let index = selected?;
+        let row_index = filtered.get(index).copied()?;
+        data.files.get(row_index).map(PreviewResource::File)
+    }
+}
+
 #[derive(Clone)]
 struct TestBundle {
     contributions: Vec<Contribution>,
@@ -161,6 +178,7 @@ impl TestBundle {
                 Contribution::search_tab(&TEST_DESCRIPTOR, TestModule),
                 Contribution::preview_split(&TEST_DESCRIPTOR, TestPreview),
                 Contribution::icons(&TEST_DESCRIPTOR, TestIcons),
+                Contribution::selection_resolver(&TEST_DESCRIPTOR, TestResolver),
             ],
         }
     }
@@ -194,6 +212,15 @@ fn preview_split_for(
     mode: SearchMode,
 ) -> Option<Arc<dyn PreviewSplit>> {
     catalog.contributions().resolve::<PreviewSplitStore>(mode)
+}
+
+fn selection_resolver_for(
+    catalog: &ExtensionCatalog,
+    mode: SearchMode,
+) -> Option<Arc<dyn SelectionResolver>> {
+    catalog
+        .contributions()
+        .resolve::<SelectionResolverStore>(mode)
 }
 
 fn icon_provider_for(
@@ -238,6 +265,7 @@ fn deregister_removes_module_and_updates_indexes() {
     assert!(registry.module_by_id(TEST_DESCRIPTOR.id).is_none());
     assert!(preview_split_for(&registry, test_mode()).is_none());
     assert!(icon_provider_for(&registry, test_mode()).is_none());
+    assert!(selection_resolver_for(&registry, test_mode()).is_none());
 }
 
 #[test]
@@ -254,6 +282,7 @@ fn deregister_by_id_removes_module() {
     assert!(registry.is_empty());
     assert!(preview_split_for(&registry, test_mode()).is_none());
     assert!(icon_provider_for(&registry, test_mode()).is_none());
+    assert!(selection_resolver_for(&registry, test_mode()).is_none());
 }
 
 #[test]
@@ -303,6 +332,16 @@ fn register_package_registers_icons() {
         .expect("register package");
 
     assert!(icon_provider_for(&registry, test_mode()).is_some());
+}
+
+#[test]
+fn register_package_registers_selection_resolver() {
+    let mut registry = ExtensionCatalog::empty();
+    registry
+        .register_package(TestBundle::search_with_preview())
+        .expect("register package");
+
+    assert!(selection_resolver_for(&registry, test_mode()).is_some());
 }
 
 #[test]

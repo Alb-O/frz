@@ -36,7 +36,7 @@ impl Dataset for [FileRow] {
     }
 }
 
-impl<'a, T> Dataset for &'a T
+impl<T> Dataset for &T
 where
     T: Dataset + ?Sized,
 {

@@ -1,6 +1,7 @@
 mod icons;
 mod preview_split;
 mod search_tabs;
+mod selection;
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
@@ -15,6 +16,7 @@ use crate::extensions::api::search::SearchMode;
 pub use icons::{Icon, IconProvider, IconResource, IconStore};
 pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
 pub use search_tabs::SearchTabStore;
+pub use selection::{PreviewResource, SelectionResolver, SelectionResolverStore};
 
 type Cloner = fn(&dyn Any) -> Box<dyn Any + Send + Sync>;
 type CleanupHandler = Arc<dyn Fn(&mut dyn Any, SearchMode) + Send + Sync>;
@@ -95,6 +97,16 @@ impl Contribution {
         P: icons::IconProvider + 'static,
     {
         Self::from_spec(icons::IconContribution::new(descriptor, provider))
+    }
+
+    /// Create a selection resolver contribution.
+    pub fn selection_resolver<R>(descriptor: &'static ExtensionDescriptor, resolver: R) -> Self
+    where
+        R: selection::SelectionResolver + 'static,
+    {
+        Self::from_spec(selection::SelectionResolverContribution::new(
+            descriptor, resolver,
+        ))
     }
 
     fn from_spec<T>(spec: T) -> Self

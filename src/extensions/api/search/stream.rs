@@ -15,7 +15,7 @@ pub struct MatchBatch {
 impl MatchBatch {
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        let ids_empty = self.ids.as_ref().map_or(true, |ids| ids.is_empty());
+        let ids_empty = self.ids.as_ref().is_none_or(|ids| ids.is_empty());
         self.indices.is_empty() && self.scores.is_empty() && ids_empty
     }
 }
@@ -29,6 +29,13 @@ pub trait SearchView {
     fn clear_matches(&mut self, mode: SearchMode);
 
     /// Observe the completion state of the stream for the given mode.
+    ///
+    /// The `complete` flag is `true` exactly once per query and signals that no
+    /// further updates will arrive for the associated [`SearchStream::id`].
+    /// Consumers should use this to retire in-flight progress indicators or
+    /// trigger follow-up work that depends on the final result set. Partial
+    /// flushes set `complete` to `false` to indicate that additional batches are
+    /// pending.
     fn record_completion(&mut self, mode: SearchMode, complete: bool);
 
     /// Attempt to upgrade to the V2 search view if supported.
@@ -80,6 +87,10 @@ impl<'a> SearchStream<'a> {
     }
 
     /// Send a batch of search results to the UI thread.
+    ///
+    /// The `complete` flag matches the value passed to [`record_completion`] on
+    /// the receiving [`SearchView`], allowing the consumer to distinguish
+    /// between partial flushes and the terminal update for a query.
     pub fn send(&self, indices: Vec<usize>, scores: Vec<u16>, complete: bool) -> bool {
         let mode = self.mode();
         let empty = indices.is_empty() && scores.is_empty();

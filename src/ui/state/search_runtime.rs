@@ -110,3 +110,34 @@ impl SearchRuntime {
         let _ = self.tx.send(SearchCommand::Update(action));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::sync::mpsc;
+
+    use crate::extensions::builtin::files;
+    use crate::systems::search::SearchCommand;
+
+    #[test]
+    fn partial_completion_does_not_finalize_query() {
+        let (command_tx, _command_rx) = mpsc::channel::<SearchCommand>();
+        let (_result_tx, result_rx) = mpsc::channel();
+        let latest = Arc::new(AtomicU64::new(0));
+        let mut runtime = SearchRuntime::new(command_tx, result_rx, Arc::clone(&latest));
+
+        runtime.mark_query_dirty();
+        runtime.issue_search("example".into(), files::mode());
+        assert!(runtime.is_in_flight());
+        assert!(runtime.has_unapplied_input());
+
+        runtime.record_result_completion(false);
+        assert!(runtime.is_in_flight());
+        assert!(runtime.has_unapplied_input());
+
+        runtime.record_result_completion(true);
+        assert!(!runtime.is_in_flight());
+        assert!(!runtime.has_unapplied_input());
+    }
+}

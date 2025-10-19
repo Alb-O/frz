@@ -6,7 +6,9 @@ use ratatui::{
     widgets::{Clear, Paragraph},
 };
 
-use crate::extensions::api::{Icon, PreviewSplitContext, PreviewSplitStore};
+use crate::extensions::api::{
+    Icon, PreviewSplitContext, PreviewSplitStore, SelectionResolverStore,
+};
 use crate::systems::search;
 use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
@@ -86,6 +88,7 @@ impl<'a> App<'a> {
         let dataset = descriptor.dataset;
         let scope = self.contributions().scope(self.mode);
         let preview_split = scope.resolve::<PreviewSplitStore>();
+        let selection_resolver = scope.resolve::<SelectionResolverStore>();
         let preview_icon = preview_split.as_ref().and_then(|split| split.header_icon());
         let query = self.search_input.text().to_string();
 
@@ -167,11 +170,15 @@ impl<'a> App<'a> {
                 (preview_split.clone(), preview_content_area)
             {
                 let selected = self.table_state.selected();
+                let selection_resource = selection_resolver
+                    .as_ref()
+                    .and_then(|resolver| resolver.resolve(&self.data, &state.filtered, selected));
                 let context = PreviewSplitContext::new(
                     &self.data,
                     &state.filtered,
                     &state.scores,
                     selected,
+                    selection_resource,
                     query.as_str(),
                     self.bat_theme.as_deref(),
                 );

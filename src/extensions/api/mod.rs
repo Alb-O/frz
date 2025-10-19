@@ -9,8 +9,8 @@ pub mod streams;
 pub use context::{ExtensionQueryContext, ExtensionSelectionContext};
 pub use contributions::{
     Contribution, ContributionScope, ContributionStores, ExtensionPackage, Icon, IconProvider,
-    IconResource, IconStore, PreviewSplit, PreviewSplitContext, PreviewSplitStore,
-    ScopedContribution,
+    IconResource, IconStore, PreviewResource, PreviewSplit, PreviewSplitContext, PreviewSplitStore,
+    ScopedContribution, SelectionResolver, SelectionResolverStore,
 };
 pub use descriptors::{
     ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,

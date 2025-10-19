@@ -11,7 +11,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Clear, Paragraph, Wrap};
 
-use crate::extensions::api::{Icon, PreviewSplit, PreviewSplitContext};
+use crate::extensions::api::{Icon, PreviewResource, PreviewSplit, PreviewSplitContext};
 
 #[derive(Clone, PartialEq, Eq)]
 struct PreviewKey {
@@ -111,12 +111,19 @@ impl PreviewSplit for FilePreviewer {
             return;
         }
 
-        let Some(selected_index) = context.selected_row_index() else {
-            render_message(frame, area, "Select a file to preview");
-            return;
-        };
+        let file = context
+            .selection()
+            .and_then(|resource| match resource {
+                PreviewResource::File(file) => Some(*file),
+                _ => None,
+            })
+            .or_else(|| {
+                context
+                    .selected_row_index()
+                    .and_then(|index| context.data().files.get(index))
+            });
 
-        let Some(file) = context.data().files.get(selected_index) else {
+        let Some(file) = file else {
             render_message(frame, area, "Select a file to preview");
             return;
         };

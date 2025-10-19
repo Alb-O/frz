@@ -61,7 +61,7 @@ where
         }
         let entry = AlphabeticalEntry {
             index,
-            key: (&mut self.key_for_index)(index),
+            key: (self.key_for_index)(index),
         };
         if self.heap.len() < self.limit {
             self.heap.push(entry);

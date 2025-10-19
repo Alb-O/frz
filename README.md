@@ -88,3 +88,23 @@ selection as pretty JSON using `--output json`.
 - Extensions can register new tabs by implementing [`ExtensionModule`](https://docs.rs/frz/latest/frz/trait.ExtensionModule.html) and adding them to an [`ExtensionCatalog`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html). Each module exposes an [`ExtensionDescriptor`](https://docs.rs/frz/latest/frz/extensions/descriptors/struct.ExtensionDescriptor.html) that advertises UI copy, table layout metadata, and an associated [`ExtensionDataset`](https://docs.rs/frz/latest/frz/extensions/descriptors/trait.ExtensionDataset.html) implementation; the dataset abstraction lets modules describe how to render their tables, report aggregate counts, and contribute progress information, enabling the catalog to treat every extension uniformly regardless of how many are registered.
 - Catalogs preserve insertion order, making it easy to deterministically compose built-in and custom tabs. They also expose helpers such as [`ExtensionCatalog::remove`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html#method.remove) and [`ExtensionCatalog::module_by_id`](https://docs.rs/frz/latest/frz/struct.ExtensionCatalog.html#method.module_by_id) so applications can swap out built-in implementations or target modules by their identifier without having to manage bookkeeping themselves.
 - Reusable background services live under the `extensions::systems` module. The search worker is available via [`extensions::systems::search`](https://docs.rs/frz/latest/frz/extensions/systems/search/), which exposes the [`SearchStream`](https://docs.rs/frz/latest/frz/extensions/systems/search/struct.SearchStream.html) type and helpers for streaming attributes and files using the built-in matching pipeline. The filesystem indexer is exposed through [`extensions::systems::filesystem`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/), which provides [`FilesystemOptions`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/struct.FilesystemOptions.html), [`spawn_filesystem_index`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/fn.spawn_filesystem_index.html), and the [`merge_update`](https://docs.rs/frz/latest/frz/extensions/systems/filesystem/fn.merge_update.html) helper for applying incremental results to `SearchData`.
+
+### Contribution stores
+
+Extensions can provide optional capabilities beyond search tabs by installing
+contributions while registering with the catalog:
+
+- [`SearchTabStore`](src/extensions/api/contributions/search_tabs.rs) accepts
+  `ExtensionModule` implementations for new tabs.
+- [`PreviewSplitStore`](src/extensions/api/contributions/preview_split.rs)
+  holds preview renderers that receive a [`PreviewSplitContext`](src/extensions/api/contributions/preview_split.rs#L13-L94)
+  describing the current query, filtered rows, and the active selection.
+- [`SelectionResolverStore`](src/extensions/api/contributions/selection.rs)
+  lets extensions translate the UI selection into a typed
+  [`PreviewResource`](src/extensions/api/contributions/selection.rs#L8-L15) so previewers can work with rich domain data instead of table indices.
+- [`IconStore`](src/extensions/api/contributions/icons.rs) enables custom icon
+  providers for rows rendered in the results table.
+
+Each store exposes a `resolve(mode)` helper and automatically cleans up when a
+mode is removed from the catalog, ensuring contribution lifecycles remain in
+sync with registered modules.
