@@ -19,7 +19,7 @@ struct CachedPreview {
 ///
 /// The struct owns both the cached result, if any, and the communication
 /// channel to a worker thread that is generating a new preview. It is designed
-/// to be wrapped in a [`Mutex`](std::sync::Mutex) so `FilePreviewer` can manage
+/// to be wrapped in a [`Mutex`](std::sync::Mutex) so `TextPreviewer` can manage
 /// concurrent UI access.
 #[derive(Default)]
 pub(super) struct PreviewState {

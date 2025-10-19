@@ -22,6 +22,10 @@ impl<'a> App<'a> {
         let mut terminal = ratatui::init();
         terminal.clear()?;
 
+        // Probe terminal graphics capabilities before the event loop begins so
+        // image previews can reuse the detected protocol safely.
+        crate::previewers::image::initialize_graphics()?;
+
         self.hydrate_initial_results();
 
         let (event_tx, event_rx) = mpsc::channel();

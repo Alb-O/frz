@@ -2,7 +2,7 @@
 //!
 //! The module is split into smaller building blocks to make the data flow
 //! easier to follow:
-//! - `previewer` exposes the [`FilePreviewer`] type that the rest of the
+//! - `previewer` exposes the [`TextPreviewer`] type that the rest of the
 //!   application consumes.
 //! - `state` tracks asynchronous preview jobs and caches their output.
 //! - `worker` knows how to invoke `bat` with the correct configuration.
@@ -15,4 +15,4 @@ mod previewer;
 mod state;
 mod worker;
 
-pub use previewer::FilePreviewer;
+pub use previewer::TextPreviewer;

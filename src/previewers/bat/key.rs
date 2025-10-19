@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-/// Identifies a unique preview request produced by the `FilePreviewer`.
+/// Identifies a unique preview request produced by the `TextPreviewer`.
 ///
 /// The cache key combines the file path, the available render width and the
 /// optional bat theme so we can reuse rendered output whenever the user moves

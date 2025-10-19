@@ -10,13 +10,13 @@ use super::ansi::ansi_to_text;
 use super::key::PreviewKey;
 use super::state::PreviewState;
 
-/// Renders syntax highlighted previews for the currently selected search result.
+/// Renders syntax highlighted previews for the currently selected textual search result.
 #[derive(Default)]
-pub struct FilePreviewer {
+pub struct TextPreviewer {
     state: Mutex<PreviewState>,
 }
 
-impl PreviewSplit for FilePreviewer {
+impl PreviewSplit for TextPreviewer {
     fn render_preview(&self, frame: &mut Frame, area: Rect, context: PreviewSplitContext<'_>) {
         frame.render_widget(Clear, area);
 

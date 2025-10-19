@@ -17,6 +17,8 @@ frizbee = { version = "0.5" }
 anyhow = "1"
 ignore = "0.4"
 throbber-widgets-tui = "0.9"
+ratatui-image = "8.0.2"
+image = { version = "0.25", default-features = false, features = ["default-formats"] }
 bat = { version = "0.25", default-features = false, features = ["git", "regex-onig"] }
 clap = { version = "4", features = ["derive", "env"] }
 config = "0.15"

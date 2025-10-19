@@ -10,7 +10,7 @@ use crate::extensions::api::{
     },
     stream_files,
 };
-use crate::previewers::bat::FilePreviewer;
+use crate::previewers::FilePreviewer;
 use crate::tui::tables::rows::build_file_rows;
 
 pub const DATASET_KEY: &str = "files";
