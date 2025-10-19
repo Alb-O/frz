@@ -1,3 +1,9 @@
+//! Background coordination for search queries and index updates.
+//!
+//! The [`SearchRuntime`] encapsulates communication with the asynchronous
+//! search worker, ensuring requests are sequenced correctly and that only the
+//! newest results influence UI state.
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
@@ -7,6 +13,7 @@ use crate::extensions::api::{SearchData, SearchMode, StreamAction};
 use crate::systems::filesystem::{IndexUpdate, merge_update};
 use crate::systems::search::{SearchCommand, SearchResult};
 
+/// Tracks the revision counters used to determine when data has changed.
 #[derive(Default)]
 struct RevisionState {
     input: u64,
@@ -15,6 +22,7 @@ struct RevisionState {
     last_user_input: u64,
 }
 
+/// Thin wrapper around the search worker channels.
 pub(crate) struct SearchRuntime {
     tx: Sender<SearchCommand>,
     rx: Receiver<SearchResult>,

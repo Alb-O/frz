@@ -1,3 +1,8 @@
+//! Core state container for the terminal application's front-end.
+//!
+//! The `app` module exposes the [`App`] struct which bundles together search
+//! data, extension metadata, and UI-specific caches.
+
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
@@ -5,7 +10,7 @@ use std::time::{Duration, Instant};
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
-use super::config::UiConfig;
+use super::SearchRuntime;
 use crate::extensions::api::{
     ContributionStores, ExtensionCatalog, ExtensionSelectionContext, SearchData, SearchMode,
     SearchSelection,
@@ -15,10 +20,7 @@ use crate::systems::search;
 use crate::tui::components::IndexProgress;
 use crate::tui::input::SearchInput;
 pub use crate::tui::theme::Theme;
-
-mod search_runtime;
-
-use search_runtime::SearchRuntime;
+use crate::ui::config::UiConfig;
 
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
@@ -26,6 +28,13 @@ impl<'a> Drop for App<'a> {
     }
 }
 
+/// Aggregate state shared across the terminal UI.
+///
+/// The `App` owns the current search data, manages extension-defined
+/// contributions, and keeps track of UI affordances such as tab buffers and
+/// loading indicators.  Splitting the implementation into smaller modules lets
+/// call-sites interact with a focused surface area while the underlying state
+/// remains centralized here.
 pub struct App<'a> {
     pub data: SearchData,
     pub mode: SearchMode,
@@ -41,11 +50,12 @@ pub struct App<'a> {
     pub(crate) row_id_maps: HashMap<SearchMode, HashMap<u64, usize>>,
     extensions: ExtensionCatalog,
     pub(crate) index_updates: Option<Receiver<IndexResult>>,
-    pub(super) search: SearchRuntime,
+    pub(in crate::ui) search: SearchRuntime,
     pub(crate) initial_results_deadline: Option<Instant>,
     pub(crate) initial_results_timeout: Option<Duration>,
 }
 
+/// Cache of rendered rows for a specific tab.
 #[derive(Default)]
 pub(crate) struct TabBuffers {
     pub filtered: Vec<usize>,
@@ -55,6 +65,7 @@ pub(crate) struct TabBuffers {
 }
 
 impl<'a> App<'a> {
+    /// Construct an [`App`] with the builtin extension catalog.
     pub fn new(data: SearchData) -> Self {
         let mut extensions = ExtensionCatalog::default();
         crate::extensions::builtin::register_builtin_extensions(&mut extensions)
@@ -62,6 +73,7 @@ impl<'a> App<'a> {
         Self::with_extensions(data, extensions)
     }
 
+    /// Construct an [`App`] using the provided extension catalog.
     pub fn with_extensions(data: SearchData, extensions: ExtensionCatalog) -> Self {
         let mut table_state = TableState::default();
         table_state.select(Some(0));
@@ -120,15 +132,18 @@ impl<'a> App<'a> {
         app
     }
 
+    /// Apply a new theme without changing the associated bat configuration.
     pub fn set_theme(&mut self, theme: Theme) {
         self.set_theme_with_bat(theme, None);
     }
 
+    /// Apply a new theme and optional bat theme name.
     pub fn set_theme_with_bat(&mut self, theme: Theme, bat_theme: Option<String>) {
         self.theme = theme;
         self.bat_theme = bat_theme;
     }
 
+    /// Switch to a different search mode and reset the selection.
     pub fn set_mode(&mut self, mode: SearchMode) {
         if self.mode != mode {
             self.mode = mode;
@@ -139,6 +154,7 @@ impl<'a> App<'a> {
         }
     }
 
+    /// Ensure the row selection remains valid for the currently filtered list.
     pub(crate) fn ensure_selection(&mut self) {
         if self.filtered_len() == 0 {
             self.table_state.select(None);
@@ -152,6 +168,7 @@ impl<'a> App<'a> {
         }
     }
 
+    /// Return the number of filtered entries for the active tab.
     pub(crate) fn filtered_len(&self) -> usize {
         self.tab_states
             .get(&self.mode)
@@ -159,14 +176,18 @@ impl<'a> App<'a> {
             .unwrap_or(0)
     }
 
+    /// Flag the in-memory query so the next search run refreshes it.
     pub(crate) fn mark_query_dirty(&mut self) {
         self.search.mark_query_dirty();
     }
 
+    /// Flag the query after direct user input, ensuring freshness even if
+    /// indexing updates are pending.
     pub(crate) fn mark_query_dirty_from_user_input(&mut self) {
         self.search.mark_query_dirty_from_user_input();
     }
 
+    /// Compute the currently selected row using extension-specific logic.
     pub(crate) fn current_selection(&self) -> Option<SearchSelection> {
         let selected = self.table_state.selected()?;
         let state = self.tab_states.get(&self.mode)?;
@@ -176,6 +197,7 @@ impl<'a> App<'a> {
         module.selection(context, index)
     }
 
+    /// Ensure that every known search mode has backing buffers.
     pub(crate) fn ensure_tab_buffers(&mut self) {
         for module in self.extensions.modules() {
             self.tab_states.entry(module.mode()).or_default();
@@ -187,6 +209,7 @@ impl<'a> App<'a> {
         }
     }
 
+    /// Rebuild the stable-id lookup tables from the current dataset.
     pub(crate) fn rebuild_row_id_maps(&mut self) {
         self.row_id_maps.clear();
         for module in self.extensions.modules() {
@@ -200,6 +223,8 @@ impl<'a> App<'a> {
         }
     }
 
+    /// Apply a batch of matches, reconciling stable ids with indices when
+    /// available.
     pub(crate) fn apply_match_batch(
         &mut self,
         mode: SearchMode,
@@ -234,6 +259,7 @@ impl<'a> App<'a> {
         self.ensure_selection();
     }
 
+    /// Gather total counts for each registered dataset.
     pub(crate) fn dataset_totals(&self) -> Vec<(&'static str, usize)> {
         self.extensions
             .modules()
@@ -244,14 +270,17 @@ impl<'a> App<'a> {
             .collect()
     }
 
+    /// Update headers for a specific search mode.
     pub fn set_headers_for(&mut self, mode: SearchMode, headers: Vec<String>) {
         self.tab_states.entry(mode).or_default().headers = Some(headers);
     }
 
+    /// Update column widths for a specific search mode.
     pub fn set_widths_for(&mut self, mode: SearchMode, widths: Vec<ratatui::layout::Constraint>) {
         self.tab_states.entry(mode).or_default().widths = Some(widths);
     }
 
+    /// Return the currently registered contribution stores.
     pub(crate) fn contributions(&self) -> ContributionStores {
         self.extensions.contributions()
     }
