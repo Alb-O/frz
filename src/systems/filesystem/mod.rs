@@ -1,4 +1,5 @@
 mod fs;
+pub mod stream;
 
 use std::sync::Arc;
 
@@ -7,6 +8,7 @@ use crate::extensions::api::{AttributeRow, FileRow, SearchData};
 pub use fs::FilesystemOptions;
 pub use fs::spawn_filesystem_index;
 pub mod extension;
+pub use stream::{IndexKind, IndexResult, IndexStream, IndexView};
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
 #[derive(Debug, Clone)]

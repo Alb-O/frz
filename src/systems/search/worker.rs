@@ -6,8 +6,6 @@ use std::thread;
 use super::commands::{SearchCommand, SearchResult};
 use crate::extensions::api::{ExtensionCatalog, ExtensionQueryContext, SearchData, SearchStream};
 
-use crate::systems::filesystem::merge_update;
-
 /// Launches the background search worker thread and returns communication channels.
 pub(crate) fn spawn(
     mut data: SearchData,
@@ -58,8 +56,8 @@ fn handle_command(
                 true
             }
         }
-        SearchCommand::Update(update) => {
-            merge_update(data, &update);
+        SearchCommand::Update(action) => {
+            action.apply(data);
             true
         }
         SearchCommand::Shutdown => false,
@@ -78,8 +76,7 @@ mod tests {
             TableDescriptor,
         },
         registry::ExtensionModule,
-        search::FileRow,
-        search::SearchStream,
+        search::{FileRow, SearchStream, SearchView},
     };
 
     struct DummyDataset;
@@ -197,10 +194,42 @@ mod tests {
             .expect("receive search result");
 
         assert_eq!(result.id, 1);
-        assert_eq!(result.mode, mode());
-        assert_eq!(result.indices, vec![1]);
-        assert_eq!(result.scores, vec![u16::MAX]);
+        assert_eq!(result.kind, mode());
         assert!(result.complete);
+
+        #[derive(Default)]
+        struct RecordingView {
+            indices: Vec<usize>,
+            scores: Vec<u16>,
+            completions: Vec<bool>,
+        }
+
+        impl SearchView for RecordingView {
+            fn replace_matches(
+                &mut self,
+                _mode: SearchMode,
+                indices: Vec<usize>,
+                scores: Vec<u16>,
+            ) {
+                self.indices = indices;
+                self.scores = scores;
+            }
+
+            fn clear_matches(&mut self, _mode: SearchMode) {
+                self.indices.clear();
+                self.scores.clear();
+            }
+
+            fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
+                self.completions.push(complete);
+            }
+        }
+
+        let mut view = RecordingView::default();
+        result.dispatch(&mut view);
+        assert_eq!(view.indices, vec![1]);
+        assert_eq!(view.scores, vec![u16::MAX]);
+        assert_eq!(view.completions, vec![true]);
 
         command_tx
             .send(SearchCommand::Shutdown)

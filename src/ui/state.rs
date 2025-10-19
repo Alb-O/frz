@@ -10,7 +10,7 @@ use crate::extensions::api::{
     ContributionStores, ExtensionCatalog, ExtensionSelectionContext, SearchData, SearchMode,
     SearchSelection,
 };
-use crate::systems::filesystem::IndexUpdate;
+use crate::systems::filesystem::IndexResult;
 use crate::systems::search;
 use crate::tui::components::IndexProgress;
 use crate::tui::input::SearchInput;
@@ -39,7 +39,7 @@ pub struct App<'a> {
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
     extensions: ExtensionCatalog,
-    pub(crate) index_updates: Option<Receiver<IndexUpdate>>,
+    pub(crate) index_updates: Option<Receiver<IndexResult>>,
     pub(super) search: SearchRuntime,
     pub(crate) initial_results_deadline: Option<Instant>,
     pub(crate) initial_results_timeout: Option<Duration>,

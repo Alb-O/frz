@@ -1,6 +1,6 @@
 use crate::extensions::api::{AttributeRow, FileRow, SearchData, search::Fs};
 use crate::extensions::builtin::files;
-use crate::systems::filesystem::{IndexUpdate, ProgressSnapshot};
+use crate::systems::filesystem::{IndexKind, IndexStream, IndexUpdate, ProgressSnapshot};
 use crate::ui::App;
 use ratatui::{Terminal, backend::TestBackend};
 use std::io;
@@ -59,7 +59,7 @@ fn initial_files_tab_render_captures_missing_results() {
 
     let (tx, rx) = mpsc::channel();
     app.set_index_updates(rx);
-    tx.send(sample_index_update()).unwrap();
+    IndexStream::new(&tx, 0, IndexKind::Update).send_update(sample_index_update(), true);
 
     app.pump_index_updates();
     app.pump_search_results();
@@ -144,20 +144,22 @@ fn massive_filesystem_initial_load_shows_preview_snapshot() {
 
     let (tx, rx) = mpsc::channel();
     app.set_index_updates(rx);
-    tx.send(IndexUpdate {
-        files: preview_files.into(),
-        attributes: preview_attributes.into(),
-        progress: ProgressSnapshot {
-            indexed_attributes: total_attributes,
-            indexed_files: PREVIEW_SLICE,
-            total_attributes: Some(total_attributes),
-            total_files: Some(total_files),
-            complete: false,
+    IndexStream::new(&tx, 0, IndexKind::Preview).send_update(
+        IndexUpdate {
+            files: preview_files.into(),
+            attributes: preview_attributes.into(),
+            progress: ProgressSnapshot {
+                indexed_attributes: total_attributes,
+                indexed_files: PREVIEW_SLICE,
+                total_attributes: Some(total_attributes),
+                total_files: Some(total_files),
+                complete: false,
+            },
+            reset: true,
+            cached_data: None,
         },
-        reset: true,
-        cached_data: None,
-    })
-    .unwrap();
+        false,
+    );
 
     app.pump_index_updates();
     app.pump_search_results();

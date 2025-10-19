@@ -2,9 +2,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use crate::extensions::api::SearchMode;
+use crate::extensions::api::{SearchData, SearchMode, StreamAction};
 
-use crate::systems::filesystem::IndexUpdate;
+use crate::systems::filesystem::{IndexUpdate, merge_update};
 use crate::systems::search::{SearchCommand, SearchResult};
 
 #[derive(Default)]
@@ -101,6 +101,12 @@ impl SearchRuntime {
     }
 
     pub(crate) fn notify_of_update(&self, update: &IndexUpdate) {
-        let _ = self.tx.send(SearchCommand::Update(update.clone()));
+        let action = StreamAction::new({
+            let update = update.clone();
+            move |data: &mut SearchData| {
+                merge_update(data, &update);
+            }
+        });
+        let _ = self.tx.send(SearchCommand::Update(action));
     }
 }

@@ -1,7 +1,7 @@
-use crate::extensions::api::SearchMode;
 pub(crate) use crate::extensions::api::SearchResult;
+use crate::extensions::api::{SearchMode, StreamAction};
 
-use crate::systems::filesystem::IndexUpdate;
+use crate::extensions::api::SearchData;
 
 /// Commands understood by the background search worker.
 #[derive(Debug)]
@@ -16,7 +16,7 @@ pub(crate) enum SearchCommand {
         mode: SearchMode,
     },
     /// Merge a fresh index update into the existing in-memory search data.
-    Update(IndexUpdate),
+    Update(StreamAction<SearchData>),
     /// Stop the background worker thread.
     Shutdown,
 }

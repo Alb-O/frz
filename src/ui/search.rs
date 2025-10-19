@@ -2,8 +2,8 @@ use std::sync::mpsc::TryRecvError;
 use std::time::Instant;
 
 use super::App;
+use crate::extensions::api::{SearchMode, SearchResult, SearchView};
 use crate::systems::filesystem::IndexUpdate;
-use crate::systems::search::SearchResult;
 
 impl<'a> App<'a> {
     /// Send a search request for the current query text and mode.
@@ -47,25 +47,45 @@ impl<'a> App<'a> {
             return;
         }
 
-        self.ensure_tab_buffers();
-        let entry = self.tab_states.entry(result.mode).or_default();
-        entry.filtered = result.indices;
-        entry.scores = result.scores;
-
-        if let Some(deadline) = self.initial_results_deadline
-            && (!entry.filtered.is_empty() || Instant::now() >= deadline)
-        {
-            self.initial_results_deadline = None;
-        }
-
-        self.ensure_selection();
-
-        self.search.record_result_completion(result.complete);
+        result.dispatch(self);
     }
 
     fn issue_search(&mut self) {
         let query = self.search_input.text().to_string();
         let mode = self.mode;
         self.search.issue_search(query, mode);
+    }
+
+    fn settle_initial_results(&mut self, has_results: bool) {
+        if let Some(deadline) = self.initial_results_deadline
+            && (has_results || Instant::now() >= deadline)
+        {
+            self.initial_results_deadline = None;
+        }
+    }
+}
+
+impl<'a> SearchView for App<'a> {
+    fn replace_matches(&mut self, mode: SearchMode, indices: Vec<usize>, scores: Vec<u16>) {
+        self.ensure_tab_buffers();
+        let entry = self.tab_states.entry(mode).or_default();
+        entry.filtered = indices;
+        entry.scores = scores;
+        let has_results = !entry.filtered.is_empty();
+        self.settle_initial_results(has_results);
+        self.ensure_selection();
+    }
+
+    fn clear_matches(&mut self, mode: SearchMode) {
+        self.ensure_tab_buffers();
+        let entry = self.tab_states.entry(mode).or_default();
+        entry.filtered.clear();
+        entry.scores.clear();
+        self.settle_initial_results(false);
+        self.ensure_selection();
+    }
+
+    fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
+        self.search.record_result_completion(complete);
     }
 }

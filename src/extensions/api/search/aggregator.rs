@@ -118,7 +118,7 @@ mod tests {
     use crate::extensions::api::{
         TableContext, TableDescriptor,
         descriptors::{ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition},
-        search::{SearchData, SearchMode, SearchStream},
+        search::{SearchData, SearchMode, SearchStream, SearchView},
     };
     use std::sync::mpsc::channel;
 
@@ -170,9 +170,50 @@ mod tests {
         assert!(aggregator.finish());
         let result = rx.try_recv().expect("result should be emitted");
         assert_eq!(result.id, 7);
-        assert_eq!(result.indices, vec![1, 3, 2, 0]);
-        assert_eq!(result.scores, vec![3, 3, 2, 1]);
         assert!(result.complete);
+
+        struct RecordingView {
+            indices: Vec<usize>,
+            scores: Vec<u16>,
+            completions: Vec<bool>,
+        }
+
+        impl RecordingView {
+            fn new() -> Self {
+                Self {
+                    indices: Vec::new(),
+                    scores: Vec::new(),
+                    completions: Vec::new(),
+                }
+            }
+        }
+
+        impl SearchView for RecordingView {
+            fn replace_matches(
+                &mut self,
+                _mode: SearchMode,
+                indices: Vec<usize>,
+                scores: Vec<u16>,
+            ) {
+                self.indices = indices;
+                self.scores = scores;
+            }
+
+            fn clear_matches(&mut self, _mode: SearchMode) {
+                self.indices.clear();
+                self.scores.clear();
+            }
+
+            fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
+                self.completions.push(complete);
+            }
+        }
+
+        let mut view = RecordingView::new();
+        result.dispatch(&mut view);
+        assert_eq!(view.indices, vec![1, 3, 2, 0]);
+        assert_eq!(view.scores, vec![3, 3, 2, 1]);
+        assert_eq!(view.completions, vec![true]);
     }
 
     #[test]
@@ -187,6 +228,7 @@ mod tests {
 
         aggregator.push(super::MAX_RENDERED_RESULTS + 1, 50);
         assert!(aggregator.flush_partial());
-        assert!(rx.try_recv().is_ok(), "partial flush should emit");
+        let result = rx.try_recv().expect("partial flush should emit");
+        assert!(!result.complete);
     }
 }

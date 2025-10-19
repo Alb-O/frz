@@ -9,7 +9,7 @@ use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
 
 use crate::extensions::api::{AttributeRow, FileRow, SearchData, tags_for_relative_path};
 
-use super::super::{IndexUpdate, ProgressSnapshot};
+use super::super::{IndexKind, IndexResult, IndexStream, IndexUpdate, ProgressSnapshot};
 use super::FilesystemOptions;
 use super::cache::{CacheHandle, CacheWriter};
 use super::cached_stream::stream_cached_entry;
@@ -18,7 +18,7 @@ use super::update_batcher::UpdateBatcher;
 pub fn spawn_filesystem_index(
     root: PathBuf,
     mut options: FilesystemOptions,
-) -> Result<(SearchData, Receiver<IndexUpdate>)> {
+) -> Result<(SearchData, Receiver<IndexResult>)> {
     let (tx, rx) = mpsc::channel();
 
     let cache_handle = CacheHandle::resolve(&root, &options);
@@ -61,13 +61,17 @@ pub fn spawn_filesystem_index(
                 };
 
                 if !files.is_empty() || !attributes.is_empty() {
-                    let _ = tx.send(IndexUpdate {
-                        files,
-                        attributes,
-                        progress,
-                        reset: true,
-                        cached_data: Some(preview.data),
-                    });
+                    let stream = IndexStream::new(&tx, 0, IndexKind::Preview);
+                    let _ = stream.send_update(
+                        IndexUpdate {
+                            files,
+                            attributes,
+                            progress,
+                            reset: true,
+                            cached_data: Some(preview.data),
+                        },
+                        preview_is_complete,
+                    );
                 }
 
                 preview_complete = preview_is_complete;
@@ -106,12 +110,12 @@ pub fn spawn_filesystem_index(
             while let Ok(file) = file_rx.recv() {
                 batcher.record_file(file);
 
-                if batcher.should_flush() && batcher.flush(&update_tx, false).is_err() {
+                if batcher.should_flush() && !batcher.flush(&update_tx, false) {
                     return None::<CacheWriter>;
                 }
             }
 
-            batcher.finalize(&update_tx).unwrap_or_default()
+            batcher.finalize(&update_tx)
         });
 
         let global_ignores = Arc::new(options.global_ignore_set());

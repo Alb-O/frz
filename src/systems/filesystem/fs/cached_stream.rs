@@ -1,17 +1,16 @@
-use std::sync::Arc;
-use std::sync::mpsc::Sender;
-
 use crate::extensions::api::{AttributeRow, FileRow};
+use std::sync::Arc;
 
-use super::super::{IndexUpdate, ProgressSnapshot};
+use super::super::{IndexKind, IndexStream, IndexUpdate, ProgressSnapshot};
 use super::MAX_BATCH_SIZE;
 use super::cache::CachedEntry;
 
 pub(super) fn stream_cached_entry(
     entry: CachedEntry,
     preview_len: Option<usize>,
-    tx: &Sender<IndexUpdate>,
+    tx: &std::sync::mpsc::Sender<super::super::IndexResult>,
 ) {
+    let stream = IndexStream::new(tx, 0, IndexKind::Preview);
     let data = entry.data;
     let total_files = data.files.len();
     let total_attributes = data.attributes.len();
@@ -37,13 +36,16 @@ pub(super) fn stream_cached_entry(
             complete: false,
         };
 
-        let _ = tx.send(IndexUpdate {
-            files: Arc::from(Vec::<FileRow>::new()),
-            attributes,
-            progress,
-            reset: preview_len.is_none(),
-            cached_data: None,
-        });
+        let _ = stream.send_update(
+            IndexUpdate {
+                files: Arc::from(Vec::<FileRow>::new()),
+                attributes,
+                progress,
+                reset: preview_len.is_none(),
+                cached_data: None,
+            },
+            false,
+        );
         return;
     }
 
@@ -71,7 +73,7 @@ pub(super) fn stream_cached_entry(
             cached_data: None,
         };
 
-        if tx.send(update).is_err() {
+        if !stream.send_update(update, false) {
             break;
         }
 

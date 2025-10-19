@@ -126,7 +126,7 @@ mod tests {
     use crate::extensions::api::{
         TableContext, TableDescriptor,
         descriptors::{ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition},
-        search::{SearchData, SearchMode, SearchStream},
+        search::{SearchData, SearchMode, SearchStream, SearchView},
     };
     use std::sync::mpsc::channel;
 
@@ -164,6 +164,32 @@ mod tests {
         SearchMode::from_descriptor(&DESCRIPTOR)
     }
 
+    #[derive(Default)]
+    struct RecordingView {
+        indices: Vec<usize>,
+        scores: Vec<u16>,
+    }
+
+    impl RecordingView {
+        fn new() -> Self {
+            Self::default()
+        }
+    }
+
+    impl SearchView for RecordingView {
+        fn replace_matches(&mut self, _mode: SearchMode, indices: Vec<usize>, scores: Vec<u16>) {
+            self.indices = indices;
+            self.scores = scores;
+        }
+
+        fn clear_matches(&mut self, _mode: SearchMode) {
+            self.indices.clear();
+            self.scores.clear();
+        }
+
+        fn record_completion(&mut self, _mode: SearchMode, _complete: bool) {}
+    }
+
     #[test]
     fn keeps_smallest_entries() {
         let (tx, rx) = channel();
@@ -177,8 +203,11 @@ mod tests {
         assert!(collector.finish());
 
         let result = rx.try_recv().expect("collector should emit");
-        assert_eq!(result.indices, vec![2, 1, 4, 3, 0]);
-        assert_eq!(result.scores, vec![0, 0, 0, 0, 0]);
+
+        let mut view = RecordingView::new();
+        result.dispatch(&mut view);
+        assert_eq!(view.indices, vec![2, 1, 4, 3, 0]);
+        assert_eq!(view.scores, vec![0, 0, 0, 0, 0]);
     }
 
     #[test]
@@ -188,7 +217,9 @@ mod tests {
         let mut collector = AlphabeticalCollector::new(stream, 0, |_| "".into());
         assert!(collector.finish());
         let result = rx.try_recv().expect("empty collector should emit");
-        assert!(result.indices.is_empty());
-        assert!(result.scores.is_empty());
+        let mut view = RecordingView::new();
+        result.dispatch(&mut view);
+        assert!(view.indices.is_empty());
+        assert!(view.scores.is_empty());
     }
 }

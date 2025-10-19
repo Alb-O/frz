@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use std::sync::mpsc::{self, Sender};
+use std::sync::mpsc::Sender;
 use std::time::Instant;
 
 use crate::extensions::api::{AttributeRow, FileRow};
 
-use super::super::IndexUpdate;
+use super::super::{IndexKind, IndexResult, IndexStream, IndexUpdate};
 use super::cache::CacheWriter;
 use super::{DISPATCH_INTERVAL, MAX_BATCH_SIZE, MIN_BATCH_SIZE};
 
@@ -59,17 +59,13 @@ impl UpdateBatcher {
         self.last_dispatch.elapsed() >= DISPATCH_INTERVAL
     }
 
-    pub fn flush(
-        &mut self,
-        tx: &Sender<IndexUpdate>,
-        complete: bool,
-    ) -> Result<(), Box<mpsc::SendError<IndexUpdate>>> {
+    pub fn flush(&mut self, tx: &Sender<IndexResult>, complete: bool) -> bool {
         if !complete
             && !self.emit_reset
             && self.pending_files.is_empty()
             && self.pending_attributes.is_empty()
         {
-            return Ok(());
+            return true;
         }
 
         let files_vec = std::mem::take(&mut self.pending_files);
@@ -99,26 +95,30 @@ impl UpdateBatcher {
             self.emit_reset = false;
         }
 
-        tx.send(IndexUpdate {
-            files,
-            attributes,
-            progress,
-            reset,
-            cached_data: None,
-        })
-        .map_err(Box::new)?;
+        let stream = IndexStream::new(tx, 0, IndexKind::Update);
+        if !stream.send_update(
+            IndexUpdate {
+                files,
+                attributes,
+                progress,
+                reset,
+                cached_data: None,
+            },
+            complete,
+        ) {
+            return false;
+        }
 
         self.last_dispatch = Instant::now();
-        Ok(())
+        true
     }
 
-    pub fn finalize(
-        self,
-        tx: &Sender<IndexUpdate>,
-    ) -> Result<Option<CacheWriter>, Box<mpsc::SendError<IndexUpdate>>> {
+    pub fn finalize(self, tx: &Sender<IndexResult>) -> Option<CacheWriter> {
         let mut this = self;
-        this.flush(tx, true)?;
-        Ok(this.cache_writer)
+        if !this.flush(tx, true) {
+            return None;
+        }
+        this.cache_writer
     }
 }
 

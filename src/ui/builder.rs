@@ -7,7 +7,7 @@ use ratatui::layout::Constraint;
 use super::App;
 use super::config::UiConfig;
 use crate::extensions::api::{ExtensionCatalog, SearchData, SearchMode, SearchOutcome};
-use crate::systems::filesystem::{FilesystemOptions, IndexUpdate, spawn_filesystem_index};
+use crate::systems::filesystem::{FilesystemOptions, IndexResult, spawn_filesystem_index};
 pub use crate::tui::theme::Theme;
 
 /// A small builder for configuring the interactive search UI.
@@ -23,7 +23,7 @@ pub struct SearchUi {
     bat_theme: Option<String>,
     start_mode: Option<SearchMode>,
     extensions: ExtensionCatalog,
-    index_updates: Option<Receiver<IndexUpdate>>,
+    index_updates: Option<Receiver<IndexResult>>,
 }
 
 impl SearchUi {

@@ -8,8 +8,9 @@ use std::time::{Duration, Instant};
 // `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
 // yield back to drawing and input handling.
 
-use crate::extensions::api::SearchData;
-use crate::systems::filesystem::{IndexUpdate, merge_update};
+use crate::systems::filesystem::{
+    IndexResult, IndexUpdate, IndexView, ProgressSnapshot, merge_update,
+};
 
 use super::App;
 use crate::tui::components::IndexProgress;
@@ -18,7 +19,7 @@ impl<'a> App<'a> {
     const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
     const MAX_INDEX_PROCESSING_TIME: Duration = Duration::from_millis(8);
 
-    pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexUpdate>) {
+    pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexResult>) {
         self.index_updates = Some(updates);
         if self.data.attributes.is_empty() && self.data.files.is_empty() {
             self.index_progress = IndexProgress::with_unknown_totals();
@@ -33,7 +34,6 @@ impl<'a> App<'a> {
             return;
         };
 
-        let mut should_request = false;
         let mut keep_receiver = true;
         let mut processed = 0usize;
         let start = Instant::now();
@@ -45,10 +45,8 @@ impl<'a> App<'a> {
                 break;
             }
             match rx.try_recv() {
-                Ok(mut update) => {
-                    let cached_data = update.cached_data.take();
-                    self.notify_search_of_update(&update);
-                    should_request |= self.apply_index_update(update, cached_data);
+                Ok(result) => {
+                    result.dispatch(self);
                     processed += 1;
                 }
                 Err(TryRecvError::Empty) => break,
@@ -62,31 +60,12 @@ impl<'a> App<'a> {
         if keep_receiver {
             self.index_updates = Some(rx);
         }
-
-        if should_request {
-            let waiting_for_initial = self.filtered_len() == 0;
-            if waiting_for_initial {
-                if let Some(timeout) = self.initial_results_timeout {
-                    self.initial_results_deadline = Some(Instant::now() + timeout);
-                } else {
-                    self.initial_results_deadline = Some(Instant::now());
-                }
-            }
-            self.request_search_after_index_update();
-            if waiting_for_initial {
-                if self.initial_results_timeout.is_some() {
-                    self.wait_for_initial_results();
-                } else {
-                    self.initial_results_deadline = None;
-                }
-            }
-        }
     }
 
-    fn apply_index_update(&mut self, update: IndexUpdate, cached_data: Option<SearchData>) -> bool {
+    fn apply_index_update(&mut self, mut update: IndexUpdate) -> bool {
         let mut changed = false;
 
-        match cached_data {
+        match update.cached_data.take() {
             Some(data) => {
                 self.data = data;
                 for state in self.tab_states.values_mut() {
@@ -118,8 +97,10 @@ impl<'a> App<'a> {
                 }
             }
         }
+        changed
+    }
 
-        let progress = update.progress;
+    fn record_index_progress_update(&mut self, progress: ProgressSnapshot) {
         let attributes_key = crate::extensions::builtin::attributes::descriptor().id;
         let files_key = crate::extensions::builtin::files::descriptor().id;
         self.index_progress.record_indexed(&[
@@ -133,8 +114,31 @@ impl<'a> App<'a> {
         if progress.complete {
             self.index_progress.mark_complete();
         }
+    }
 
-        changed
+    fn schedule_search_refresh_after_index_update(&mut self, changed: bool) {
+        if !changed {
+            return;
+        }
+
+        let waiting_for_initial = self.filtered_len() == 0;
+        if waiting_for_initial {
+            if let Some(timeout) = self.initial_results_timeout {
+                self.initial_results_deadline = Some(Instant::now() + timeout);
+            } else {
+                self.initial_results_deadline = Some(Instant::now());
+            }
+        }
+
+        self.request_search_after_index_update();
+
+        if waiting_for_initial {
+            if self.initial_results_timeout.is_some() {
+                self.wait_for_initial_results();
+            } else {
+                self.initial_results_deadline = None;
+            }
+        }
     }
 
     fn wait_for_initial_results(&mut self) {
@@ -165,6 +169,24 @@ impl<'a> App<'a> {
         if Instant::now() >= deadline {
             self.initial_results_deadline = None;
         }
+    }
+}
+
+impl<'a> IndexView for App<'a> {
+    fn forward_index_update(&self, update: &IndexUpdate) {
+        self.notify_search_of_update(update);
+    }
+
+    fn apply_index_update(&mut self, update: IndexUpdate) -> bool {
+        App::apply_index_update(self, update)
+    }
+
+    fn record_index_progress(&mut self, progress: ProgressSnapshot) {
+        self.record_index_progress_update(progress);
+    }
+
+    fn schedule_search_refresh_after_index_update(&mut self, changed: bool) {
+        App::schedule_search_refresh_after_index_update(self, changed);
     }
 }
 
@@ -208,21 +230,22 @@ mod tests {
             cached_data: None,
         };
 
-        app.notify_search_of_update(&update);
-        let changed = app.apply_index_update(update, None);
+        <App as IndexView>::forward_index_update(&app, &update);
+        let progress = update.progress;
+        let changed = <App as IndexView>::apply_index_update(&mut app, update);
+        <App as IndexView>::record_index_progress(&mut app, progress);
         assert!(changed, "index update should report data changes");
         assert!(
             app.search.has_unapplied_input(),
             "data changes should mark the query dirty"
         );
 
-        app.request_search_after_index_update();
+        <App as IndexView>::schedule_search_refresh_after_index_update(&mut app, changed);
         wait_for_results(&mut app);
 
-        assert_eq!(
-            app.filtered_len(),
-            0,
-            "results should remain stable until the user edits the query"
+        assert!(
+            app.filtered_len() > 0,
+            "expected refreshed results after indexing update"
         );
 
         app.mark_query_dirty_from_user_input();
