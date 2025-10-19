@@ -35,7 +35,12 @@ impl PreviewSplit for FilePreviewer {
         };
 
         let path = context.data().resolve_file_path(file);
-        let key = PreviewKey::new(path.clone(), area.width, context.bat_theme());
+        let key = PreviewKey::new(
+            path.clone(),
+            area.width,
+            context.bat_theme(),
+            context.git_modifications(),
+        );
         let display_path = key.path.display().to_string();
 
         let mut state = self.state.lock().expect("preview state poisoned");

@@ -148,6 +148,12 @@ pub(crate) struct CliArgs {
     )]
     pub(crate) file_headers: Option<Vec<String>>,
     #[arg(
+        long = "git-modifications",
+        value_parser = BoolishValueParser::new(),
+        help = "Highlight Git modifications in previews (default: enabled)"
+    )]
+    pub(crate) git_modifications: Option<bool>,
+    #[arg(
         short = 'H',
         long = "hidden",
         value_parser = BoolishValueParser::new(),

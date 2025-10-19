@@ -78,8 +78,9 @@ impl PreviewState {
         let path = key.path.clone();
         let width = key.width;
         let bat_theme = key.bat_theme.clone();
+        let git_modifications = key.git_modifications;
         thread::spawn(move || {
-            let result = render_file(path, width, bat_theme.as_deref());
+            let result = render_file(path, width, bat_theme.as_deref(), git_modifications);
             let _ = sender.send(result);
         });
         self.pending = Some(PendingPreview { key, receiver });

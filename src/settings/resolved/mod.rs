@@ -22,6 +22,7 @@ pub struct ResolvedConfig {
     pub ui: UiConfig,
     pub facet_headers: Option<Vec<String>>,
     pub file_headers: Option<Vec<String>>,
+    pub git_modifications: bool,
 }
 
 impl ResolvedConfig {

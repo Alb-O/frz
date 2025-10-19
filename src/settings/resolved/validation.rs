@@ -52,6 +52,7 @@ mod tests {
             ui: UiConfig::default(),
             facet_headers: None,
             file_headers: None,
+            git_modifications: true,
         };
 
         let sources = ConfigSources {
@@ -82,6 +83,7 @@ mod tests {
             ui: UiConfig::default(),
             facet_headers: None,
             file_headers: None,
+            git_modifications: true,
         };
 
         let sources = ConfigSources {

@@ -24,6 +24,7 @@ pub struct SearchUi {
     start_mode: Option<SearchMode>,
     extensions: ExtensionCatalog,
     index_updates: Option<Receiver<IndexResult>>,
+    git_modifications: bool,
 }
 
 impl SearchUi {
@@ -44,6 +45,7 @@ impl SearchUi {
             start_mode: None,
             extensions,
             index_updates: None,
+            git_modifications: true,
         }
     }
 
@@ -103,6 +105,11 @@ impl SearchUi {
         self
     }
 
+    pub fn with_git_modifications(mut self, enabled: bool) -> Self {
+        self.git_modifications = enabled;
+        self
+    }
+
     pub fn with_start_mode(mut self, mode: SearchMode) -> Self {
         self.start_mode = Some(mode);
         self
@@ -143,6 +150,7 @@ impl SearchUi {
         if let Some(theme) = self.theme {
             app.set_theme_with_bat(theme, self.bat_theme.clone());
         }
+        app.set_git_modifications(self.git_modifications);
         if let Some(mode) = self.start_mode {
             app.set_mode(mode);
         }

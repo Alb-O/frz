@@ -20,6 +20,7 @@ pub struct PreviewSplitContext<'a> {
     query: &'a str,
     bat_theme: Option<&'a str>,
     selection: Option<PreviewResource<'a>>,
+    git_modifications: bool,
 }
 
 impl<'a> PreviewSplitContext<'a> {
@@ -31,6 +32,7 @@ impl<'a> PreviewSplitContext<'a> {
         selection: Option<PreviewResource<'a>>,
         query: &'a str,
         bat_theme: Option<&'a str>,
+        git_modifications: bool,
     ) -> Self {
         Self {
             data,
@@ -40,6 +42,7 @@ impl<'a> PreviewSplitContext<'a> {
             selection,
             query,
             bat_theme,
+            git_modifications,
         }
     }
 
@@ -74,6 +77,10 @@ impl<'a> PreviewSplitContext<'a> {
 
     pub fn bat_theme(&self) -> Option<&'a str> {
         self.bat_theme
+    }
+
+    pub fn git_modifications(&self) -> bool {
+        self.git_modifications
     }
 }
 
@@ -170,13 +177,22 @@ mod tests {
             .with_files(vec![FileRow::new("a.rs", Vec::<String>::new())])
             .with_attributes(vec![AttributeRow::new("alpha", 1)]);
         let selection = Some(PreviewResource::File(&data.files[0]));
-        let context =
-            PreviewSplitContext::new(&data, &[0], &[100], Some(0), selection, "query", None);
+        let context = PreviewSplitContext::new(
+            &data,
+            &[0],
+            &[100],
+            Some(0),
+            selection,
+            "query",
+            None,
+            false,
+        );
         let resource = context.selection().expect("selection present");
         match resource {
             PreviewResource::File(file) => assert_eq!(file.path, "a.rs"),
             PreviewResource::Attribute(_) => panic!("unexpected attribute"),
         }
         assert_eq!(context.selected_row_index(), Some(0));
+        assert!(!context.git_modifications());
     }
 }

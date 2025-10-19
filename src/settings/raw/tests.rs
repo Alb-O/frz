@@ -35,6 +35,7 @@ fn cli_overrides_take_precedence() {
     cli.files_count_label = Some("files count".into());
     cli.facet_headers = Some(vec!["a".into()]);
     cli.file_headers = Some(vec!["b".into()]);
+    cli.git_modifications = Some(false);
 
     let mut config = RawConfig::default();
     config.apply_cli_overrides(&cli);
@@ -46,4 +47,5 @@ fn cli_overrides_take_precedence() {
     assert_eq!(config.ui.start_mode, Some("files".into()));
     assert_eq!(config.ui.facet_headers, cli.facet_headers);
     assert_eq!(config.ui.file_headers, cli.file_headers);
+    assert_eq!(config.ui.git_modifications, cli.git_modifications);
 }

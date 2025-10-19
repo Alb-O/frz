@@ -181,6 +181,7 @@ impl<'a> App<'a> {
                     selection_resource,
                     query.as_str(),
                     self.bat_theme.as_deref(),
+                    self.git_modifications,
                 );
                 preview.render_preview(frame, preview_area, context);
             }

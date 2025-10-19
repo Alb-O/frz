@@ -24,6 +24,7 @@ pub(super) struct UiSection {
     pub(super) files: Option<PaneSection>,
     pub(super) facet_headers: Option<Vec<String>>,
     pub(super) file_headers: Option<Vec<String>>,
+    pub(super) git_modifications: Option<bool>,
 }
 
 /// Raw configuration for a specific UI pane.
@@ -44,6 +45,7 @@ pub(super) struct UiResolution {
     pub(super) start_mode: Option<SearchMode>,
     pub(super) facet_headers: Option<Vec<String>>,
     pub(super) file_headers: Option<Vec<String>>,
+    pub(super) git_modifications: bool,
 }
 
 impl UiSection {
@@ -107,6 +109,9 @@ impl UiSection {
         if let Some(headers) = &cli.file_headers {
             self.file_headers = Some(headers.clone());
         }
+        if let Some(value) = cli.git_modifications {
+            self.git_modifications = Some(value);
+        }
     }
 
     pub(super) fn finalize(self, default_title: String) -> Result<UiResolution> {
@@ -138,6 +143,7 @@ impl UiSection {
             .file_headers
             .map(sanitize_headers)
             .filter(|headers| !headers.is_empty());
+        let git_modifications = self.git_modifications.unwrap_or(true);
 
         let input_title = match self.input_title {
             Some(title) => Some(title),
@@ -158,6 +164,7 @@ impl UiSection {
             start_mode,
             facet_headers,
             file_headers,
+            git_modifications,
         })
     }
 }

@@ -69,6 +69,7 @@ impl RawConfig {
             ui: ui.ui,
             facet_headers: ui.facet_headers,
             file_headers: ui.file_headers,
+            git_modifications: ui.git_modifications,
         };
 
         config.validate(&sources).map_err(Error::new)?;

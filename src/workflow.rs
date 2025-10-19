@@ -38,6 +38,7 @@ impl SearchUiFactory {
             ui,
             facet_headers,
             file_headers,
+            git_modifications,
         } = config;
 
         let builder = Self::new(root, filesystem)?
@@ -47,7 +48,8 @@ impl SearchUiFactory {
             .with_theme(theme)
             .with_start_mode(start_mode)
             .with_headers(attributes::mode(), facet_headers)
-            .with_headers(files::mode(), file_headers);
+            .with_headers(files::mode(), file_headers)
+            .with_git_modifications(git_modifications);
 
         Ok(builder.finish())
     }
@@ -93,6 +95,11 @@ impl SearchUiFactory {
             let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
             self.search_ui = self.search_ui.with_headers_for(mode, refs);
         }
+        self
+    }
+
+    fn with_git_modifications(mut self, enabled: bool) -> Self {
+        self.search_ui = self.search_ui.with_git_modifications(enabled);
         self
     }
 

@@ -10,16 +10,23 @@ pub(super) struct PreviewKey {
     pub(super) path: PathBuf,
     pub(super) width: u16,
     pub(super) bat_theme: Option<String>,
+    pub(super) git_modifications: bool,
 }
 
 impl PreviewKey {
     /// Creates a new [`PreviewKey`] by normalising the optional theme
     /// reference into an owned [`String`].
-    pub(super) fn new(path: PathBuf, width: u16, bat_theme: Option<&str>) -> Self {
+    pub(super) fn new(
+        path: PathBuf,
+        width: u16,
+        bat_theme: Option<&str>,
+        git_modifications: bool,
+    ) -> Self {
         Self {
             path,
             width,
             bat_theme: bat_theme.map(ToString::to_string),
+            git_modifications,
         }
     }
 }

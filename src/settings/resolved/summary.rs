@@ -63,6 +63,10 @@ pub(super) fn print_summary(config: &ResolvedConfig) {
             .map(|mode| mode.id().to_string())
             .unwrap_or_else(|| "(auto)".to_string())
     );
+    println!(
+        "  Preview Git modifications: {}",
+        bool_to_word(config.git_modifications)
+    );
     if let Some(title) = &config.input_title {
         println!("  Prompt title: {title}");
     }
@@ -105,6 +109,7 @@ mod tests {
             ui: UiConfig::default(),
             facet_headers: Some(vec!["col1".into()]),
             file_headers: Some(vec!["col2".into()]),
+            git_modifications: true,
         };
 
         print_summary(&config);

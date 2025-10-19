@@ -8,6 +8,7 @@ pub(super) fn render_file(
     path: PathBuf,
     width: u16,
     bat_theme: Option<&str>,
+    git_modifications: bool,
 ) -> Result<String, String> {
     if width == 0 {
         return Ok(String::new());
@@ -21,6 +22,7 @@ pub(super) fn render_file(
         .header(false)
         .grid(false)
         .line_numbers(true)
+        .vcs_modification_markers(git_modifications)
         .snip(false);
 
     if let Some(theme) = bat_theme {

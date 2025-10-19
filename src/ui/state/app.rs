@@ -44,6 +44,7 @@ pub struct App<'a> {
     pub(crate) ui: UiConfig,
     pub theme: Theme,
     pub(crate) bat_theme: Option<String>,
+    pub(crate) git_modifications: bool,
     pub(crate) throbber_state: ThrobberState,
     pub(crate) index_progress: IndexProgress,
     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
@@ -118,6 +119,7 @@ impl<'a> App<'a> {
             ui,
             theme: Theme::default(),
             bat_theme: None,
+            git_modifications: true,
             throbber_state: ThrobberState::default(),
             index_progress,
             tab_states,
@@ -141,6 +143,11 @@ impl<'a> App<'a> {
     pub fn set_theme_with_bat(&mut self, theme: Theme, bat_theme: Option<String>) {
         self.theme = theme;
         self.bat_theme = bat_theme;
+    }
+
+    /// Enable or disable Git modification highlights in previews.
+    pub fn set_git_modifications(&mut self, enabled: bool) {
+        self.git_modifications = enabled;
     }
 
     /// Switch to a different search mode and reset the selection.
