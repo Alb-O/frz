@@ -26,7 +26,7 @@ impl PartialOrd for AlphabeticalEntry {
 /// Collects the lexicographically smallest entries for an empty query.
 pub(super) struct AlphabeticalCollector<'a, F>
 where
-    F: Fn(usize) -> String,
+    F: FnMut(usize) -> String,
 {
     stream: SearchStream<'a>,
     limit: usize,
@@ -39,7 +39,7 @@ where
 
 impl<'a, F> AlphabeticalCollector<'a, F>
 where
-    F: Fn(usize) -> String,
+    F: FnMut(usize) -> String,
 {
     /// Creates a collector that will emit at most [`MAX_RENDERED_RESULTS`] entries.
     pub(super) fn new(stream: SearchStream<'a>, total: usize, key_for_index: F) -> Self {
@@ -61,7 +61,7 @@ where
         }
         let entry = AlphabeticalEntry {
             index,
-            key: (self.key_for_index)(index),
+            key: (&mut self.key_for_index)(index),
         };
         if self.heap.len() < self.limit {
             self.heap.push(entry);

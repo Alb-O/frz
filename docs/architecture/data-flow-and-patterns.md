@@ -241,10 +241,10 @@ Expose `bat_theme` resolution more explicitly at `App` construction time and thr
 - [ ] Add optional `SearchViewV2` that consumes `MatchBatch`; default to legacy.
 
 ### Dataset-Agnostic Streaming
-- [ ] Introduce `Dataset` trait with `len` and `key_for(index)`.
-- [ ] Implement `Dataset` for `[AttributeRow]` and `[FileRow]`.
-- [ ] Replace `stream_attributes`/`stream_files` with `stream_dataset` and thin wrappers.
-- [ ] Generalize `AlphabeticalCollector` over a key function (already half-there).
+- [x] Introduce `Dataset` trait with `len` and `key_for(index)`.
+- [x] Implement `Dataset` for `[AttributeRow]` and `[FileRow]`.
+- [x] Replace `stream_attributes`/`stream_files` with `stream_dataset` and thin wrappers.
+- [x] Generalize `AlphabeticalCollector` over a key function (already half-there).
 
 ### Preview Splits
 - [ ] Add `SelectionResolver` and `SelectionResolverStore` contribution.
