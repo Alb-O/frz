@@ -1,7 +1,9 @@
 use crate::extensions::api::{AttributeRow, FileRow, SearchData, search::Fs};
-use crate::extensions::builtin::files;
+use crate::extensions::builtin::{files, logger};
+use crate::logging;
 use crate::systems::filesystem::{IndexKind, IndexStream, IndexUpdate, ProgressSnapshot};
 use crate::ui::App;
+use log::LevelFilter;
 use ratatui::{Terminal, backend::TestBackend};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -176,5 +178,94 @@ fn massive_filesystem_initial_load_shows_preview_snapshot() {
     insta::assert_snapshot!(
         "massive_filesystem_initial_load_shows_preview_snapshot",
         view
+    );
+}
+
+#[test]
+fn logger_preview_displays_runtime_logs_snapshot() {
+    logging::initialize();
+    tui_logger::set_default_level(LevelFilter::Trace);
+    tui_logger::set_level_for_target("frz::tests::logger", LevelFilter::Trace);
+    tui_logger::set_level_for_target("frz::preview::image", LevelFilter::Trace);
+
+    let mut app = App::new(SearchData::new());
+    app.set_mode(logger::mode());
+    app.hydrate_initial_results();
+
+    log::error!(
+        target: "frz::tests::logger",
+        "failed to attach to remote debugger: connection refused"
+    );
+    log::warn!(
+        target: "frz::tests::logger",
+        "falling back to offline analysis mode"
+    );
+    log::info!(
+        target: "frz::tests::logger",
+        "queued 3 indexing tasks for the diagnostics subsystem"
+    );
+    log::debug!(
+        target: "frz::tests::logger",
+        "poll cycle completed with 3 queued tasks"
+    );
+    log::info!(
+        target: "frz::preview::image",
+        "tui graphics backend initialised for snapshot testing"
+    );
+    log::debug!(
+        target: "frz::preview::image",
+        "kitty graphics handshake acknowledged in debug mode"
+    );
+
+    tui_logger::move_events();
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 25)).unwrap();
+    let view = capture_view(&mut app, &mut terminal);
+
+    let mut settings = insta::Settings::clone_current();
+    settings.add_filter(r"\d{2}:\d{2}:\d{2}", "<time>");
+    settings.add_filter(r"tests\.rs:\d+", "tests.rs:<line>");
+    settings.add_filter(r"\[log=[^\]]+\]", "[log=<rate>]");
+    settings.bind(|| {
+        insta::assert_snapshot!("logger_preview_displays_runtime_logs_snapshot", view);
+    });
+}
+
+#[test]
+fn image_debug_logs_captured_when_inactive() {
+    logging::initialize();
+    tui_logger::set_level_for_target("frz::preview::image", LevelFilter::Trace);
+
+    let mut app = App::new(SearchData::new());
+    assert_ne!(app.mode, logger::mode());
+    app.hydrate_initial_results();
+
+    log::debug!(
+        target: "frz::preview::image",
+        "image transport negotiated sixel protocol",
+    );
+    log::debug!(
+        target: "frz::preview::image",
+        "image transport enabled debug diagnostics",
+    );
+
+    {
+        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
+        let _ = capture_view(&mut app, &mut terminal);
+    }
+
+    app.set_mode(logger::mode());
+    app.hydrate_initial_results();
+
+    let mut terminal = Terminal::new(TestBackend::new(90, 25)).unwrap();
+    let view = capture_view(&mut app, &mut terminal);
+
+    assert!(
+        view.contains("negotiated sixel"),
+        "expected inactive preview debug logs to be captured"
+    );
+    assert!(
+        view.contains("debug diagnostics"),
+        "expected subsequent debug logs to appear after switching tabs"
     );
 }

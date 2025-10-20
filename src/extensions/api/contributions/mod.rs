@@ -14,7 +14,7 @@ use crate::extensions::api::registry::RegisteredModule;
 use crate::extensions::api::search::SearchMode;
 
 pub use icons::{Icon, IconProvider, IconResource, IconStore};
-pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
+pub use preview_split::{PreviewLayout, PreviewSplit, PreviewSplitContext, PreviewSplitStore};
 pub use search_tabs::SearchTabStore;
 pub use selection::{PreviewResource, SelectionResolver, SelectionResolverStore};
 

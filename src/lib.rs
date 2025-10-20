@@ -6,6 +6,7 @@
 
 pub mod app_dirs;
 pub mod extensions;
+pub mod logging;
 pub mod previewers;
 mod systems;
 pub mod tui;

@@ -56,7 +56,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use frz::extensions::builtin::{attributes, files};
+    use frz::extensions::builtin::{attributes, files, logger};
 
     #[test]
     fn default_preset_is_returned_for_empty_input() {
@@ -74,6 +74,7 @@ mod tests {
     fn parse_mode_supports_known_variants() {
         assert_eq!(parse_mode("attributes").unwrap(), attributes::mode());
         assert_eq!(parse_mode("FILES").unwrap(), files::mode());
+        assert_eq!(parse_mode("logs").unwrap(), logger::mode());
         assert!(parse_mode("unknown").is_err());
     }
 

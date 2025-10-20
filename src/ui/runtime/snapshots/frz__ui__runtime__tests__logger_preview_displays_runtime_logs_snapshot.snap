@@ -1,0 +1,30 @@
+---
+source: src/ui/runtime/tests.rs
+assertion_line: 230
+expression: view
+---
+" Log viewer > Indexed attributes: 0 • Indexed Files: 0 • Indexed Lo  Tags   Files   Logs  "
+"                                      Logger controls                                     "
+" ┌Targets──────────────────┐┌Runtime log [log=<rate>]───────────────────────────────────┐ "
+" │EWIDT:frz::preview::image││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
+" │EWIDT:frz::tests::logger ││         image transport negotiated sixel protocol         │ "
+" │                         ││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
+" │                         ││         image transport enabled debug diagnostics         │ "
+" │                         ││<time>:E:frz::tests::logger:src/ui/runtime/tests.rs:<line>:f│ "
+" │                         ││         ailed to attach to remote debugger: connection ref│ "
+" │                         ││         used                                              │ "
+" │                         ││<time>:W:frz::tests::logger:src/ui/runtime/tests.rs:<line>:f│ "
+" │                         ││         alling back to offline analysis mode              │ "
+" │                         ││<time>:I:frz::tests::logger:src/ui/runtime/tests.rs:<line>:q│ "
+" │                         ││         ueued 3 indexing tasks for the diagnostics subsyst│ "
+" │                         ││         em                                                │ "
+" │                         ││<time>:D:frz::tests::logger:src/ui/runtime/tests.rs:<line>:p│ "
+" │                         ││         oll cycle completed with 3 queued tasks           │ "
+" │                         ││<time>:I:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
+" │                         ││         tui graphics backend initialised for snapshot test│ "
+" │                         ││         ing                                               │ "
+" │                         ││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
+" │                         ││         kitty graphics handshake acknowledged in debug mod│ "
+" │                         ││         e                                                 │ "
+" │                         ││                                                           │ "
+" └─────────────────────────┘└───────────────────────────────────────────────────────────┘ "

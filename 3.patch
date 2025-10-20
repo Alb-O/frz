@@ -1,0 +1,2157 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 7c9072817a17dccfa8113c1be2f06a8dc6837176..39f540b64c273c9e22a95fb681d09b23671052c9 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -10,50 +10,59 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
+
+ [[package]]
+ name = "aho-corasick"
+ version = "1.1.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916"
+ dependencies = [
+  "memchr",
+ ]
+
+ [[package]]
+ name = "aligned-vec"
+ version = "0.6.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "dc890384c8602f339876ded803c97ad529f3842aba97f6392b3dba0dd171769b"
+ dependencies = [
+  "equator",
+ ]
+
+ [[package]]
+ name = "allocator-api2"
+ version = "0.2.21"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
+
++[[package]]
++name = "android_system_properties"
++version = "0.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
++dependencies = [
++ "libc",
++]
++
+ [[package]]
+ name = "ansi_colours"
+ version = "1.2.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "14eec43e0298190790f41679fe69ef7a829d2a2ddd78c8c00339e84710e435fe"
+ dependencies = [
+  "rgb",
+ ]
+
+ [[package]]
+ name = "anstream"
+ version = "0.6.21"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "43d5b281e737544384e969a5ccad3f1cdd24b48086a0fc1b2a5262a26b8f4f4a"
+ dependencies = [
+  "anstyle",
+  "anstyle-parse",
+  "anstyle-query",
+  "anstyle-wincon",
+  "colorchoice",
+  "is_terminal_polyfill",
+  "utf8parse",
+ ]
+
+ [[package]]
+@@ -326,50 +335,61 @@ version = "1.2.41"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ac9fe6cdbb24b6ade63616c0a0688e45bb56732262c158df3c0c4bea4ca47cb7"
+ dependencies = [
+  "find-msvc-tools",
+  "jobserver",
+  "libc",
+  "shlex",
+ ]
+
+ [[package]]
+ name = "cfg-expr"
+ version = "0.15.8"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "d067ad48b8650848b989a59a86c6c36a995d02d2bf778d45c3c5d57bc2718f02"
+ dependencies = [
+  "smallvec",
+  "target-lexicon",
+ ]
+
+ [[package]]
+ name = "cfg-if"
+ version = "1.0.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
++[[package]]
++name = "chrono"
++version = "0.4.42"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "145052bdd345b87320e369255277e3fb5152762ad123a901ef5c262dd38fe8d2"
++dependencies = [
++ "iana-time-zone",
++ "num-traits",
++ "windows-link",
++]
++
+ [[package]]
+ name = "clap"
+ version = "4.5.49"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f4512b90fa68d3a9932cea5184017c5d200f5921df706d45e853537dea51508f"
+ dependencies = [
+  "clap_builder",
+  "clap_derive",
+ ]
+
+ [[package]]
+ name = "clap_builder"
+ version = "4.5.49"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0025e98baa12e766c67ba13ff4695a887a1eba19569aad00a472546795bd6730"
+ dependencies = [
+  "anstream",
+  "anstyle",
+  "clap_lex",
+  "strsim",
+ ]
+
+ [[package]]
+ name = "clap_derive"
+ version = "4.5.49"
+@@ -473,50 +493,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f9d839f2a20b0aee515dc581a6172f2321f96cab76c1a38a4c584a194955390e"
+ dependencies = [
+  "getrandom 0.2.16",
+  "once_cell",
+  "tiny-keccak",
+ ]
+
+ [[package]]
+ name = "content_inspector"
+ version = "0.2.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b7bda66e858c683005a53a9a60c69a4aca7eeaa45d124526e389f7aec8e62f38"
+ dependencies = [
+  "memchr",
+ ]
+
+ [[package]]
+ name = "convert_case"
+ version = "0.6.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+ dependencies = [
+  "unicode-segmentation",
+ ]
+
++[[package]]
++name = "core-foundation-sys"
++version = "0.8.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
++
+ [[package]]
+ name = "cpufeatures"
+ version = "0.2.17"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
+ dependencies = [
+  "libc",
+ ]
+
+ [[package]]
+ name = "crc32fast"
+ version = "1.5.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
+ dependencies = [
+  "cfg-if",
+ ]
+
+ [[package]]
+ name = "crossbeam-deque"
+ version = "0.8.6"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51"
+ dependencies = [
+  "crossbeam-epoch",
+@@ -717,50 +743,60 @@ checksum = "442039f5147480ba31067cb00ada1adae6892028e40e45fc5de7b7df6dcc1b5f"
+ dependencies = [
+  "const-random",
+ ]
+
+ [[package]]
+ name = "either"
+ version = "1.15.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+
+ [[package]]
+ name = "encode_unicode"
+ version = "1.0.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "34aa73646ffb006b8f5147f3dc182bd4bcb190227ce861fc4a4844bf8e3cb2c0"
+
+ [[package]]
+ name = "encoding_rs"
+ version = "0.8.35"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "75030f3c4f45dafd7586dd6780965a8c7e8e285a5ecb86713e63a79c5b2766f3"
+ dependencies = [
+  "cfg-if",
+ ]
+
++[[package]]
++name = "env_filter"
++version = "0.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1bf3c259d255ca70051b30e2e95b5446cdb8949ac4cd22c0d7fd634d89f568e2"
++dependencies = [
++ "log",
++ "regex",
++]
++
+ [[package]]
+ name = "equator"
+ version = "0.4.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4711b213838dfee0117e3be6ac926007d7f433d7bbe33595975d4190cb07e6fc"
+ dependencies = [
+  "equator-macro",
+ ]
+
+ [[package]]
+ name = "equator-macro"
+ version = "0.4.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "44f23cf4b44bfce11a86ace86f8a73ffdec849c9fd00a386a53d278bd9e81fb3"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+  "syn",
+ ]
+
+ [[package]]
+ name = "equivalent"
+ version = "1.0.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+@@ -877,58 +913,60 @@ dependencies = [
+ name = "frizbee"
+ version = "0.5.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "cf07bb9bf0cb3e201c76a7dfd7c0e78ed1ef60d46c2be1126f76394f96bdcfd6"
+ dependencies = [
+  "memchr",
+  "rayon",
+ ]
+
+ [[package]]
+ name = "frz"
+ version = "0.4.0"
+ dependencies = [
+  "anyhow",
+  "bat",
+  "clap",
+  "config",
+  "devicons",
+  "directories",
+  "frizbee",
+  "ignore",
+  "image",
+  "include_dir",
+  "indexmap",
+  "insta",
++ "log",
+  "ratatui",
+  "ratatui-image",
+  "serde",
+  "serde_json",
+  "tempfile",
+  "thiserror 2.0.17",
+  "throbber-widgets-tui",
+  "toml 0.9.8",
++ "tui-logger",
+  "tui-textarea",
+  "unicode-truncate 2.0.0",
+  "unicode-width 0.2.0",
+ ]
+
+ [[package]]
+ name = "generic-array"
+ version = "0.14.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4bb6743198531e02858aeaea5398fcc883e71851fcbcb5a2f773e2fb6cb1edf2"
+ dependencies = [
+  "typenum",
+  "version_check",
+ ]
+
+ [[package]]
+ name = "getrandom"
+ version = "0.2.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "335ff9f135e4384c8150d6f27c6daed433577f86b4750418338c01a1a2528592"
+ dependencies = [
+  "cfg-if",
+  "libc",
+  "wasi",
+ ]
+@@ -1017,50 +1055,74 @@ checksum = "5419bdc4f6a9207fbeba6d11b604d481addf78ecd10c11ad51e76c2f6482748d"
+
+ [[package]]
+ name = "hashlink"
+ version = "0.10.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
+ dependencies = [
+  "hashbrown 0.15.5",
+ ]
+
+ [[package]]
+ name = "heck"
+ version = "0.5.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
+
+ [[package]]
+ name = "home"
+ version = "0.5.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
+ dependencies = [
+  "windows-sys 0.59.0",
+ ]
+
++[[package]]
++name = "iana-time-zone"
++version = "0.1.64"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "33e57f83510bb73707521ebaffa789ec8caf86f9657cad665b092b581d40e9fb"
++dependencies = [
++ "android_system_properties",
++ "core-foundation-sys",
++ "iana-time-zone-haiku",
++ "js-sys",
++ "log",
++ "wasm-bindgen",
++ "windows-core 0.58.0",
++]
++
++[[package]]
++name = "iana-time-zone-haiku"
++version = "0.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
++dependencies = [
++ "cc",
++]
++
+ [[package]]
+ name = "icu_collections"
+ version = "2.0.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "200072f5d0e3614556f94a9930d5dc3e0662a652823904c3a75dc3b0af7fee47"
+ dependencies = [
+  "displaydoc",
+  "potential_utf",
+  "yoke",
+  "zerofrom",
+  "zerovec",
+ ]
+
+ [[package]]
+ name = "icu_locale_core"
+ version = "2.0.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0cde2700ccaed3872079a65fb1a78f6c0a36c91570f28755dda67bc8f7d9f00a"
+ dependencies = [
+  "displaydoc",
+  "litemap",
+  "tinystr",
+  "writeable",
+  "zerovec",
+ ]
+@@ -1237,50 +1299,51 @@ dependencies = [
+ name = "indexmap"
+ version = "2.12.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6717a8d2a5a929a1a2eb43a12812498ed141a0bcfb7e8f7844fbdbe4303bba9f"
+ dependencies = [
+  "equivalent",
+  "hashbrown 0.16.0",
+  "serde",
+  "serde_core",
+ ]
+
+ [[package]]
+ name = "indoc"
+ version = "2.0.6"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f4c7245a08504955605670dbf141fceab975f15ca21570696aebe9d2e71576bd"
+
+ [[package]]
+ name = "insta"
+ version = "1.43.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "46fdb647ebde000f43b5b53f773c30cf9b0cb4300453208713fa38b2c70935a0"
+ dependencies = [
+  "console",
+  "once_cell",
++ "regex",
+  "similar",
+ ]
+
+ [[package]]
+ name = "instability"
+ version = "0.3.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "435d80800b936787d62688c927b6490e887c7ef5ff9ce922c6c6050fca75eb9a"
+ dependencies = [
+  "darling 0.20.11",
+  "indoc",
+  "proc-macro2",
+  "quote",
+  "syn",
+ ]
+
+ [[package]]
+ name = "interpolate_name"
+ version = "0.2.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c34819042dc3d3971c46c2190835914dfbe0c3c13f61449b2997f4e9722dfa60"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+  "syn",
+@@ -1304,50 +1367,60 @@ dependencies = [
+ [[package]]
+ name = "itertools"
+ version = "0.13.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+ dependencies = [
+  "either",
+ ]
+
+ [[package]]
+ name = "itoa"
+ version = "1.0.15"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
+
+ [[package]]
+ name = "jobserver"
+ version = "0.1.34"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9afb3de4395d6b3e67a780b6de64b51c978ecf11cb9a462c66be7d4ca9039d33"
+ dependencies = [
+  "getrandom 0.3.4",
+  "libc",
+ ]
+
++[[package]]
++name = "js-sys"
++version = "0.3.81"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec48937a97411dcb524a265206ccd4c90bb711fca92b2792c407f268825b9305"
++dependencies = [
++ "once_cell",
++ "wasm-bindgen",
++]
++
+ [[package]]
+ name = "json5"
+ version = "0.4.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "96b0db21af676c1ce64250b5f40f3ce2cf27e4e47cb91ed91eb6fe9350b430c1"
+ dependencies = [
+  "pest",
+  "pest_derive",
+  "serde",
+ ]
+
+ [[package]]
+ name = "lazy_static"
+ version = "1.5.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+ [[package]]
+ name = "lebe"
+ version = "0.5.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
+
+ [[package]]
+ name = "libc"
+@@ -2646,50 +2719,65 @@ dependencies = [
+  "toml_write",
+  "winnow",
+ ]
+
+ [[package]]
+ name = "toml_parser"
+ version = "1.0.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c0cbe268d35bdb4bb5a56a2de88d0ad0eb70af5384a99d648cd4b3d04039800e"
+ dependencies = [
+  "winnow",
+ ]
+
+ [[package]]
+ name = "toml_write"
+ version = "0.1.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
+
+ [[package]]
+ name = "toml_writer"
+ version = "1.0.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "df8b2b54733674ad286d16267dcfc7a71ed5c776e4ac7aa3c3e2561f7c637bf2"
+
++[[package]]
++name = "tui-logger"
++version = "0.17.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "382b7ea88082dbe2236ed1e942552b1bfc59e98fdc5d0599f11a627aae9ee2be"
++dependencies = [
++ "chrono",
++ "env_filter",
++ "lazy_static",
++ "log",
++ "parking_lot",
++ "ratatui",
++ "unicode-segmentation",
++]
++
+ [[package]]
+ name = "tui-textarea"
+ version = "0.7.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0a5318dd619ed73c52a9417ad19046724effc1287fb75cdcc4eca1d6ac1acbae"
+ dependencies = [
+  "crossterm",
+  "ratatui",
+  "unicode-width 0.2.0",
+ ]
+
+ [[package]]
+ name = "typeid"
+ version = "1.0.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
+
+ [[package]]
+ name = "typenum"
+ version = "1.19.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
+
+ [[package]]
+ name = "ucd-trie"
+diff --git a/Cargo.toml b/Cargo.toml
+index c1d3ef24b110137043b44566e399311c24bbc7c6..b995bba09b9cb2bab9ad8da774ed6b7ced95f25c 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -11,29 +11,31 @@ authors = ["Albert O'Shea"]
+ [features]
+ default = []
+
+ [dependencies]
+ ratatui = "0.29"
+ frizbee = { version = "0.5" }
+ anyhow = "1"
+ ignore = "0.4"
+ throbber-widgets-tui = "0.9"
+ ratatui-image = "8.0.2"
+ image = { version = "0.25", default-features = false, features = ["default-formats"] }
+ bat = { version = "0.25", default-features = false, features = ["git", "regex-onig"] }
+ clap = { version = "4", features = ["derive", "env"] }
+ config = "0.15"
+ thiserror = "2"
+ directories = "6"
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ unicode-width = "0.2"
+ tui-textarea = "0.7"
+ unicode-truncate = "2"
+ indexmap = "2"
+ toml = "0.9"
+ include_dir = "0.7"
+ devicons = "0.6.12"
++log = "0.4"
++tui-logger = { version = "0.17.4", features = ["crossterm"] }
+
+ [dev-dependencies]
+-insta = "1.43"
++insta = { version = "1.43", features = ["filters"] }
+ tempfile = "3"
+diff --git a/src/extensions/api/contributions/mod.rs b/src/extensions/api/contributions/mod.rs
+index d59d48e1193bbe51ed4b2331e7fe8c3034d04639..9c3d4275498d2b98068c3ff979ac807ce7b794d3 100644
+--- a/src/extensions/api/contributions/mod.rs
++++ b/src/extensions/api/contributions/mod.rs
+@@ -1,42 +1,42 @@
+ mod icons;
+ mod preview_split;
+ mod search_tabs;
+ mod selection;
+
+ use std::any::{Any, TypeId};
+ use std::collections::HashMap;
+ use std::sync::Arc;
+
+ use crate::extensions::api::descriptors::ExtensionDescriptor;
+ use crate::extensions::api::error::ExtensionCatalogError;
+ use crate::extensions::api::registry::ExtensionModule;
+ use crate::extensions::api::registry::RegisteredModule;
+ use crate::extensions::api::search::SearchMode;
+
+ pub use icons::{Icon, IconProvider, IconResource, IconStore};
+-pub use preview_split::{PreviewSplit, PreviewSplitContext, PreviewSplitStore};
++pub use preview_split::{PreviewLayout, PreviewSplit, PreviewSplitContext, PreviewSplitStore};
+ pub use search_tabs::SearchTabStore;
+ pub use selection::{PreviewResource, SelectionResolver, SelectionResolverStore};
+
+ type Cloner = fn(&dyn Any) -> Box<dyn Any + Send + Sync>;
+ type CleanupHandler = Arc<dyn Fn(&mut dyn Any, SearchMode) + Send + Sync>;
+
+ /// Trait implemented by contribution stores that resolve data for a search mode.
+ pub trait ScopedContribution: Clone + Send + Sync + 'static {
+     type Output;
+
+     fn resolve(&self, mode: SearchMode) -> Option<Self::Output>;
+ }
+
+ /// Trait implemented by concrete contribution specifications.
+ trait ContributionSpec: Send + Sync {
+     /// Install the contribution into the provided context.
+     fn install(
+         &self,
+         context: &mut ContributionInstallContext<'_>,
+     ) -> Result<(), ExtensionCatalogError>;
+
+     /// Clone the contribution specification.
+     fn clone_spec(&self) -> Arc<dyn ContributionSpec>;
+ }
+
+diff --git a/src/extensions/api/contributions/preview_split.rs b/src/extensions/api/contributions/preview_split.rs
+index 5026763a6df31f1ca3f91d54a86f38bc9f2a985f..60043d6b0f1709cd371706be1fe29552b6698d8f 100644
+--- a/src/extensions/api/contributions/preview_split.rs
++++ b/src/extensions/api/contributions/preview_split.rs
+@@ -1,38 +1,48 @@
+ use std::collections::HashMap;
+ use std::sync::Arc;
+
+ use ratatui::{Frame, layout::Rect};
++use ratatui::crossterm::event::KeyEvent;
+
+ use crate::extensions::api::descriptors::ExtensionDescriptor;
+ use crate::extensions::api::error::ExtensionCatalogError;
+ use crate::extensions::api::search::{SearchData, SearchMode};
+
+ use super::{
+     ContributionInstallContext, ContributionSpecImpl, Icon, PreviewResource, ScopedContribution,
+ };
+
++/// Layout hints describing how a preview split should be rendered.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub enum PreviewLayout {
++    /// Render the preview alongside the primary results table.
++    Split,
++    /// Render the preview using the full available width, hiding the results table.
++    PreviewOnly,
++}
++
+ /// Context provided to preview split renderers when drawing the preview area.
+ pub struct PreviewSplitContext<'a> {
+     data: &'a SearchData,
+     filtered: &'a [usize],
+     scores: &'a [u16],
+     selected: Option<usize>,
+     query: &'a str,
+     bat_theme: Option<&'a str>,
+     selection: Option<PreviewResource<'a>>,
+     git_modifications: bool,
+ }
+
+ impl<'a> PreviewSplitContext<'a> {
+     pub fn new(
+         data: &'a SearchData,
+         filtered: &'a [usize],
+         scores: &'a [u16],
+         selected: Option<usize>,
+         selection: Option<PreviewResource<'a>>,
+         query: &'a str,
+         bat_theme: Option<&'a str>,
+         git_modifications: bool,
+     ) -> Self {
+         Self {
+             data,
+@@ -69,50 +79,58 @@ impl<'a> PreviewSplitContext<'a> {
+
+     pub fn selection(&self) -> Option<&PreviewResource<'a>> {
+         self.selection.as_ref()
+     }
+
+     pub fn query(&self) -> &'a str {
+         self.query
+     }
+
+     pub fn bat_theme(&self) -> Option<&'a str> {
+         self.bat_theme
+     }
+
+     pub fn git_modifications(&self) -> bool {
+         self.git_modifications
+     }
+ }
+
+ /// Behaviour implemented by preview split renderers.
+ pub trait PreviewSplit: Send + Sync {
+     fn render_preview(&self, frame: &mut Frame, area: Rect, context: PreviewSplitContext<'_>);
+
+     fn header_icon(&self) -> Option<Icon> {
+         None
+     }
++
++    fn layout(&self) -> PreviewLayout {
++        PreviewLayout::Split
++    }
++
++    fn handle_key(&self, _key: KeyEvent) -> bool {
++        false
++    }
+ }
+
+ /// Storage for preview split renderers registered by extensions.
+ #[derive(Clone, Default)]
+ pub struct PreviewSplitStore {
+     splits: HashMap<SearchMode, Arc<dyn PreviewSplit>>,
+ }
+
+ impl PreviewSplitStore {
+     pub fn register(
+         &mut self,
+         mode: SearchMode,
+         preview: Arc<dyn PreviewSplit>,
+     ) -> Result<(), ExtensionCatalogError> {
+         if self.splits.contains_key(&mode) {
+             return Err(ExtensionCatalogError::contribution_conflict(
+                 "preview split",
+                 mode,
+             ));
+         }
+         self.splits.insert(mode, preview);
+         Ok(())
+     }
+
+     pub fn get(&self, mode: SearchMode) -> Option<Arc<dyn PreviewSplit>> {
+diff --git a/src/extensions/api/mod.rs b/src/extensions/api/mod.rs
+index 67f6bfe88712f8e4c71684dcb81b481a84708df9..b97f609303c734f8e8c7b72ca51e4d32b696231e 100644
+--- a/src/extensions/api/mod.rs
++++ b/src/extensions/api/mod.rs
+@@ -1,26 +1,26 @@
+ pub mod context;
+ pub mod contributions;
+ pub mod descriptors;
+ pub mod error;
+ pub mod registry;
+ pub mod search;
+ pub mod streams;
+
+ pub use context::{ExtensionQueryContext, ExtensionSelectionContext};
+ pub use contributions::{
+     Contribution, ContributionScope, ContributionStores, ExtensionPackage, Icon, IconProvider,
+-    IconResource, IconStore, PreviewResource, PreviewSplit, PreviewSplitContext, PreviewSplitStore,
+-    ScopedContribution, SelectionResolver, SelectionResolverStore,
++    IconResource, IconStore, PreviewLayout, PreviewResource, PreviewSplit, PreviewSplitContext,
++    PreviewSplitStore, ScopedContribution, SelectionResolver, SelectionResolverStore,
+ };
+ pub use descriptors::{
+     ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor,
+ };
+ pub use error::ExtensionCatalogError;
+ pub use registry::{ExtensionCatalog, ExtensionModule, RegisteredModule};
+ pub use search::{
+     AttributeRow, ExtensionSelection, FileRow, MAX_RENDERED_RESULTS, MatchBatch,
+     PREFILTER_ENABLE_THRESHOLD, SearchData, SearchMode, SearchOutcome, SearchResult,
+     SearchSelection, SearchStream, SearchView, SearchViewV2, TruncationStyle, stream_attributes,
+     stream_files, tags_for_relative_path,
+ };
+ pub use streams::{DataStream, StreamAction, StreamEnvelope, ViewAction, ViewTarget};
+diff --git a/src/extensions/builtin/logger.rs b/src/extensions/builtin/logger.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..004e6d638da509005ba932bb81b30a4e9609163f
+--- /dev/null
++++ b/src/extensions/builtin/logger.rs
+@@ -0,0 +1,220 @@
++use std::sync::Arc;
++
++use log::LevelFilter;
++use ratatui::{
++    Frame,
++    layout::{Constraint, Rect},
++    widgets::{Cell, Clear, Row},
++};
++use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
++
++use crate::extensions::api::{
++    Contribution, ExtensionModule, ExtensionPackage, ExtensionQueryContext,
++    ExtensionSelectionContext, SearchMode, SearchSelection, SearchStream,
++    descriptors::{ExtensionDataset, ExtensionDescriptor, ExtensionUiDefinition, TableContext, TableDescriptor},
++    search::SearchData,
++};
++use crate::extensions::api::contributions::{PreviewLayout, PreviewSplit, PreviewSplitContext};
++use crate::logging;
++use crate::tui::theme::Theme;
++use tui_logger::{TuiLoggerLevelOutput, TuiLoggerSmartWidget, TuiWidgetEvent, TuiWidgetState};
++
++pub const DATASET_KEY: &str = "logs";
++
++pub fn mode() -> SearchMode {
++    SearchMode::from_descriptor(descriptor())
++}
++
++pub fn descriptor() -> &'static ExtensionDescriptor {
++    &LOGGER_DESCRIPTOR
++}
++
++static LOGGER_DATASET: LoggerDataset = LoggerDataset;
++
++pub static LOGGER_DESCRIPTOR: ExtensionDescriptor = ExtensionDescriptor {
++    id: DATASET_KEY,
++    ui: ExtensionUiDefinition {
++        tab_label: "Logs",
++        mode_title: "Log viewer",
++        hint: "Inspect runtime logs and adjust targets with arrow keys.",
++        table_title: "Logger controls",
++        count_label: "Logs",
++    },
++    dataset: &LOGGER_DATASET,
++};
++
++struct LoggerDataset;
++
++impl ExtensionDataset for LoggerDataset {
++    fn key(&self) -> &'static str {
++        DATASET_KEY
++    }
++
++    fn total_count(&self, _data: &SearchData) -> usize {
++        0
++    }
++
++    fn build_table<'a>(&self, context: TableContext<'a>) -> TableDescriptor<'a> {
++        let headers = context
++            .headers
++            .cloned()
++            .unwrap_or_else(|| vec!["Action".to_string()]);
++        let widths = context
++            .widths
++            .cloned()
++            .unwrap_or_else(|| vec![Constraint::Percentage(100)]);
++        let rows = vec![Row::new(vec![Cell::from(
++            "Use the preview pane to view log output and configure targets.",
++        )])];
++        TableDescriptor::new(headers, widths, rows)
++    }
++}
++
++#[derive(Clone)]
++struct LoggerModule;
++
++impl ExtensionModule for LoggerModule {
++    fn descriptor(&self) -> &'static ExtensionDescriptor {
++        descriptor()
++    }
++
++    fn stream(
++        &self,
++        _query: &str,
++        stream: SearchStream<'_>,
++        _context: ExtensionQueryContext<'_>,
++    ) -> bool {
++        stream.send(Vec::new(), Vec::new(), true)
++    }
++
++    fn selection(
++        &self,
++        _context: ExtensionSelectionContext<'_>,
++        _index: usize,
++    ) -> Option<SearchSelection> {
++        None
++    }
++}
++
++pub struct LoggerWidgetState {
++    widget: TuiWidgetState,
++}
++
++impl LoggerWidgetState {
++    pub fn new() -> Self {
++        let widget = TuiWidgetState::new().set_default_display_level(LevelFilter::Debug);
++        Self { widget }
++    }
++
++    pub fn widget(&self) -> &TuiWidgetState {
++        &self.widget
++    }
++
++    pub fn handle_key(&self, key: KeyEvent) -> bool {
++        if key.kind != KeyEventKind::Press {
++            return false;
++        }
++
++        let event = match key.code {
++            KeyCode::Char(' ') => Some(TuiWidgetEvent::SpaceKey),
++            KeyCode::Char('h') | KeyCode::Char('H') => Some(TuiWidgetEvent::HideKey),
++            KeyCode::Char('f') | KeyCode::Char('F') => Some(TuiWidgetEvent::FocusKey),
++            KeyCode::Char('+') => Some(TuiWidgetEvent::PlusKey),
++            KeyCode::Char('-') => Some(TuiWidgetEvent::MinusKey),
++            KeyCode::Up => Some(TuiWidgetEvent::UpKey),
++            KeyCode::Down => Some(TuiWidgetEvent::DownKey),
++            KeyCode::Left => Some(TuiWidgetEvent::LeftKey),
++            KeyCode::Right => Some(TuiWidgetEvent::RightKey),
++            KeyCode::PageUp => Some(TuiWidgetEvent::PrevPageKey),
++            KeyCode::PageDown => Some(TuiWidgetEvent::NextPageKey),
++            KeyCode::Esc => Some(TuiWidgetEvent::EscapeKey),
++            _ => None,
++        };
++
++        if let Some(event) = event {
++            self.widget.transition(event);
++            return true;
++        }
++
++        false
++    }
++}
++
++impl Default for LoggerWidgetState {
++    fn default() -> Self {
++        Self::new()
++    }
++}
++
++#[derive(Clone)]
++struct LoggerPreview {
++    state: Arc<LoggerWidgetState>,
++}
++
++impl LoggerPreview {
++    fn new(state: Arc<LoggerWidgetState>) -> Self {
++        Self { state }
++    }
++}
++
++impl PreviewSplit for LoggerPreview {
++    fn render_preview(&self, frame: &mut Frame, area: Rect, _context: PreviewSplitContext<'_>) {
++        frame.render_widget(Clear, area);
++        if area.width == 0 || area.height == 0 {
++            return;
++        }
++
++        logging::initialize();
++        tui_logger::move_events();
++
++        let widget = TuiLoggerSmartWidget::default()
++            .title_log("Runtime log")
++            .title_target("Targets")
++            .highlight_style(Theme::default().highlight_style())
++            .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
++            .state(self.state.widget());
++        frame.render_widget(widget, area);
++    }
++
++    fn layout(&self) -> PreviewLayout {
++        PreviewLayout::PreviewOnly
++    }
++
++    fn handle_key(&self, key: KeyEvent) -> bool {
++        self.state.handle_key(key)
++    }
++}
++
++pub struct LoggerPackage {
++    contributions: [Contribution; 2],
++}
++
++impl LoggerPackage {
++    fn new() -> Self {
++        let state = Arc::new(LoggerWidgetState::new());
++        let contributions = [
++            Contribution::search_tab(descriptor(), LoggerModule),
++            Contribution::preview_split(descriptor(), LoggerPreview::new(state)),
++        ];
++        Self { contributions }
++    }
++}
++
++impl Default for LoggerPackage {
++    fn default() -> Self {
++        Self::new()
++    }
++}
++
++impl ExtensionPackage for LoggerPackage {
++    type Contributions<'a> = std::array::IntoIter<Contribution, 2>;
++
++    fn contributions(&self) -> Self::Contributions<'_> {
++        self.contributions.clone().into_iter()
++    }
++}
++
++#[must_use]
++pub fn bundle() -> LoggerPackage {
++    LoggerPackage::default()
++}
+diff --git a/src/extensions/builtin/mod.rs b/src/extensions/builtin/mod.rs
+index 39b03bd3212fd98cf1149dd79f705a52195f199b..752f753c6cac697c000d51aa9056183ebc40b0a5 100644
+--- a/src/extensions/builtin/mod.rs
++++ b/src/extensions/builtin/mod.rs
+@@ -1,19 +1,24 @@
+ pub mod attributes;
+ pub mod files;
++pub mod logger;
+
+ use crate::extensions::api::{ExtensionCatalog, ExtensionCatalogError, ExtensionDescriptor};
+
+ pub fn register_builtin_extensions(
+     catalog: &mut ExtensionCatalog,
+ ) -> Result<(), ExtensionCatalogError> {
+     catalog.register_package(attributes::bundle())?;
+     catalog.register_package(files::bundle())?;
++    catalog.register_package(logger::bundle())?;
+     Ok(())
+ }
+
+ pub fn descriptors() -> &'static [&'static ExtensionDescriptor] {
+     &BUILTIN_DESCRIPTORS
+ }
+
+-static BUILTIN_DESCRIPTORS: [&ExtensionDescriptor; 2] =
+-    [&attributes::ATTRIBUTE_DESCRIPTOR, &files::FILE_DESCRIPTOR];
++static BUILTIN_DESCRIPTORS: [&ExtensionDescriptor; 3] = [
++    &attributes::ATTRIBUTE_DESCRIPTOR,
++    &files::FILE_DESCRIPTOR,
++    &logger::LOGGER_DESCRIPTOR,
++];
+diff --git a/src/lib.rs b/src/lib.rs
+index f43a6c54319c4d6480068c80f50b38f8ba8963e2..7649053eaffec0da26f479824dc97486c66455f8 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,25 +1,26 @@
+ //! Core crate exports for building and running the `frz` terminal interface.
+ //!
+ //! The root module primarily re-exports types from the UI and extension
+ //! subsystems so that embedders can configure the application without digging
+ //! through the module hierarchy.
+
+ pub mod app_dirs;
+ pub mod extensions;
+ pub mod previewers;
+ mod systems;
+ pub mod tui;
+ pub mod ui;
++pub mod logging;
+
+ pub use crate::extensions::api::{
+     AttributeRow, ExtensionCatalog, ExtensionModule, ExtensionSelection, FileRow, SearchData,
+     SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
+ };
+ pub use crate::tui::components::{progress, tables, tabs};
+ pub use crate::tui::input::SearchInput;
+ pub use crate::tui::tables::rows as utils;
+ pub use crate::tui::theme::{Theme, builtin_themes, default_theme};
+ pub use systems::filesystem::FilesystemOptions;
+ pub use systems::search::extension::{self as search_system, SearchStream};
+ pub use ui::run;
+ pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig};
+diff --git a/src/logging.rs b/src/logging.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..8db6fecfa25b4adadd52c680eb20ad246342372d
+--- /dev/null
++++ b/src/logging.rs
+@@ -0,0 +1,41 @@
++use std::env;
++use std::sync::OnceLock;
++
++use log::LevelFilter;
++
++static LOGGER: OnceLock<()> = OnceLock::new();
++
++/// Initialise the global logger, enabling runtime log capture for the UI.
++///
++/// Subsequent calls are no-ops, allowing callers to invoke this during
++/// different entry points without worrying about double-initialisation.
++pub fn initialize() {
++    LOGGER.get_or_init(|| {
++        if let Err(error) = tui_logger::init_logger(LevelFilter::Trace) {
++            eprintln!("failed to initialise tui-logger: {error}");
++            return;
++        }
++
++        tui_logger::set_default_level(LevelFilter::Info);
++
++        if !env::var("RUST_LOG")
++            .map(|value| value.contains("frz::preview::image"))
++            .unwrap_or(false)
++        {
++            tui_logger::set_level_for_target("frz::preview::image", LevelFilter::Debug);
++        }
++
++        // Allow users to opt into traditional RUST_LOG syntax while still using
++        // the in-application viewer. Errors are ignored because the filter is
++        // optional.
++        let _ = tui_logger::set_env_filter_from_env(None);
++    });
++}
++
++/// Move buffered log events into the main display queue when logging has been
++/// initialised.
++pub fn pump() {
++    if LOGGER.get().is_some() {
++        tui_logger::move_events();
++    }
++}
+diff --git a/src/previewers/image/backend.rs b/src/previewers/image/backend.rs
+index be6f8ac09f4220acbe48d5f7b68210d99f8e50d9..f7c1e876d900f47c027f051e99b96d6559d6a755 100644
+--- a/src/previewers/image/backend.rs
++++ b/src/previewers/image/backend.rs
+@@ -1,99 +1,96 @@
+ //! Terminal graphics capability detection and caching.
+ //!
+ //! This module wraps `ratatui-image`'s capability probing so we can run it
+ //! once during application startup and reuse the result for subsequent image
+ //! renders. Detecting protocols requires briefly exchanging escape sequences
+ //! with the terminal, which should only happen after entering the alternate
+ //! screen and before the main event loop begins. Running the probe once keeps
+ //! preview rendering lightweight and avoids conflicting with the event reader.
+
+-use std::{env, sync::OnceLock};
++use std::sync::OnceLock;
+
+ use anyhow::Result;
+ use ratatui_image::picker::Picker;
+
+ /// Shared graphics state describing the chosen protocol and any warnings that
+ /// should be surfaced to the user.
+ pub struct GraphicsBackend {
+     picker: Picker,
+     warning: Option<String>,
+ }
+
+ impl GraphicsBackend {
+     /// Return the cached picker used to build protocol instances for
+     /// individual images.
+     pub fn picker(&self) -> &Picker {
+         &self.picker
+     }
+
+     /// Optional warning that explains why protocol detection fell back to a
+     /// conservative default.
+     pub fn warning(&self) -> Option<&str> {
+         self.warning.as_deref()
+     }
+ }
+
+ static GRAPHICS: OnceLock<GraphicsBackend> = OnceLock::new();
+
+-fn debug_enabled() -> bool {
+-    env::var("FRZ_DEBUG_IMAGE").is_ok()
+-}
+-
+-pub(crate) fn debug_log(message: impl AsRef<str>) {
+-    if debug_enabled() {
+-        eprintln!("[frz:image] {}", message.as_ref());
+-    }
+-}
+-
+ /// Probe the running terminal for graphics protocol support.
+ ///
+ /// This must be called after the terminal enters raw mode and alternate
+ /// screen, but before event polling starts. Subsequent calls are cheap because
+ /// the detection result is memoised.
+ pub fn initialize() -> Result<()> {
+     if GRAPHICS.get().is_none() {
+-        debug_log("probing terminal graphics capabilities");
++        log::debug!(target: "frz::preview::image", "probing terminal graphics capabilities");
+         let backend = detect_backend()?;
+         let _ = GRAPHICS.set(backend);
+     }
+     Ok(())
+ }
+
+ /// Retrieve the cached graphics backend, if detection ran successfully.
+ pub fn backend() -> Option<&'static GraphicsBackend> {
+     GRAPHICS.get()
+ }
+
+ fn detect_backend() -> Result<GraphicsBackend> {
+     match Picker::from_query_stdio() {
+         Ok(picker) => {
+-            debug_log(&format!(
++            log::debug!(
++                target: "frz::preview::image",
+                 "protocol detected: {:?}, font size {:?}",
+                 picker.protocol_type(),
+                 picker.font_size()
+-            ));
++            );
+             Ok(GraphicsBackend {
+                 picker,
+                 warning: None,
+             })
+         }
+         Err(error) => {
+             // Fall back to a sensible default that at least provides unicode
+             // half-block rendering. `ratatui-image` picks a reasonable
+             // character cell size for this scenario, so we can still render an
+             // approximate preview while alerting the user that richer
+             // protocols were unavailable.
+             let picker = Picker::from_fontsize((10, 20));
+             let warning = format!(
+                 "Image protocol detection failed ({error}); falling back to unicode half blocks"
+             );
+             let backend = GraphicsBackend {
+                 picker,
+                 warning: Some(warning),
+             };
+-            debug_log(&format!("protocol detection failed: {error}"));
+-            debug_log("falling back to unicode half-block renderer");
++            log::warn!(
++                target: "frz::preview::image",
++                "protocol detection failed: {error}"
++            );
++            log::warn!(
++                target: "frz::preview::image",
++                "falling back to unicode half-block renderer"
++            );
+             Ok(backend)
+         }
+     }
+ }
+diff --git a/src/settings/ui.rs b/src/settings/ui.rs
+index 81d8437f655a966a457fac7319310753b0a77c2d..d18afcfd73c738de3e7f0e93fd3ddf87222a8060 100644
+--- a/src/settings/ui.rs
++++ b/src/settings/ui.rs
+@@ -34,64 +34,65 @@ pub(super) fn apply_pane_config(target: &mut PaneUiConfig, pane: PaneSection) {
+         target.table_title = value;
+     }
+     if let Some(value) = pane.count_label {
+         target.count_label = value;
+     }
+ }
+
+ /// Parse a start mode string into a strongly typed [`SearchMode`].
+ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
+     let trimmed = value.trim();
+     if trimmed.is_empty() {
+         bail!("start mode cannot be empty");
+     }
+     let id = trimmed.to_ascii_lowercase();
+     let mut registry = ExtensionCatalog::new();
+     frz::extensions::builtin::register_builtin_extensions(&mut registry)?;
+     registry
+         .mode_by_id(&id)
+         .or_else(|| registry.mode_by_id(trimmed))
+         .ok_or_else(|| anyhow!("unknown start mode '{trimmed}'"))
+ }
+
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+-    use frz::extensions::builtin::{attributes, files};
++    use frz::extensions::builtin::{attributes, files, logger};
+
+     #[test]
+     fn default_preset_is_returned_for_empty_input() {
+         let config = ui_from_preset(Some("   ")).unwrap();
+         let default = UiConfig::default();
+
+         assert_eq!(config.filter_label, default.filter_label);
+         let attributes_mode = attributes::mode();
+         let config_attributes = config.pane(attributes_mode).unwrap();
+         let default_attributes = default.pane(attributes_mode).unwrap();
+         assert_eq!(config_attributes.mode_title, default_attributes.mode_title);
+     }
+
+     #[test]
+     fn parse_mode_supports_known_variants() {
+         assert_eq!(parse_mode("attributes").unwrap(), attributes::mode());
+         assert_eq!(parse_mode("FILES").unwrap(), files::mode());
++        assert_eq!(parse_mode("logs").unwrap(), logger::mode());
+         assert!(parse_mode("unknown").is_err());
+     }
+
+     #[test]
+     fn apply_pane_config_overrides_fields() {
+         let mut target = PaneUiConfig::new("a", "b", "c", "d");
+         let pane = PaneSection {
+             mode_title: Some("Mode".into()),
+             hint: Some("Hint".into()),
+             table_title: Some("Table".into()),
+             count_label: Some("Count".into()),
+         };
+
+         apply_pane_config(&mut target, pane);
+
+         assert_eq!(target.mode_title, "Mode");
+         assert_eq!(target.hint, "Hint");
+         assert_eq!(target.table_title, "Table");
+         assert_eq!(target.count_label, "Count");
+     }
+ }
+diff --git a/src/ui/actions.rs b/src/ui/actions.rs
+index 2c7177185ed89804245711f0604a580b53ebf263..72e99627f71690324f4f7f64215876fe013ba357 100644
+--- a/src/ui/actions.rs
++++ b/src/ui/actions.rs
+@@ -1,65 +1,76 @@
+ use anyhow::Result;
+ use ratatui::crossterm::event::{KeyCode, KeyEvent};
+
+-use crate::extensions::api::SearchOutcome;
++use crate::extensions::api::{PreviewSplitStore, SearchOutcome};
+
+ use super::App;
+
+ impl<'a> App<'a> {
+     pub(crate) fn handle_key(&mut self, key: KeyEvent) -> Result<Option<SearchOutcome>> {
+         match key.code {
+             KeyCode::Esc => {
+                 return Ok(Some(SearchOutcome {
+                     accepted: false,
+                     selection: None,
+                     query: self.search_input.text().to_string(),
+                 }));
+             }
+             KeyCode::Enter => {
+                 let selection = self.current_selection();
+                 return Ok(Some(SearchOutcome {
+                     accepted: true,
+                     selection,
+                     query: self.search_input.text().to_string(),
+                 }));
+             }
+             KeyCode::Tab => {
+                 self.mark_query_dirty();
+                 self.switch_mode();
+             }
+-            KeyCode::Up => {
+-                self.move_selection_up();
+-            }
+-            KeyCode::Down => {
+-                self.move_selection_down();
+-            }
+             _ => {
++                let scope = self.contributions().scope(self.mode);
++                if let Some(preview) = scope.resolve::<PreviewSplitStore>() {
++                    if preview.handle_key(key) {
++                        return Ok(None);
++                    }
++                }
++
++                match key.code {
++                    KeyCode::Up => {
++                        self.move_selection_up();
++                    }
++                    KeyCode::Down => {
++                        self.move_selection_down();
++                    }
++                    _ => {
+                 if self.search_input.input(key) {
+                     self.mark_query_dirty_from_user_input();
+                     self.request_search();
+                 }
++                    }
++                }
+             }
+         }
+         Ok(None)
+     }
+
+     fn switch_mode(&mut self) {
+         let tabs = self.ui.tabs();
+         if tabs.is_empty() {
+             return;
+         }
+         let current = tabs
+             .iter()
+             .position(|tab| tab.mode == self.mode)
+             .unwrap_or(0);
+         let next = (current + 1) % tabs.len();
+         let next_mode = tabs[next].mode;
+         self.set_mode(next_mode);
+     }
+
+     fn move_selection_up(&mut self) {
+         if let Some(selected) = self.table_state.selected()
+             && selected > 0
+         {
+             self.table_state.select(Some(selected - 1));
+         }
+diff --git a/src/ui/builder.rs b/src/ui/builder.rs
+index d5c0d775022ad70c6611983d8b7fb1b29a8a7d62..39a2a1ca4796cd5e7c3fdc4a32b41725a6d9bb15 100644
+--- a/src/ui/builder.rs
++++ b/src/ui/builder.rs
+@@ -8,50 +8,51 @@ use super::App;
+ use super::config::UiConfig;
+ use crate::extensions::api::{ExtensionCatalog, SearchData, SearchMode, SearchOutcome};
+ use crate::systems::filesystem::{FilesystemOptions, IndexResult, spawn_filesystem_index};
+ pub use crate::tui::theme::Theme;
+
+ /// A small builder for configuring the interactive search UI.
+ /// This presents an fzf-like API for setting prompts, column
+ /// headings and column widths before running the interactive picker.
+ pub struct SearchUi {
+     data: SearchData,
+     input_title: Option<String>,
+     headers: HashMap<SearchMode, Vec<String>>,
+     widths: HashMap<SearchMode, Vec<Constraint>>,
+     ui_config: Option<UiConfig>,
+     theme: Option<Theme>,
+     bat_theme: Option<String>,
+     start_mode: Option<SearchMode>,
+     extensions: ExtensionCatalog,
+     index_updates: Option<Receiver<IndexResult>>,
+     git_modifications: bool,
+ }
+
+ impl SearchUi {
+     /// Create a new search UI for the provided data.
+     pub fn new(data: SearchData) -> Self {
++        crate::logging::initialize();
+         let mut extensions = ExtensionCatalog::default();
+         crate::extensions::builtin::register_builtin_extensions(&mut extensions)
+             .expect("builtin extensions must register successfully");
+
+         Self {
+             data,
+             input_title: None,
+             headers: HashMap::new(),
+             widths: HashMap::new(),
+             ui_config: None,
+             theme: None,
+             bat_theme: None,
+             start_mode: None,
+             extensions,
+             index_updates: None,
+             git_modifications: true,
+         }
+     }
+
+     /// Create a search UI pre-populated with files from the filesystem rooted at `path`.
+     pub fn filesystem(path: impl AsRef<std::path::Path>) -> Result<Self> {
+         Self::filesystem_with_options(path.as_ref().to_path_buf(), FilesystemOptions::default())
+     }
+
+     pub fn filesystem_with_options(
+@@ -162,27 +163,32 @@ impl SearchUi {
+     }
+
+     fn with_headers(mut self, mode: SearchMode, headers: Vec<String>) -> Self {
+         self.headers.insert(mode, headers);
+         self
+     }
+ }
+
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+     use crate::extensions::builtin::{attributes, files};
+
+     #[test]
+     fn builder_registers_builtin_extensions() {
+         let ui = SearchUi::new(SearchData::new());
+
+         assert!(
+             ui.extensions.contains_mode(attributes::mode()),
+             "expected attributes extension to be registered"
+         );
+         assert!(
+             ui.extensions.contains_mode(files::mode()),
+             "expected files extension to be registered"
+         );
++        assert!(
++            ui.extensions
++                .contains_mode(crate::extensions::builtin::logger::mode()),
++            "expected logger extension to be registered"
++        );
+     }
+ }
+diff --git a/src/ui/render.rs b/src/ui/render.rs
+index f0482a7360ecbd6353536e1716c0eed0a6543c73..10f30e8ab069a17336495018467a7d92c0298e55 100644
+--- a/src/ui/render.rs
++++ b/src/ui/render.rs
+@@ -1,224 +1,276 @@
+ use ratatui::{
+     Frame,
+     layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
+     style::Style,
+     text::{Line, Span, Text},
+     widgets::{Clear, Paragraph},
+ };
+
+ use crate::extensions::api::{
+-    Icon, PreviewSplitContext, PreviewSplitStore, SelectionResolverStore,
++    Icon, PreviewLayout, PreviewSplitContext, PreviewSplitStore, SelectionResolverStore,
+ };
++use crate::logging;
+ use crate::systems::search;
+ use crate::tui::components::{
+     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
+ };
+ pub use crate::tui::theme::Theme;
+ use frizbee::Options;
+
+ use super::App;
+
+ impl<'a> App<'a> {
+     pub(crate) fn draw(&mut self, frame: &mut Frame) {
++        logging::pump();
++
+         let area = frame.area();
+         let area = area.inner(Margin {
+             vertical: 0,
+             horizontal: 1,
+         });
+
+         let layout = Layout::default()
+             .direction(Direction::Vertical)
+             .constraints([Constraint::Length(1), Constraint::Min(1)])
+             .split(area);
+
+         let (progress_text, progress_complete) = self.progress_status();
+         let tabs = self
+             .ui
+             .tabs()
+             .iter()
+             .map(|tab| TabItem {
+                 mode: tab.mode,
+                 label: tab.tab_label.as_str(),
+             })
+             .collect::<Vec<_>>();
+         let input_ctx = InputContext {
+             search_input: &self.search_input,
+             input_title: self.input_title.as_deref(),
+             pane_title: self.ui.pane(self.mode).map(|pane| pane.mode_title.as_str()),
+             mode: self.mode,
+             tabs: &tabs,
+             area: layout[0],
+             theme: &self.theme,
+         };
+         let progress_state = ProgressState {
+             progress_text: &progress_text,
+             progress_complete,
+             throbber_state: &self.throbber_state,
+         };
+         render_input_with_tabs(frame, input_ctx, progress_state);
+         let results_area = layout[1];
+-        self.render_results(frame, results_area);
++        let preview_layout = self.render_results(frame, results_area);
+
+-        if self.filtered_len() == 0 {
++        if self.filtered_len() == 0 && preview_layout != PreviewLayout::PreviewOnly {
+             let mut message_area = results_area;
+             const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
+             if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
+                 message_area.y += HEADER_AND_DIVIDER_HEIGHT;
+                 message_area.height -= HEADER_AND_DIVIDER_HEIGHT;
+
+                 let empty = Paragraph::new("No results")
+                     .alignment(Alignment::Center)
+                     .style(Theme::default().empty_style());
+                 frame.render_widget(Clear, message_area);
+                 frame.render_widget(empty, message_area);
+             }
+         }
+     }
+
+     fn progress_status(&mut self) -> (String, bool) {
+         let mut labels = Vec::new();
+         for tab in self.ui.tabs() {
+             labels.push((tab.mode.id(), tab.pane.count_label.clone()));
+         }
+         self.index_progress.status(&labels)
+     }
+
+-    fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
++    fn render_results(
++        &mut self,
++        frame: &mut Frame,
++        area: ratatui::layout::Rect,
++    ) -> PreviewLayout {
+         let descriptor = self.mode.descriptor();
+         let dataset = descriptor.dataset;
+         let scope = self.contributions().scope(self.mode);
+         let preview_split = scope.resolve::<PreviewSplitStore>();
+         let selection_resolver = scope.resolve::<SelectionResolverStore>();
+         let preview_icon = preview_split.as_ref().and_then(|split| split.header_icon());
+         let query = self.search_input.text().to_string();
+
+-        let (table_area, preview_area) = if preview_split.is_some() {
+-            let [table_area, preview_area] =
+-                Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+-                    .areas(area);
+-            (table_area, Some(preview_area))
+-        } else {
+-            (area, None)
+-        };
+-
+         const HEADER_HEIGHT: u16 = 1;
+         let capability_title = self.ui.mode_table_title(self.mode).to_string();
++        let preview_layout = preview_split
++            .as_ref()
++            .map(|split| split.layout())
++            .unwrap_or(PreviewLayout::Split);
++
++        let mut table_area_opt = Some(area);
+         let mut preview_header_area = None;
+-        let mut preview_content_area = preview_area;
+-        if let Some(area) = preview_area
+-            && area.height > 0
+-        {
+-            let header_height = HEADER_HEIGHT.min(area.height);
+-            preview_header_area = Some(Rect {
+-                x: area.x,
+-                y: area.y,
+-                width: area.width,
+-                height: header_height,
+-            });
+-
+-            let total_width = area
+-                .x
+-                .saturating_add(area.width)
+-                .saturating_sub(table_area.x);
+-            let header_rect = Rect {
+-                x: table_area.x,
+-                y: table_area.y,
+-                width: total_width,
+-                height: header_height,
+-            };
+-
+-            render_split_header_background(frame, header_rect, &self.theme);
+-
+-            let content_height = area.height.saturating_sub(header_height);
+-            if content_height > 0 {
+-                preview_content_area = Some(Rect {
+-                    x: area.x,
+-                    y: area.y + header_height,
+-                    width: area.width,
+-                    height: content_height,
+-                });
+-            } else {
+-                preview_content_area = None;
++        let mut preview_content_area = None;
++
++        match preview_layout {
++            PreviewLayout::Split => {
++                if preview_split.is_some() {
++                    let [table_area, preview_area] = Layout::horizontal([
++                        Constraint::Percentage(50),
++                        Constraint::Percentage(50),
++                    ])
++                    .areas(area);
++                    table_area_opt = Some(table_area);
++
++                    if preview_area.height > 0 {
++                        let header_height = HEADER_HEIGHT.min(preview_area.height);
++                        preview_header_area = Some(Rect {
++                            x: preview_area.x,
++                            y: preview_area.y,
++                            width: preview_area.width,
++                            height: header_height,
++                        });
++
++                        let total_width = preview_area
++                            .x
++                            .saturating_add(preview_area.width)
++                            .saturating_sub(table_area.x);
++                        let header_rect = Rect {
++                            x: table_area.x,
++                            y: table_area.y,
++                            width: total_width,
++                            height: header_height,
++                        };
++
++                        render_split_header_background(frame, header_rect, &self.theme);
++
++                        let content_height = preview_area.height.saturating_sub(header_height);
++                        if content_height > 0 {
++                            preview_content_area = Some(Rect {
++                                x: preview_area.x,
++                                y: preview_area.y + header_height,
++                                width: preview_area.width,
++                                height: content_height,
++                            });
++                        }
++                    }
++                } else {
++                    preview_content_area = None;
++                }
++            }
++            PreviewLayout::PreviewOnly => {
++                table_area_opt = None;
++                if preview_split.is_some() && area.height > 0 {
++                    let header_height = HEADER_HEIGHT.min(area.height);
++                    preview_header_area = Some(Rect {
++                        x: area.x,
++                        y: area.y,
++                        width: area.width,
++                        height: header_height,
++                    });
++
++                    let header_rect = Rect {
++                        x: area.x,
++                        y: area.y,
++                        width: area.width,
++                        height: header_height,
++                    };
++                    render_split_header_background(frame, header_rect, &self.theme);
++
++                    let content_height = area.height.saturating_sub(header_height);
++                    if content_height > 0 {
++                        preview_content_area = Some(Rect {
++                            x: area.x,
++                            y: area.y + header_height,
++                            width: area.width,
++                            height: content_height,
++                        });
++                    }
++                }
+             }
+         }
+
+         let highlight_owned = self.highlight_for_query(dataset.total_count(&self.data));
+         let highlight_state = highlight_owned
+             .as_ref()
+             .map(|(text, config)| (text.as_str(), *config));
+         {
+             let state = self.tab_states.entry(self.mode).or_default();
+-            render_table(
+-                frame,
+-                table_area,
+-                &mut self.table_state,
+-                dataset,
+-                &self.theme,
+-                TableRenderContext {
+-                    area: table_area,
+-                    filtered: &state.filtered,
+-                    scores: &state.scores,
+-                    headers: state.headers.as_ref(),
+-                    widths: state.widths.as_ref(),
+-                    highlight: highlight_state,
+-                    scope: scope.clone(),
+-                    data: &self.data,
+-                },
+-            );
++            if let Some(table_area) = table_area_opt {
++                render_table(
++                    frame,
++                    table_area,
++                    &mut self.table_state,
++                    dataset,
++                    &self.theme,
++                    TableRenderContext {
++                        area: table_area,
++                        filtered: &state.filtered,
++                        scores: &state.scores,
++                        headers: state.headers.as_ref(),
++                        widths: state.widths.as_ref(),
++                        highlight: highlight_state,
++                        scope: scope.clone(),
++                        data: &self.data,
++                    },
++                );
++            }
+
+             if let (Some(preview), Some(preview_area)) =
+                 (preview_split.clone(), preview_content_area)
+             {
+                 let selected = self.table_state.selected();
+                 let selection_resource = selection_resolver
+                     .as_ref()
+                     .and_then(|resolver| resolver.resolve(&self.data, &state.filtered, selected));
+                 let context = PreviewSplitContext::new(
+                     &self.data,
+                     &state.filtered,
+                     &state.scores,
+                     selected,
+                     selection_resource,
+                     query.as_str(),
+                     self.bat_theme.as_deref(),
+                     self.git_modifications,
+                 );
+                 preview.render_preview(frame, preview_area, context);
+             }
+         }
+
+         if let Some(header_area) = preview_header_area {
+             render_split_header_title(
+                 frame,
+                 header_area,
+                 &self.theme,
+                 &capability_title,
+                 preview_icon,
+             );
+-            render_split_header_separator(frame, table_area, header_area, &self.theme);
++            if let Some(table_area) = table_area_opt {
++                render_split_header_separator(frame, table_area, header_area, &self.theme);
++            }
+         }
++
++        preview_layout
+     }
+
+     fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {
+         let query = self.search_input.text().trim();
+         if query.is_empty() {
+             return None;
+         }
+         let config = search::config_for_query(query, dataset_len);
+         Some((query.to_string(), config))
+     }
+ }
+
+ fn render_split_header_background(frame: &mut Frame, header_rect: Rect, theme: &Theme) {
+     if header_rect.width == 0 || header_rect.height == 0 {
+         return;
+     }
+
+     let fill = " ".repeat(header_rect.width as usize);
+     let background = Paragraph::new(fill).style(Style::new().bg(theme.header_bg()));
+     frame.render_widget(background, header_rect);
+ }
+
+ fn render_split_header_separator(
+     frame: &mut Frame,
+     table_area: Rect,
+diff --git a/src/ui/runtime/snapshots/frz__ui__runtime__tests__initial_files_tab_render_captures_missing_results.snap b/src/ui/runtime/snapshots/frz__ui__runtime__tests__initial_files_tab_render_captures_missing_results.snap
+index 332b92d48e6f08b162ee12293a3ec3b349071bcf..4f51fd6a36c5d7aa576d33a5a70f487f4075af7d 100644
+--- a/src/ui/runtime/snapshots/frz__ui__runtime__tests__initial_files_tab_render_captures_missing_results.snap
++++ b/src/ui/runtime/snapshots/frz__ui__runtime__tests__initial_files_tab_render_captures_missing_results.snap
+@@ -1,25 +1,25 @@
+ ---
+ source: src/ui/runtime/tests.rs
+ assertion_line: 69
+ expression: view
+ ---
+-" File search >          Indexed attributes: 3 • Indexed Files: 3  Tags   Files  "
++" File search >   Indexed attributes: 3 • Indexed Files: 3  Tags   Files   Logs  "
+ "   Path             Tags        Score              󰍉 Matching files             "
+ "  ────────────────────────────────────────────────────────────────────────────  "
+ " ▶  README.md      *.md        0                                               "
+ "    src/lib.rs     *.rs, src   0                                               "
+ "    src/main.rs    *.rs, src   0                                               "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+ "                                                                                "
+diff --git a/src/ui/runtime/snapshots/frz__ui__runtime__tests__logger_preview_displays_runtime_logs_snapshot.snap b/src/ui/runtime/snapshots/frz__ui__runtime__tests__logger_preview_displays_runtime_logs_snapshot.snap
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7106b27ccb9fe554567bfa5129973aafa0d3f94
+--- /dev/null
++++ b/src/ui/runtime/snapshots/frz__ui__runtime__tests__logger_preview_displays_runtime_logs_snapshot.snap
+@@ -0,0 +1,30 @@
++---
++source: src/ui/runtime/tests.rs
++assertion_line: 230
++expression: view
++---
++" Log viewer > Indexed attributes: 0 • Indexed Files: 0 • Indexed Lo  Tags   Files   Logs  "
++"                                      Logger controls                                     "
++" ┌Targets──────────────────┐┌Runtime log [log=<rate>]───────────────────────────────────┐ "
++" │EWIDT:frz::preview::image││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
++" │EWIDT:frz::tests::logger ││         image transport negotiated sixel protocol         │ "
++" │                         ││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
++" │                         ││         image transport enabled debug diagnostics         │ "
++" │                         ││<time>:E:frz::tests::logger:src/ui/runtime/tests.rs:<line>:f│ "
++" │                         ││         ailed to attach to remote debugger: connection ref│ "
++" │                         ││         used                                              │ "
++" │                         ││<time>:W:frz::tests::logger:src/ui/runtime/tests.rs:<line>:f│ "
++" │                         ││         alling back to offline analysis mode              │ "
++" │                         ││<time>:I:frz::tests::logger:src/ui/runtime/tests.rs:<line>:q│ "
++" │                         ││         ueued 3 indexing tasks for the diagnostics subsyst│ "
++" │                         ││         em                                                │ "
++" │                         ││<time>:D:frz::tests::logger:src/ui/runtime/tests.rs:<line>:p│ "
++" │                         ││         oll cycle completed with 3 queued tasks           │ "
++" │                         ││<time>:I:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
++" │                         ││         tui graphics backend initialised for snapshot test│ "
++" │                         ││         ing                                               │ "
++" │                         ││<time>:D:frz::preview::image:src/ui/runtime/tests.rs:<line>:│ "
++" │                         ││         kitty graphics handshake acknowledged in debug mod│ "
++" │                         ││         e                                                 │ "
++" │                         ││                                                           │ "
++" └─────────────────────────┘└───────────────────────────────────────────────────────────┘ "
+diff --git a/src/ui/runtime/snapshots/frz__ui__runtime__tests__massive_filesystem_initial_load_shows_preview_snapshot.snap b/src/ui/runtime/snapshots/frz__ui__runtime__tests__massive_filesystem_initial_load_shows_preview_snapshot.snap
+index 911c6d254c76c73b3ad4208ff0fe1c2c438a89b1..eef484616ed8984387baa8f55dd65e9c38b6a32c 100644
+--- a/src/ui/runtime/snapshots/frz__ui__runtime__tests__massive_filesystem_initial_load_shows_preview_snapshot.snap
++++ b/src/ui/runtime/snapshots/frz__ui__runtime__tests__massive_filesystem_initial_load_shows_preview_snapshot.snap
+@@ -1,31 +1,31 @@
+ ---
+ source: src/ui/runtime/tests.rs
+-assertion_line: 174
++assertion_line: 176
+ expression: view
+ ---
+-" File search >                 ⠯ Indexed attributes: 246 • Indexed Files: 512/125000  Tags   Files  "
++" File search >          ⠯ Indexed attributes: 246 • Indexed Files: 512/125000  Tags   Files   Logs  "
+ "   Path                    Tags           Score                   󰍉 Matching files                  "
+ "  ────────────────────────────────────────────────────────────────────────────────────────────────  "
+ " ▶ 󰈙 …0000/file_000000.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000001.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000002.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000003.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000004.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000005.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000006.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000007.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000008.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000009.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000010.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000011.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000012.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000013.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000014.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000015.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000016.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000017.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000018.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000019.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000020.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000021.txt *.txt, dir_00… 0                                                         "
+ "   󰈙 …0000/file_000022.txt *.txt, dir_00… 0                                                         "
+diff --git a/src/ui/runtime/tests.rs b/src/ui/runtime/tests.rs
+index 1ff6f66c39b8f290485fd2fc2d9039d0246a33dc..7c37d6b16206b10e0f29a7c928340ae972e1f033 100644
+--- a/src/ui/runtime/tests.rs
++++ b/src/ui/runtime/tests.rs
+@@ -1,27 +1,29 @@
+ use crate::extensions::api::{AttributeRow, FileRow, SearchData, search::Fs};
+-use crate::extensions::builtin::files;
++use crate::extensions::builtin::{files, logger};
++use crate::logging;
++use log::LevelFilter;
+ use crate::systems::filesystem::{IndexKind, IndexStream, IndexUpdate, ProgressSnapshot};
+ use crate::ui::App;
+ use ratatui::{Terminal, backend::TestBackend};
+ use std::io;
+ use std::path::{Path, PathBuf};
+ use std::sync::mpsc;
+ use std::thread;
+ use std::time::{Duration, Instant};
+
+ fn capture_view(app: &mut App, terminal: &mut Terminal<TestBackend>) -> String {
+     let deadline = Instant::now() + Duration::from_secs(1);
+
+     loop {
+         terminal.draw(|frame| app.draw(frame)).unwrap();
+
+         let view = terminal.backend().to_string();
+
+         if !view.contains("Loading preview for") || Instant::now() >= deadline {
+             return view;
+         }
+
+         thread::sleep(Duration::from_millis(25));
+     }
+ }
+
+@@ -156,25 +158,114 @@ fn massive_filesystem_initial_load_shows_preview_snapshot() {
+                 complete: false,
+             },
+             reset: true,
+             cached_data: None,
+         },
+         false,
+     );
+
+     app.pump_index_updates();
+     app.pump_search_results();
+     assert!(
+         app.filtered_len() > 0,
+         "expected preview results to be visible during indexing"
+     );
+
+     app.throbber_state.calc_next();
+
+     let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+     let view = capture_view(&mut app, &mut terminal);
+
+     insta::assert_snapshot!(
+         "massive_filesystem_initial_load_shows_preview_snapshot",
+         view
+     );
+ }
++
++#[test]
++fn logger_preview_displays_runtime_logs_snapshot() {
++    logging::initialize();
++    tui_logger::set_default_level(LevelFilter::Trace);
++    tui_logger::set_level_for_target("frz::tests::logger", LevelFilter::Trace);
++    tui_logger::set_level_for_target("frz::preview::image", LevelFilter::Trace);
++
++    let mut app = App::new(SearchData::new());
++    app.set_mode(logger::mode());
++    app.hydrate_initial_results();
++
++    log::error!(
++        target: "frz::tests::logger",
++        "failed to attach to remote debugger: connection refused"
++    );
++    log::warn!(
++        target: "frz::tests::logger",
++        "falling back to offline analysis mode"
++    );
++    log::info!(
++        target: "frz::tests::logger",
++        "queued 3 indexing tasks for the diagnostics subsystem"
++    );
++    log::debug!(
++        target: "frz::tests::logger",
++        "poll cycle completed with 3 queued tasks"
++    );
++    log::info!(
++        target: "frz::preview::image",
++        "tui graphics backend initialised for snapshot testing"
++    );
++    log::debug!(
++        target: "frz::preview::image",
++        "kitty graphics handshake acknowledged in debug mode"
++    );
++
++    tui_logger::move_events();
++
++    let mut terminal = Terminal::new(TestBackend::new(90, 25)).unwrap();
++    let view = capture_view(&mut app, &mut terminal);
++
++    let mut settings = insta::Settings::clone_current();
++    settings.add_filter(r"\d{2}:\d{2}:\d{2}", "<time>");
++    settings.add_filter(r"tests\.rs:\d+", "tests.rs:<line>");
++    settings.add_filter(r"\[log=[^\]]+\]", "[log=<rate>]");
++    settings.bind(|| {
++        insta::assert_snapshot!("logger_preview_displays_runtime_logs_snapshot", view);
++    });
++}
++
++#[test]
++fn image_debug_logs_captured_when_inactive() {
++    logging::initialize();
++    tui_logger::set_level_for_target("frz::preview::image", LevelFilter::Trace);
++
++    let mut app = App::new(SearchData::new());
++    assert_ne!(app.mode, logger::mode());
++    app.hydrate_initial_results();
++
++    log::debug!(
++        target: "frz::preview::image",
++        "image transport negotiated sixel protocol",
++    );
++    log::debug!(
++        target: "frz::preview::image",
++        "image transport enabled debug diagnostics",
++    );
++
++    {
++        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
++        let _ = capture_view(&mut app, &mut terminal);
++    }
++
++    app.set_mode(logger::mode());
++    app.hydrate_initial_results();
++
++    let mut terminal = Terminal::new(TestBackend::new(90, 25)).unwrap();
++    let view = capture_view(&mut app, &mut terminal);
++
++    assert!(
++        view.contains("negotiated sixel"),
++        "expected inactive preview debug logs to be captured"
++    );
++    assert!(
++        view.contains("debug diagnostics"),
++        "expected subsequent debug logs to appear after switching tabs"
++    );
++}
+diff --git a/src/ui/state/app.rs b/src/ui/state/app.rs
+index 4de8087d107096114b0d1f176caf14d68c65ccc2..e35a8239b38c80eb8f2b2e96b5cfa8d34cd23349 100644
+--- a/src/ui/state/app.rs
++++ b/src/ui/state/app.rs
+@@ -46,58 +46,60 @@ pub struct App<'a> {
+     pub(crate) bat_theme: Option<String>,
+     pub(crate) git_modifications: bool,
+     pub(crate) throbber_state: ThrobberState,
+     pub(crate) index_progress: IndexProgress,
+     pub(crate) tab_states: HashMap<SearchMode, TabBuffers>,
+     pub(crate) row_id_maps: HashMap<SearchMode, HashMap<u64, usize>>,
+     extensions: ExtensionCatalog,
+     pub(crate) index_updates: Option<Receiver<IndexResult>>,
+     pub(in crate::ui) search: SearchRuntime,
+     pub(crate) initial_results_deadline: Option<Instant>,
+     pub(crate) initial_results_timeout: Option<Duration>,
+ }
+
+ /// Cache of rendered rows for a specific tab.
+ #[derive(Default)]
+ pub(crate) struct TabBuffers {
+     pub filtered: Vec<usize>,
+     pub scores: Vec<u16>,
+     pub headers: Option<Vec<String>>,
+     pub widths: Option<Vec<ratatui::layout::Constraint>>,
+ }
+
+ impl<'a> App<'a> {
+     /// Construct an [`App`] with the builtin extension catalog.
+     pub fn new(data: SearchData) -> Self {
++        crate::logging::initialize();
+         let mut extensions = ExtensionCatalog::default();
+         crate::extensions::builtin::register_builtin_extensions(&mut extensions)
+             .expect("builtin extensions must register successfully");
+         Self::with_extensions(data, extensions)
+     }
+
+     /// Construct an [`App`] using the provided extension catalog.
+     pub fn with_extensions(data: SearchData, extensions: ExtensionCatalog) -> Self {
++        crate::logging::initialize();
+         let mut table_state = TableState::default();
+         table_state.select(Some(0));
+         let initial_query = data.initial_query.clone();
+         let context_label = data.context_label.clone();
+         let mut index_progress = IndexProgress::new();
+         let worker_extensions = extensions.clone();
+         let (search_tx, search_rx, search_latest_query_id) =
+             search::spawn(data.clone(), worker_extensions);
+         let search = SearchRuntime::new(search_tx, search_rx, search_latest_query_id);
+         let mut tab_states = HashMap::new();
+         for module in extensions.modules() {
+             let mode = module.mode();
+             tab_states.insert(mode, TabBuffers::default());
+             index_progress.register_dataset(module.descriptor().dataset.key());
+         }
+         let mut ui = UiConfig::default();
+         for descriptor in extensions.descriptors() {
+             ui.register_extension(descriptor);
+         }
+         let mode = extensions
+             .modules()
+             .next()
+             .map(|module| module.mode())
+             .or_else(|| ui.tabs().first().map(|tab| tab.mode))
+             .unwrap_or_else(crate::extensions::builtin::attributes::mode);
+

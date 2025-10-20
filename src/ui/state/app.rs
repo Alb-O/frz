@@ -68,6 +68,7 @@ pub(crate) struct TabBuffers {
 impl<'a> App<'a> {
     /// Construct an [`App`] with the builtin extension catalog.
     pub fn new(data: SearchData) -> Self {
+        crate::logging::initialize();
         let mut extensions = ExtensionCatalog::default();
         crate::extensions::builtin::register_builtin_extensions(&mut extensions)
             .expect("builtin extensions must register successfully");
@@ -76,6 +77,7 @@ impl<'a> App<'a> {
 
     /// Construct an [`App`] using the provided extension catalog.
     pub fn with_extensions(data: SearchData, extensions: ExtensionCatalog) -> Self {
+        crate::logging::initialize();
         let mut table_state = TableState::default();
         table_state.select(Some(0));
         let initial_query = data.initial_query.clone();

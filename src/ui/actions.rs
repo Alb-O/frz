@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
-use crate::extensions::api::SearchOutcome;
+use crate::extensions::api::{PreviewSplitStore, SearchOutcome};
 
 use super::App;
 
@@ -27,16 +27,27 @@ impl<'a> App<'a> {
                 self.mark_query_dirty();
                 self.switch_mode();
             }
-            KeyCode::Up => {
-                self.move_selection_up();
-            }
-            KeyCode::Down => {
-                self.move_selection_down();
-            }
             _ => {
-                if self.search_input.input(key) {
-                    self.mark_query_dirty_from_user_input();
-                    self.request_search();
+                let scope = self.contributions().scope(self.mode);
+                if let Some(preview) = scope.resolve::<PreviewSplitStore>() {
+                    if preview.handle_key(key) {
+                        return Ok(None);
+                    }
+                }
+
+                match key.code {
+                    KeyCode::Up => {
+                        self.move_selection_up();
+                    }
+                    KeyCode::Down => {
+                        self.move_selection_down();
+                    }
+                    _ => {
+                        if self.search_input.input(key) {
+                            self.mark_query_dirty_from_user_input();
+                            self.request_search();
+                        }
+                    }
                 }
             }
         }

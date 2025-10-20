@@ -3,7 +3,7 @@ source: src/ui/runtime/tests.rs
 assertion_line: 69
 expression: view
 ---
-" File search >          Indexed attributes: 3 • Indexed Files: 3  Tags   Files  "
+" File search >   Indexed attributes: 3 • Indexed Files: 3  Tags   Files   Logs  "
 "   Path             Tags        Score              󰍉 Matching files             "
 "  ────────────────────────────────────────────────────────────────────────────  "
 " ▶  README.md      *.md        0                                               "

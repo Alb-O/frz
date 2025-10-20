@@ -7,7 +7,7 @@
 //! screen and before the main event loop begins. Running the probe once keeps
 //! preview rendering lightweight and avoids conflicting with the event reader.
 
-use std::{env, sync::OnceLock};
+use std::sync::OnceLock;
 
 use anyhow::Result;
 use ratatui_image::picker::Picker;
@@ -35,16 +35,6 @@ impl GraphicsBackend {
 
 static GRAPHICS: OnceLock<GraphicsBackend> = OnceLock::new();
 
-fn debug_enabled() -> bool {
-    env::var("FRZ_DEBUG_IMAGE").is_ok()
-}
-
-pub(crate) fn debug_log(message: impl AsRef<str>) {
-    if debug_enabled() {
-        eprintln!("[frz:image] {}", message.as_ref());
-    }
-}
-
 /// Probe the running terminal for graphics protocol support.
 ///
 /// This must be called after the terminal enters raw mode and alternate
@@ -52,7 +42,7 @@ pub(crate) fn debug_log(message: impl AsRef<str>) {
 /// the detection result is memoised.
 pub fn initialize() -> Result<()> {
     if GRAPHICS.get().is_none() {
-        debug_log("probing terminal graphics capabilities");
+        log::debug!(target: "frz::preview::image", "probing terminal graphics capabilities");
         let backend = detect_backend()?;
         let _ = GRAPHICS.set(backend);
     }
@@ -67,11 +57,12 @@ pub fn backend() -> Option<&'static GraphicsBackend> {
 fn detect_backend() -> Result<GraphicsBackend> {
     match Picker::from_query_stdio() {
         Ok(picker) => {
-            debug_log(&format!(
+            log::debug!(
+                target: "frz::preview::image",
                 "protocol detected: {:?}, font size {:?}",
                 picker.protocol_type(),
                 picker.font_size()
-            ));
+            );
             Ok(GraphicsBackend {
                 picker,
                 warning: None,
@@ -91,8 +82,14 @@ fn detect_backend() -> Result<GraphicsBackend> {
                 picker,
                 warning: Some(warning),
             };
-            debug_log(&format!("protocol detection failed: {error}"));
-            debug_log("falling back to unicode half-block renderer");
+            log::warn!(
+                target: "frz::preview::image",
+                "protocol detection failed: {error}"
+            );
+            log::warn!(
+                target: "frz::preview::image",
+                "falling back to unicode half-block renderer"
+            );
             Ok(backend)
         }
     }

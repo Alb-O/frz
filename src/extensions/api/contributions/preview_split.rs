@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use ratatui::crossterm::event::KeyEvent;
 use ratatui::{Frame, layout::Rect};
 
 use crate::extensions::api::descriptors::ExtensionDescriptor;
@@ -10,6 +11,15 @@ use crate::extensions::api::search::{SearchData, SearchMode};
 use super::{
     ContributionInstallContext, ContributionSpecImpl, Icon, PreviewResource, ScopedContribution,
 };
+
+/// Layout hints describing how a preview split should be rendered.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PreviewLayout {
+    /// Render the preview alongside the primary results table.
+    Split,
+    /// Render the preview using the full available width, hiding the results table.
+    PreviewOnly,
+}
 
 /// Context provided to preview split renderers when drawing the preview area.
 pub struct PreviewSplitContext<'a> {
@@ -90,6 +100,14 @@ pub trait PreviewSplit: Send + Sync {
 
     fn header_icon(&self) -> Option<Icon> {
         None
+    }
+
+    fn layout(&self) -> PreviewLayout {
+        PreviewLayout::Split
+    }
+
+    fn handle_key(&self, _key: KeyEvent) -> bool {
+        false
     }
 }
 

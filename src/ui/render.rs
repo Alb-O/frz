@@ -7,8 +7,9 @@ use ratatui::{
 };
 
 use crate::extensions::api::{
-    Icon, PreviewSplitContext, PreviewSplitStore, SelectionResolverStore,
+    Icon, PreviewLayout, PreviewSplitContext, PreviewSplitStore, SelectionResolverStore,
 };
+use crate::logging;
 use crate::systems::search;
 use crate::tui::components::{
     InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
@@ -20,6 +21,8 @@ use super::App;
 
 impl<'a> App<'a> {
     pub(crate) fn draw(&mut self, frame: &mut Frame) {
+        logging::pump();
+
         let area = frame.area();
         let area = area.inner(Margin {
             vertical: 0,
@@ -57,9 +60,9 @@ impl<'a> App<'a> {
         };
         render_input_with_tabs(frame, input_ctx, progress_state);
         let results_area = layout[1];
-        self.render_results(frame, results_area);
+        let preview_layout = self.render_results(frame, results_area);
 
-        if self.filtered_len() == 0 {
+        if self.filtered_len() == 0 && preview_layout != PreviewLayout::PreviewOnly {
             let mut message_area = results_area;
             const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
             if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
@@ -83,7 +86,7 @@ impl<'a> App<'a> {
         self.index_progress.status(&labels)
     }
 
-    fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
+    fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) -> PreviewLayout {
         let descriptor = self.mode.descriptor();
         let dataset = descriptor.dataset;
         let scope = self.contributions().scope(self.mode);
@@ -92,53 +95,92 @@ impl<'a> App<'a> {
         let preview_icon = preview_split.as_ref().and_then(|split| split.header_icon());
         let query = self.search_input.text().to_string();
 
-        let (table_area, preview_area) = if preview_split.is_some() {
-            let [table_area, preview_area] =
-                Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .areas(area);
-            (table_area, Some(preview_area))
-        } else {
-            (area, None)
-        };
-
         const HEADER_HEIGHT: u16 = 1;
         let capability_title = self.ui.mode_table_title(self.mode).to_string();
+        let preview_layout = preview_split
+            .as_ref()
+            .map(|split| split.layout())
+            .unwrap_or(PreviewLayout::Split);
+
+        let mut table_area_opt = Some(area);
         let mut preview_header_area = None;
-        let mut preview_content_area = preview_area;
-        if let Some(area) = preview_area
-            && area.height > 0
-        {
-            let header_height = HEADER_HEIGHT.min(area.height);
-            preview_header_area = Some(Rect {
-                x: area.x,
-                y: area.y,
-                width: area.width,
-                height: header_height,
-            });
+        let mut preview_content_area = None;
 
-            let total_width = area
-                .x
-                .saturating_add(area.width)
-                .saturating_sub(table_area.x);
-            let header_rect = Rect {
-                x: table_area.x,
-                y: table_area.y,
-                width: total_width,
-                height: header_height,
-            };
+        match preview_layout {
+            PreviewLayout::Split => {
+                if preview_split.is_some() {
+                    let [table_area, preview_area] = Layout::horizontal([
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ])
+                    .areas(area);
+                    table_area_opt = Some(table_area);
 
-            render_split_header_background(frame, header_rect, &self.theme);
+                    if preview_area.height > 0 {
+                        let header_height = HEADER_HEIGHT.min(preview_area.height);
+                        preview_header_area = Some(Rect {
+                            x: preview_area.x,
+                            y: preview_area.y,
+                            width: preview_area.width,
+                            height: header_height,
+                        });
 
-            let content_height = area.height.saturating_sub(header_height);
-            if content_height > 0 {
-                preview_content_area = Some(Rect {
-                    x: area.x,
-                    y: area.y + header_height,
-                    width: area.width,
-                    height: content_height,
-                });
-            } else {
-                preview_content_area = None;
+                        let total_width = preview_area
+                            .x
+                            .saturating_add(preview_area.width)
+                            .saturating_sub(table_area.x);
+                        let header_rect = Rect {
+                            x: table_area.x,
+                            y: table_area.y,
+                            width: total_width,
+                            height: header_height,
+                        };
+
+                        render_split_header_background(frame, header_rect, &self.theme);
+
+                        let content_height = preview_area.height.saturating_sub(header_height);
+                        if content_height > 0 {
+                            preview_content_area = Some(Rect {
+                                x: preview_area.x,
+                                y: preview_area.y + header_height,
+                                width: preview_area.width,
+                                height: content_height,
+                            });
+                        }
+                    }
+                } else {
+                    preview_content_area = None;
+                }
+            }
+            PreviewLayout::PreviewOnly => {
+                table_area_opt = None;
+                if preview_split.is_some() && area.height > 0 {
+                    let header_height = HEADER_HEIGHT.min(area.height);
+                    preview_header_area = Some(Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: area.width,
+                        height: header_height,
+                    });
+
+                    let header_rect = Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: area.width,
+                        height: header_height,
+                    };
+                    render_split_header_background(frame, header_rect, &self.theme);
+
+                    let content_height = area.height.saturating_sub(header_height);
+                    if content_height > 0 {
+                        preview_content_area = Some(Rect {
+                            x: area.x,
+                            y: area.y + header_height,
+                            width: area.width,
+                            height: content_height,
+                        });
+                    }
+                }
             }
         }
 
@@ -148,23 +190,25 @@ impl<'a> App<'a> {
             .map(|(text, config)| (text.as_str(), *config));
         {
             let state = self.tab_states.entry(self.mode).or_default();
-            render_table(
-                frame,
-                table_area,
-                &mut self.table_state,
-                dataset,
-                &self.theme,
-                TableRenderContext {
-                    area: table_area,
-                    filtered: &state.filtered,
-                    scores: &state.scores,
-                    headers: state.headers.as_ref(),
-                    widths: state.widths.as_ref(),
-                    highlight: highlight_state,
-                    scope: scope.clone(),
-                    data: &self.data,
-                },
-            );
+            if let Some(table_area) = table_area_opt {
+                render_table(
+                    frame,
+                    table_area,
+                    &mut self.table_state,
+                    dataset,
+                    &self.theme,
+                    TableRenderContext {
+                        area: table_area,
+                        filtered: &state.filtered,
+                        scores: &state.scores,
+                        headers: state.headers.as_ref(),
+                        widths: state.widths.as_ref(),
+                        highlight: highlight_state,
+                        scope: scope.clone(),
+                        data: &self.data,
+                    },
+                );
+            }
 
             if let (Some(preview), Some(preview_area)) =
                 (preview_split.clone(), preview_content_area)
@@ -195,8 +239,12 @@ impl<'a> App<'a> {
                 &capability_title,
                 preview_icon,
             );
-            render_split_header_separator(frame, table_area, header_area, &self.theme);
+            if let Some(table_area) = table_area_opt {
+                render_split_header_separator(frame, table_area, header_area, &self.theme);
+            }
         }
+
+        preview_layout
     }
 
     fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {

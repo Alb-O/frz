@@ -30,6 +30,7 @@ pub struct SearchUi {
 impl SearchUi {
     /// Create a new search UI for the provided data.
     pub fn new(data: SearchData) -> Self {
+        crate::logging::initialize();
         let mut extensions = ExtensionCatalog::default();
         crate::extensions::builtin::register_builtin_extensions(&mut extensions)
             .expect("builtin extensions must register successfully");
@@ -183,6 +184,11 @@ mod tests {
         assert!(
             ui.extensions.contains_mode(files::mode()),
             "expected files extension to be registered"
+        );
+        assert!(
+            ui.extensions
+                .contains_mode(crate::extensions::builtin::logger::mode()),
+            "expected logger extension to be registered"
         );
     }
 }

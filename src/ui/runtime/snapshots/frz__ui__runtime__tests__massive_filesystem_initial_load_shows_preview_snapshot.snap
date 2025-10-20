@@ -1,9 +1,9 @@
 ---
 source: src/ui/runtime/tests.rs
-assertion_line: 174
+assertion_line: 176
 expression: view
 ---
-" File search >                 ⠯ Indexed attributes: 246 • Indexed Files: 512/125000  Tags   Files  "
+" File search >          ⠯ Indexed attributes: 246 • Indexed Files: 512/125000  Tags   Files   Logs  "
 "   Path                    Tags           Score                   󰍉 Matching files                  "
 "  ────────────────────────────────────────────────────────────────────────────────────────────────  "
 " ▶ 󰈙 …0000/file_000000.txt *.txt, dir_00… 0                                                         "
