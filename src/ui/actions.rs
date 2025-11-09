@@ -29,10 +29,10 @@ impl<'a> App<'a> {
             }
             _ => {
                 let scope = self.contributions().scope(self.mode);
-                if let Some(preview) = scope.resolve::<PreviewSplitStore>() {
-                    if preview.handle_key(key) {
-                        return Ok(None);
-                    }
+                if let Some(preview) = scope.resolve::<PreviewSplitStore>()
+                    && preview.handle_key(key)
+                {
+                    return Ok(None);
                 }
 
                 match key.code {

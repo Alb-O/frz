@@ -204,11 +204,11 @@ fn render_cached(
         CachedImage::Ready { protocol, .. } => {
             let widget: StatefulImage<StatefulProtocol> = StatefulImage::default();
             frame.render_stateful_widget(widget, area, protocol);
-            if let Some(result) = protocol.last_encoding_result() {
-                if let Err(error) = result {
-                    let message = format!("Unable to render image {display_path}: {}", error);
-                    render_message(frame, area, &message);
-                }
+            if let Some(result) = protocol.last_encoding_result()
+                && let Err(error) = result
+            {
+                let message = format!("Unable to render image {display_path}: {}", error);
+                render_message(frame, area, &message);
             }
         }
         CachedImage::Failed { error, .. } => {

@@ -4,6 +4,7 @@
         ".direnv"
     ],
     "rust-analyzer.check.command": "clippy",
+    "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
     // https://twitter.com/sridca/status/1674947342607216641
     // "editor.inlayHints.enabled": "offUnlessPressed",
 }
