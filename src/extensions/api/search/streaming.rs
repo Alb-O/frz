@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use super::{
     EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, SearchData, aggregator::ScoreAggregator,
-    alphabetical::AlphabeticalCollector, attribute::AttributeRow, config::config_for_query,
-    file::FileRow, stream::SearchStream,
+    alphabetical::AlphabeticalCollector, file::{AttributeRow, FileRow},
+    stream::SearchStream, util::config_for_query,
 };
 
 /// Represents a collection that can be searched via fuzzy matching.

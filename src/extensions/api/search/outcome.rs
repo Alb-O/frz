@@ -1,5 +1,4 @@
-use super::attribute::AttributeRow;
-use super::file::FileRow;
+use super::file::{AttributeRow, FileRow};
 use super::mode::SearchMode;
 
 /// Captures the outcome of a search interaction.

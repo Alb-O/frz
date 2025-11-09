@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use super::attribute::AttributeRow;
-use super::file::{FileRow, tags_for_relative_path};
+use super::file::{AttributeRow, FileRow, tags_for_relative_path};
 use super::fs::{Fs, OsFs};
 
 /// Data displayed in the search interface, including attributes and files.

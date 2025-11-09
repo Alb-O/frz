@@ -11,5 +11,5 @@ pub use crate::extensions::api::{SearchStream, stream_attributes, stream_files};
 /// Re-exported systems that extensions can leverage.
 pub mod systems {
     pub use crate::systems::filesystem::extension as filesystem;
-    pub use crate::systems::search::extension as search;
+    pub use crate::systems::search as search;
 }

@@ -21,6 +21,6 @@ pub use crate::tui::input::SearchInput;
 pub use crate::tui::tables::rows as utils;
 pub use crate::tui::theme::{Theme, builtin_themes, default_theme};
 pub use systems::filesystem::FilesystemOptions;
-pub use systems::search::extension::{self as search_system, SearchStream};
+pub use systems::search::{self as search_system, SearchStream};
 pub use ui::run;
 pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig};

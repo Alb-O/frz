@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use super::commands::{SearchCommand, SearchResult};
+use super::{SearchCommand, SearchResult};
 use crate::extensions::api::{ExtensionCatalog, ExtensionQueryContext, SearchData, SearchStream};
 
 /// Launches the background search worker thread and returns communication channels.
