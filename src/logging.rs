@@ -28,7 +28,7 @@ pub fn initialize() {
         // Allow users to opt into traditional RUST_LOG syntax while still using
         // the in-application viewer. Errors are ignored because the filter is
         // optional.
-        let _ = tui_logger::set_env_filter_from_env(None);
+        tui_logger::set_env_filter_from_env(None);
     });
 }
 
