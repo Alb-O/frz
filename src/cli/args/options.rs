@@ -4,8 +4,6 @@ use clap::ValueEnum;
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub(crate) enum UiPresetArg {
 	Default,
-	#[clap(name = "tags-and-files")]
-	TagsAndFiles,
 }
 
 impl UiPresetArg {
@@ -13,7 +11,6 @@ impl UiPresetArg {
 	pub(crate) fn as_str(self) -> &'static str {
 		match self {
 			UiPresetArg::Default => "default",
-			UiPresetArg::TagsAndFiles => "tags-and-files",
 		}
 	}
 }

@@ -13,7 +13,7 @@ use crate::app_dirs;
 use crate::extensions::api::{FileRow, SearchData};
 
 pub(super) const CACHE_TTL: Duration = Duration::from_secs(60);
-const CACHE_VERSION: u32 = 1;
+const CACHE_VERSION: u32 = 2;
 const CACHE_NAMESPACE: &str = "filesystem";
 const CACHE_PREVIEW_LIMIT: usize = 512;
 const CACHE_PREVIEW_EXTENSION: &str = "preview.json";
@@ -100,7 +100,6 @@ impl CacheWriter {
 	pub fn record(&mut self, file: &FileRow) {
 		self.files.push(CacheFileEntry {
 			path: file.path.clone(),
-			tags: file.tags.clone(),
 		});
 	}
 
@@ -130,7 +129,6 @@ impl CacheWriter {
 			context_label: self.context_label.clone(),
 			complete: true,
 			files: self.files,
-			attributes: Vec::new(),
 		};
 
 		let preview_payload = CachePayload {
@@ -140,7 +138,6 @@ impl CacheWriter {
 			context_label: self.context_label,
 			complete: preview_complete,
 			files: preview_files,
-			attributes: Vec::new(),
 		};
 
 		write_payload(&self.path, &payload)?;
@@ -157,20 +154,11 @@ struct CachePayload {
 	#[serde(default)]
 	complete: bool,
 	files: Vec<CacheFileEntry>,
-	#[serde(default)]
-	attributes: Vec<CacheAttributeEntry>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct CacheFileEntry {
 	path: String,
-	tags: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct CacheAttributeEntry {
-	name: String,
-	count: usize,
 }
 
 fn write_payload(path: &Path, payload: &CachePayload) -> Result<()> {
@@ -209,7 +197,7 @@ fn load_payload(path: &Path, fingerprint: u64) -> Option<CachedEntry> {
 	data.files = payload
 		.files
 		.into_iter()
-		.map(|entry| FileRow::filesystem(entry.path, entry.tags))
+		.map(|entry| FileRow::filesystem(entry.path))
 		.collect();
 
 	Some(CachedEntry {

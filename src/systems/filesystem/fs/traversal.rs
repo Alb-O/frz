@@ -12,7 +12,7 @@ use super::FilesystemOptions;
 use super::cache::{CacheHandle, CacheWriter};
 use super::cached_stream::stream_cached_entry;
 use super::update_batcher::UpdateBatcher;
-use crate::extensions::api::{FileRow, SearchData, tags_for_relative_path};
+use crate::extensions::api::{FileRow, SearchData};
 
 pub fn spawn_filesystem_index(
 	root: PathBuf,
@@ -157,9 +157,8 @@ pub fn spawn_filesystem_index(
 								return WalkState::Continue;
 							}
 						}
-						let tags = tags_for_relative_path(relative);
 						let relative_display = relative.to_string_lossy().replace('\\', "/");
-						let file = FileRow::filesystem(relative_display, tags);
+						let file = FileRow::filesystem(relative_display);
 						if sender.send(file).is_err() {
 							return WalkState::Quit;
 						}

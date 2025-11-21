@@ -12,7 +12,7 @@ mod tuning;
 
 pub use config::config_for_query;
 pub use data::{FILES_DATASET_KEY, SearchData};
-pub use file::{FileRow, TruncationStyle, tags_for_relative_path};
+pub use file::{FileRow, TruncationStyle};
 pub use fs::{Fs, FsIter, OsFs};
 pub use outcome::{SearchOutcome, SearchSelection};
 pub use stream::{MatchBatch, SearchMarker, SearchResult, SearchStream, SearchView, SearchViewV2};

@@ -224,9 +224,9 @@ mod tests {
 	fn sample_data() -> SearchData {
 		let mut data = SearchData::new();
 		data.files = vec![
-			FileRow::new("src/main.rs", ["alpha", "beta"]),
-			FileRow::new("src/lib.rs", ["beta"]),
-			FileRow::new("README.md", ["gamma"]),
+			FileRow::new("src/main.rs"),
+			FileRow::new("src/lib.rs"),
+			FileRow::new("README.md"),
 		];
 		data
 	}

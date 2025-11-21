@@ -78,12 +78,8 @@ impl<'a> App<'a> {
 			.map(|(text, config)| (text.as_str(), *config));
 
 		// Default headers and widths if not customized
-		let default_headers = vec!["Path".into(), "Tags".into(), "Score".into()];
-		let default_widths = vec![
-			Constraint::Percentage(60),
-			Constraint::Percentage(30),
-			Constraint::Length(8),
-		];
+		let default_headers = vec!["Path".into(), "Score".into()];
+		let default_widths = vec![Constraint::Percentage(92), Constraint::Length(8)];
 
 		let widths = self.tab_buffers.widths.as_ref().unwrap_or(&default_widths);
 		let headers = self

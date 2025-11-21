@@ -21,8 +21,6 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
 		Some(SearchSelection::File(file)) => json!({
 			"type": "file",
 			"path": file.path,
-			"tags": file.tags,
-			"display_tags": file.display_tags,
 		}),
 		None => serde_json::Value::Null,
 	};
@@ -54,13 +52,12 @@ mod tests {
 		let outcome = SearchOutcome {
 			accepted: true,
 			query: "test".into(),
-			selection: Some(SearchSelection::File(FileRow::new("path", ["a"]))),
+			selection: Some(SearchSelection::File(FileRow::new("path"))),
 		};
 
 		let json = format_outcome_json(&outcome).expect("json");
 		let value: Value = serde_json::from_str(&json).expect("parse");
 		assert_eq!(value["selection"]["type"], "file");
 		assert_eq!(value["selection"]["path"], "path");
-		assert_eq!(value["selection"]["tags"][0], "a");
 	}
 }

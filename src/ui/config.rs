@@ -69,7 +69,7 @@ impl Default for UiConfig {
 		};
 		let pane = PaneUiConfig::new(
 			"File search",
-			"Type to filter files by path or tag.",
+			"Type to filter files by path.",
 			"Matching files",
 			"Files",
 		);
@@ -79,28 +79,6 @@ impl Default for UiConfig {
 }
 
 impl UiConfig {
-	/// Build a configuration with built-in panes for file searching.
-	#[must_use]
-	pub fn tags_and_files() -> Self {
-		let mut config = Self {
-			filter_label: "Filter files".to_string(),
-			detail_panel_title: "Selection details".to_string(),
-			tabs: Vec::new(),
-		};
-
-		config.register_tab(TabUiConfig::new(
-			"Files",
-			PaneUiConfig::new(
-				"File search",
-				"Type to filter files by path or tag. Press Tab to view tags.",
-				"Matching files",
-				"Files",
-			),
-		));
-
-		config
-	}
-
 	/// Register a new tab definition with this configuration.
 	pub fn register_tab(&mut self, tab: TabUiConfig) {
 		self.tabs.push(tab);
@@ -143,16 +121,5 @@ impl UiConfig {
 		self.pane()
 			.map(|pane| pane.table_title.as_str())
 			.unwrap_or("")
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn tags_and_files_registers_tabs() {
-		let config = UiConfig::tags_and_files();
-		assert!(!config.tabs.is_empty());
 	}
 }

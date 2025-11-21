@@ -209,7 +209,7 @@ mod tests {
 
 		assert_eq!(app.filtered_len(), 0);
 		let update = IndexUpdate {
-			files: vec![FileRow::filesystem("src/lib.rs", ["alpha"])].into(),
+			files: vec![FileRow::filesystem("src/lib.rs")].into(),
 			progress: ProgressSnapshot {
 				indexed_files: 1,
 				total_files: Some(1),
@@ -250,8 +250,8 @@ mod tests {
 	#[test]
 	fn row_id_map_tracks_incremental_index_updates() {
 		let mut data = SearchData::new();
-		let first = FileRow::filesystem("src/lib.rs", Vec::<String>::new());
-		let second = FileRow::filesystem("src/main.rs", Vec::<String>::new());
+		let first = FileRow::filesystem("src/lib.rs");
+		let second = FileRow::filesystem("src/main.rs");
 		data.files = vec![first.clone()];
 
 		let mut app = App::new(data);
@@ -305,8 +305,8 @@ mod tests {
 
 	#[test]
 	fn row_id_map_rebuilds_when_cached_data_applied() {
-		let first = FileRow::filesystem("src/lib.rs", Vec::<String>::new());
-		let second = FileRow::filesystem("src/main.rs", Vec::<String>::new());
+		let first = FileRow::filesystem("src/lib.rs");
+		let second = FileRow::filesystem("src/main.rs");
 
 		let mut data = SearchData::new();
 		data.files = vec![first.clone()];

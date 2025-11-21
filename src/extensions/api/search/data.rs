@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use super::file::{FileRow, tags_for_relative_path};
+use super::file::FileRow;
 use super::fs::{Fs, OsFs};
 
 /// Dataset key for the files collection.
@@ -113,9 +113,8 @@ impl SearchData {
 
 		for entry in fs.walk(root)? {
 			let relative = entry?;
-			let tags = tags_for_relative_path(relative.as_path());
 			let display = relative.to_string_lossy().replace('\\', "/");
-			let file = FileRow::filesystem(display, tags);
+			let file = FileRow::filesystem(display);
 
 			files.push(file);
 		}
@@ -260,7 +259,7 @@ mod tests {
 
 	#[test]
 	fn builder_methods_replace_data() {
-		let files = vec![FileRow::new("file", Vec::<String>::new())];
+		let files = vec![FileRow::new("file")];
 		let data = SearchData::new()
 			.with_context("context")
 			.with_initial_query("query")
@@ -332,7 +331,7 @@ mod tests {
 	#[test]
 	fn resolve_file_path_joins_root_for_relative_paths() {
 		let data = SearchData::new().with_root("/root");
-		let file = FileRow::filesystem("dir/file.txt", Vec::<String>::new());
+		let file = FileRow::filesystem("dir/file.txt");
 		let resolved = data.resolve_file_path(&file);
 		assert_eq!(resolved, PathBuf::from("/root/dir/file.txt"));
 	}
@@ -340,7 +339,7 @@ mod tests {
 	#[test]
 	fn resolve_file_path_preserves_absolute_paths() {
 		let data = SearchData::new();
-		let file = FileRow::filesystem("/tmp/file.txt", Vec::<String>::new());
+		let file = FileRow::filesystem("/tmp/file.txt");
 		let resolved = data.resolve_file_path(&file);
 		assert_eq!(resolved, PathBuf::from("/tmp/file.txt"));
 	}

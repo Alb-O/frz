@@ -2,8 +2,8 @@ use frizbee::{Options, match_indices};
 use ratatui::style::Style;
 use ratatui::widgets::{Cell, Row};
 
-use crate::extensions::api::{FileRow, TruncationStyle};
-use crate::tui::highlight::{highlight_cell, highlight_cell_with_prefix};
+use crate::extensions::api::FileRow;
+use crate::tui::highlight::highlight_cell_with_prefix;
 
 /// Create match indices for the provided needle and configuration.
 #[must_use]
@@ -31,16 +31,7 @@ pub fn build_file_rows<'a>(
 			let score = file_scores.get(idx).copied().unwrap_or_default();
 			let path_highlight = highlight_state
 				.and_then(|(needle, config)| highlight_for_refs(needle, config, &entry.path));
-			let tag_highlight = highlight_state.and_then(|(needle, config)| {
-				highlight_for_refs(needle, config, &entry.display_tags)
-			});
-			let (path_width, tag_width) = column_widths
-				.map(|widths| {
-					let path = widths.first().copied();
-					let tags = widths.get(1).copied();
-					(path, tags)
-				})
-				.unwrap_or((None, None));
+			let path_width = column_widths.and_then(|widths| widths.first().copied());
 			Some(Row::new([
 				highlight_cell_with_prefix(
 					&entry.path,
@@ -49,13 +40,6 @@ pub fn build_file_rows<'a>(
 					entry.truncation_style(),
 					highlight_style,
 					None,
-				),
-				highlight_cell(
-					&entry.display_tags,
-					tag_highlight,
-					tag_width,
-					TruncationStyle::Right,
-					highlight_style,
 				),
 				Cell::from(score.to_string()),
 			]))
