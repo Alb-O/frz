@@ -12,7 +12,6 @@ pub mod tui;
 pub mod ui;
 
 pub use systems::filesystem::FilesystemOptions;
-pub use systems::search::extension::{self as search_system, SearchStream};
 pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
 
 pub use crate::extensions::api::{

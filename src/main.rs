@@ -1,10 +1,10 @@
 mod cli;
-mod settings;
+mod config;
 mod workflow;
 
 use anyhow::Result;
 use cli::{OutputFormat, parse_cli, print_json, print_plain};
-use settings::ResolvedConfig;
+use config::Config;
 use workflow::SearchWorkflow;
 
 fn main() -> Result<()> {
@@ -17,18 +17,23 @@ fn main() -> Result<()> {
 		return Ok(());
 	}
 
-	let resolved = settings::load(&cli)?;
+	let config = Config::from_cli(&cli)?;
 
 	if cli.print_config {
-		resolved.print_summary();
+		println!("Root: {}", config.root.display());
+		println!("Threads: {:?}", config.filesystem.threads);
+		println!("Max depth: {:?}", config.filesystem.max_depth);
+		println!("Hidden files: {}", config.filesystem.include_hidden);
+		println!("Follow symlinks: {}", config.filesystem.follow_symlinks);
+		println!("Theme: {:?}", config.theme);
 	}
 
-	run_search(cli.output, resolved)
+	run_search(cli.output, config)
 }
 
 /// Execute the search workflow and print output in the chosen format.
-fn run_search(format: OutputFormat, settings: ResolvedConfig) -> Result<()> {
-	let workflow = SearchWorkflow::from_config(settings)?;
+fn run_search(format: OutputFormat, config: Config) -> Result<()> {
+	let workflow = SearchWorkflow::from_config(config)?;
 	let outcome = workflow.run()?;
 
 	match format {

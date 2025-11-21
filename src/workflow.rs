@@ -1,10 +1,8 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 use frz::extensions::builtin::files;
-use frz::{FilesystemOptions, SearchMode, SearchOutcome, SearchUi, UiConfig};
+use frz::{SearchOutcome, SearchUi};
 
-use crate::settings::ResolvedConfig;
+use crate::config::Config;
 
 /// Coordinates building and running the interactive search experience.
 pub(crate) struct SearchWorkflow {
@@ -12,24 +10,8 @@ pub(crate) struct SearchWorkflow {
 }
 
 impl SearchWorkflow {
-	pub(crate) fn from_config(config: ResolvedConfig) -> Result<Self> {
-		let search_ui = SearchUiFactory::build(config)?;
-		Ok(Self { search_ui })
-	}
-
-	pub(crate) fn run(self) -> Result<SearchOutcome> {
-		self.search_ui.run()
-	}
-}
-
-/// Helper for translating resolved configuration into a configured `SearchUi`.
-struct SearchUiFactory {
-	search_ui: SearchUi,
-}
-
-impl SearchUiFactory {
-	fn build(config: ResolvedConfig) -> Result<SearchUi> {
-		let ResolvedConfig {
+	pub(crate) fn from_config(config: Config) -> Result<Self> {
+		let Config {
 			root,
 			filesystem,
 			input_title,
@@ -39,54 +21,28 @@ impl SearchUiFactory {
 			file_headers,
 		} = config;
 
-		let builder = Self::new(root, filesystem)?
-			.with_input_title(input_title)
-			.with_ui_config(ui)
-			.with_initial_query(initial_query)
-			.with_theme(theme)
-			.with_headers(files::mode(), file_headers);
+		let mut search_ui = SearchUi::filesystem_with_options(root, filesystem)?;
 
-		Ok(builder.finish())
-	}
+		if let Some(title) = input_title {
+			search_ui = search_ui.with_input_title(title);
+		}
 
-	fn new(root: PathBuf, filesystem: FilesystemOptions) -> Result<Self> {
-		let search_ui = SearchUi::filesystem_with_options(root, filesystem)?;
+		search_ui = search_ui.with_ui_config(ui);
+		search_ui = search_ui.with_initial_query(initial_query);
+
+		if let Some(theme) = theme {
+			search_ui = search_ui.with_theme_name(&theme);
+		}
+
+		if let Some(headers) = file_headers {
+			let refs: Vec<&str> = headers.iter().map(|h| h.as_str()).collect();
+			search_ui = search_ui.with_headers_for(files::mode(), refs);
+		}
+
 		Ok(Self { search_ui })
 	}
 
-	fn with_input_title(mut self, title: Option<String>) -> Self {
-		if let Some(title) = title {
-			self.search_ui = self.search_ui.with_input_title(title);
-		}
-		self
-	}
-
-	fn with_ui_config(mut self, config: UiConfig) -> Self {
-		self.search_ui = self.search_ui.with_ui_config(config);
-		self
-	}
-
-	fn with_initial_query(mut self, query: String) -> Self {
-		self.search_ui = self.search_ui.with_initial_query(query);
-		self
-	}
-
-	fn with_theme(mut self, theme: Option<String>) -> Self {
-		if let Some(theme) = theme {
-			self.search_ui = self.search_ui.with_theme_name(&theme);
-		}
-		self
-	}
-
-	fn with_headers(mut self, mode: SearchMode, headers: Option<Vec<String>>) -> Self {
-		if let Some(headers) = headers {
-			let refs: Vec<&str> = headers.iter().map(|header| header.as_str()).collect();
-			self.search_ui = self.search_ui.with_headers_for(mode, refs);
-		}
-		self
-	}
-
-	fn finish(self) -> SearchUi {
-		self.search_ui
+	pub(crate) fn run(self) -> Result<SearchOutcome> {
+		self.search_ui.run()
 	}
 }
