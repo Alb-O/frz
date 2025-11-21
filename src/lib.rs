@@ -7,20 +7,18 @@
 pub mod app_dirs;
 pub mod extensions;
 pub mod logging;
-pub mod previewers;
 mod systems;
 pub mod tui;
 pub mod ui;
 
+pub use systems::filesystem::FilesystemOptions;
+pub use systems::search::extension::{self as search_system, SearchStream};
+pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
+
 pub use crate::extensions::api::{
-    AttributeRow, ExtensionCatalog, ExtensionModule, ExtensionSelection, FileRow, SearchData,
-    SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
+	AttributeRow, FileRow, SearchData, SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
 };
 pub use crate::tui::components::{progress, tables, tabs};
 pub use crate::tui::input::SearchInput;
 pub use crate::tui::tables::rows as utils;
 pub use crate::tui::theme::{Theme, builtin_themes, default_theme};
-pub use systems::filesystem::FilesystemOptions;
-pub use systems::search::extension::{self as search_system, SearchStream};
-pub use ui::run;
-pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig};

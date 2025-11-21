@@ -6,95 +6,95 @@ use crate::extensions::api::{MatchBatch, SearchMode, SearchResult, SearchView, S
 use crate::systems::filesystem::IndexUpdate;
 
 impl<'a> App<'a> {
-    /// Send a search request for the current query text and mode.
-    pub(crate) fn request_search(&mut self) {
-        self.issue_search();
-    }
+	/// Send a search request for the current query text and mode.
+	pub(crate) fn request_search(&mut self) {
+		self.issue_search();
+	}
 
-    /// Schedule a search refresh due to new index data while respecting the
-    /// currently running query.
-    pub(crate) fn request_search_after_index_update(&mut self) {
-        // When background indexing discovers new entries we keep the UI stable
-        // unless the user currently has a query edit that hasn't been
-        // processed yet. This lets indexing continue without the visible result
-        // list jumping around while the user is idle.
-        if self.initial_results_deadline.is_some()
-            || self.search.should_refresh_after_index_update()
-        {
-            self.issue_search();
-        }
-    }
+	/// Schedule a search refresh due to new index data while respecting the
+	/// currently running query.
+	pub(crate) fn request_search_after_index_update(&mut self) {
+		// When background indexing discovers new entries we keep the UI stable
+		// unless the user currently has a query edit that hasn't been
+		// processed yet. This lets indexing continue without the visible result
+		// list jumping around while the user is idle.
+		if self.initial_results_deadline.is_some()
+			|| self.search.should_refresh_after_index_update()
+		{
+			self.issue_search();
+		}
+	}
 
-    /// Propagate an index update to the background search worker.
-    pub(crate) fn notify_search_of_update(&self, update: &IndexUpdate) {
-        self.search.notify_of_update(update);
-    }
+	/// Propagate an index update to the background search worker.
+	pub(crate) fn notify_search_of_update(&self, update: &IndexUpdate) {
+		self.search.notify_of_update(update);
+	}
 
-    /// Drain any search results waiting on the receiver channel.
-    pub(crate) fn pump_search_results(&mut self) {
-        loop {
-            match self.search.try_recv() {
-                Ok(result) => self.handle_search_result(result),
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => break,
-            }
-        }
-    }
+	/// Drain any search results waiting on the receiver channel.
+	pub(crate) fn pump_search_results(&mut self) {
+		loop {
+			match self.search.try_recv() {
+				Ok(result) => self.handle_search_result(result),
+				Err(TryRecvError::Empty) => break,
+				Err(TryRecvError::Disconnected) => break,
+			}
+		}
+	}
 
-    /// Apply a new search result if it corresponds to the most recent query.
-    fn handle_search_result(&mut self, result: SearchResult) {
-        if !self.search.matches_latest(result.id) {
-            return;
-        }
+	/// Apply a new search result if it corresponds to the most recent query.
+	fn handle_search_result(&mut self, result: SearchResult) {
+		if !self.search.matches_latest(result.id) {
+			return;
+		}
 
-        result.dispatch(self);
-    }
+		result.dispatch(self);
+	}
 
-    fn issue_search(&mut self) {
-        let query = self.search_input.text().to_string();
-        let mode = self.mode;
-        self.search.issue_search(query, mode);
-    }
+	fn issue_search(&mut self) {
+		let query = self.search_input.text().to_string();
+		let mode = self.mode;
+		self.search.issue_search(query, mode);
+	}
 
-    pub(crate) fn settle_initial_results(&mut self, has_results: bool) {
-        if let Some(deadline) = self.initial_results_deadline
-            && (has_results || Instant::now() >= deadline)
-        {
-            self.initial_results_deadline = None;
-        }
-    }
+	pub(crate) fn settle_initial_results(&mut self, has_results: bool) {
+		if let Some(deadline) = self.initial_results_deadline
+			&& (has_results || Instant::now() >= deadline)
+		{
+			self.initial_results_deadline = None;
+		}
+	}
 }
 
 impl<'a> SearchView for App<'a> {
-    fn replace_matches(&mut self, mode: SearchMode, indices: Vec<usize>, scores: Vec<u16>) {
-        self.apply_match_batch(mode, indices, None, scores);
-    }
+	fn replace_matches(&mut self, mode: SearchMode, indices: Vec<usize>, scores: Vec<u16>) {
+		self.apply_match_batch(mode, indices, None, scores);
+	}
 
-    fn clear_matches(&mut self, mode: SearchMode) {
-        self.ensure_tab_buffers();
-        let entry = self.tab_states.entry(mode).or_default();
-        entry.filtered.clear();
-        entry.scores.clear();
-        self.settle_initial_results(false);
-        self.ensure_selection();
-    }
+	fn clear_matches(&mut self, mode: SearchMode) {
+		self.ensure_tab_buffers();
+		let entry = self.tab_states.entry(mode).or_default();
+		entry.filtered.clear();
+		entry.scores.clear();
+		self.settle_initial_results(false);
+		self.ensure_selection();
+	}
 
-    fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
-        self.search.record_result_completion(complete);
-    }
+	fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
+		self.search.record_result_completion(complete);
+	}
 
-    fn as_v2(&mut self) -> Option<&mut dyn SearchViewV2> {
-        Some(self)
-    }
+	fn as_v2(&mut self) -> Option<&mut dyn SearchViewV2> {
+		Some(self)
+	}
 }
 
 impl<'a> SearchViewV2 for App<'a> {
-    fn replace_matches_v2(&mut self, mode: SearchMode, batch: MatchBatch) {
-        let MatchBatch {
-            indices,
-            ids,
-            scores,
-        } = batch;
-        self.apply_match_batch(mode, indices, ids, scores);
-    }
+	fn replace_matches_v2(&mut self, mode: SearchMode, batch: MatchBatch) {
+		let MatchBatch {
+			indices,
+			ids,
+			scores,
+		} = batch;
+		self.apply_match_batch(mode, indices, ids, scores);
+	}
 }

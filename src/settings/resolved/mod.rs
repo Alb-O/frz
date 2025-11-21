@@ -1,5 +1,6 @@
-use frz::{FilesystemOptions, SearchMode, UiConfig};
 use std::path::PathBuf;
+
+use frz::{FilesystemOptions, SearchMode, UiConfig};
 
 mod errors;
 mod sources;
@@ -13,25 +14,24 @@ pub(crate) use sources::{ConfigSources, SettingSource};
 /// sensible defaults.
 #[derive(Debug)]
 pub struct ResolvedConfig {
-    pub root: PathBuf,
-    pub filesystem: FilesystemOptions,
-    pub input_title: Option<String>,
-    pub initial_query: String,
-    pub theme: Option<String>,
-    pub start_mode: Option<SearchMode>,
-    pub ui: UiConfig,
-    pub facet_headers: Option<Vec<String>>,
-    pub file_headers: Option<Vec<String>>,
-    pub git_modifications: bool,
+	pub root: PathBuf,
+	pub filesystem: FilesystemOptions,
+	pub input_title: Option<String>,
+	pub initial_query: String,
+	pub theme: Option<String>,
+	pub start_mode: Option<SearchMode>,
+	pub ui: UiConfig,
+	pub facet_headers: Option<Vec<String>>,
+	pub file_headers: Option<Vec<String>>,
 }
 
 impl ResolvedConfig {
-    pub(super) fn validate(&self, sources: &ConfigSources) -> Result<(), ConfigError> {
-        validation::validate(self, sources)
-    }
+	pub(super) fn validate(&self, sources: &ConfigSources) -> Result<(), ConfigError> {
+		validation::validate(self, sources)
+	}
 
-    /// Print a human readable summary of the effective configuration.
-    pub fn print_summary(&self) {
-        summary::print_summary(self);
-    }
+	/// Print a human readable summary of the effective configuration.
+	pub fn print_summary(&self) {
+		summary::print_summary(self);
+	}
 }
