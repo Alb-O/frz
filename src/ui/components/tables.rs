@@ -5,9 +5,9 @@ use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
 
-use crate::extensions::api::SearchData;
-pub use crate::tui::tables::rows::*;
-use crate::tui::theme::Theme;
+use crate::search::SearchData;
+pub use crate::ui::components::rows::*;
+use crate::ui::style::Theme;
 
 const HIGHLIGHT_SYMBOL: &str = "▶ ";
 const TABLE_COLUMN_SPACING: u16 = 1;

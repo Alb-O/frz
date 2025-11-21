@@ -1,6 +1,7 @@
 //! UI building blocks shared across rendering and state modules.
 
 pub mod progress;
+pub mod rows;
 pub mod tables;
 pub mod tabs;
 

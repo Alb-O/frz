@@ -2,7 +2,7 @@ use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 use super::App;
-use crate::extensions::api::SearchOutcome;
+use crate::search::SearchOutcome;
 
 impl<'a> App<'a> {
 	pub(crate) fn handle_key(&mut self, key: KeyEvent) -> Result<Option<SearchOutcome>> {

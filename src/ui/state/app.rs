@@ -11,13 +11,13 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
-use crate::extensions::api::{FILES_DATASET_KEY, SearchData, SearchSelection};
+use crate::search::runtime as search;
+use crate::search::{FILES_DATASET_KEY, SearchData, SearchSelection};
 use crate::systems::filesystem::IndexResult;
-use crate::systems::search;
-use crate::tui::components::IndexProgress;
-use crate::tui::input::SearchInput;
-pub use crate::tui::theme::Theme;
+use crate::ui::components::IndexProgress;
 use crate::ui::config::UiConfig;
+use crate::ui::input::SearchInput;
+pub use crate::ui::style::Theme;
 
 impl<'a> Drop for App<'a> {
 	fn drop(&mut self) {
@@ -38,7 +38,7 @@ pub struct App<'a> {
 	pub table_state: TableState,
 	pub(crate) input_title: Option<String>,
 	pub(crate) ui: UiConfig,
-	pub theme: Theme,
+	pub style: crate::ui::style::StyleConfig,
 	pub(crate) bat_theme: Option<String>,
 	pub(crate) throbber_state: ThrobberState,
 	pub(crate) index_progress: IndexProgress,
@@ -86,7 +86,7 @@ impl<'a> App<'a> {
 			table_state,
 			input_title: context_label,
 			ui,
-			theme: Theme::default(),
+			style: crate::ui::style::StyleConfig::default(),
 			bat_theme: None,
 			throbber_state: ThrobberState::default(),
 			index_progress,
@@ -106,7 +106,7 @@ impl<'a> App<'a> {
 
 	/// Apply a new theme and optional bat theme name.
 	pub fn set_theme_with_bat(&mut self, theme: Theme, bat_theme: Option<String>) {
-		self.theme = theme;
+		self.style.theme = theme;
 		self.bat_theme = bat_theme;
 	}
 
@@ -219,7 +219,7 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::extensions::api::{FileRow, MatchBatch, SearchViewV2};
+	use crate::search::{FileRow, MatchBatch, SearchViewV2};
 
 	fn sample_data() -> SearchData {
 		let mut data = SearchData::new();

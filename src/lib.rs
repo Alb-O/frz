@@ -5,19 +5,17 @@
 //! through the module hierarchy.
 
 pub mod app_dirs;
-pub mod extensions;
 pub mod logging;
+pub mod search;
+pub mod streams;
 mod systems;
-pub mod tui;
 pub mod ui;
 
 pub use systems::filesystem::FilesystemOptions;
 pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
 
-pub use crate::extensions::api::{
-	FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle,
-};
-pub use crate::tui::components::{progress, tables, tabs};
-pub use crate::tui::input::SearchInput;
-pub use crate::tui::tables::rows as utils;
-pub use crate::tui::theme::{Theme, builtin_themes, default_theme};
+pub use crate::search::{FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle};
+pub use crate::ui::components::rows as utils;
+pub use crate::ui::components::{progress, tables, tabs};
+pub use crate::ui::input::SearchInput;
+pub use crate::ui::style::{StyleConfig, Theme, builtin_themes, default_theme};

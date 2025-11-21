@@ -2,8 +2,8 @@ use frizbee::{Options, match_indices};
 use ratatui::style::Style;
 use ratatui::widgets::{Cell, Row};
 
-use crate::extensions::api::FileRow;
-use crate::tui::highlight::highlight_cell_with_prefix;
+use crate::search::FileRow;
+use crate::ui::highlight::highlight_cell_with_prefix;
 
 /// Create match indices for the provided needle and configuration.
 #[must_use]

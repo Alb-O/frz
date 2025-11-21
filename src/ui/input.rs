@@ -7,7 +7,7 @@ use ratatui::Frame;
 use ratatui::layout::Rect;
 use tui_textarea::{Input, Key, TextArea};
 
-use crate::tui::theme::Theme;
+use crate::ui::style::Theme;
 
 /// A single-line text input widget
 pub struct SearchInput<'a> {

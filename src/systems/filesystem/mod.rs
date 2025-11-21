@@ -6,7 +6,7 @@ use std::sync::Arc;
 pub use fs::{FilesystemOptions, spawn_filesystem_index};
 pub use stream::{IndexKind, IndexResult, IndexStream, IndexView};
 
-use crate::extensions::api::{FileRow, SearchData};
+use crate::search::{FileRow, SearchData};
 
 /// Updates emitted by the filesystem indexer as it discovers new entries.
 #[derive(Debug, Clone)]

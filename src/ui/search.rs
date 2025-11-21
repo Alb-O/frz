@@ -2,7 +2,7 @@ use std::sync::mpsc::TryRecvError;
 use std::time::Instant;
 
 use super::App;
-use crate::extensions::api::{MatchBatch, SearchResult, SearchView, SearchViewV2};
+use crate::search::{MatchBatch, SearchResult, SearchView, SearchViewV2};
 use crate::systems::filesystem::IndexUpdate;
 
 impl<'a> App<'a> {

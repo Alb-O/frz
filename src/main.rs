@@ -5,13 +5,14 @@ mod workflow;
 use anyhow::Result;
 use cli::{OutputFormat, parse_cli, print_json, print_plain};
 use config::Config;
+use frz::ui::style;
 use workflow::SearchWorkflow;
 
 fn main() -> Result<()> {
 	let cli = parse_cli();
 
 	if cli.list_themes {
-		for name in frz::tui::theme::names() {
+		for name in style::names() {
 			println!("{name}");
 		}
 		return Ok(());

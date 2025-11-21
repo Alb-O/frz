@@ -8,9 +8,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use crate::extensions::api::{SearchData, StreamAction};
+use crate::search::SearchData;
+use crate::search::runtime::{SearchCommand, SearchResult};
+use crate::streams::StreamAction;
 use crate::systems::filesystem::{IndexUpdate, merge_update};
-use crate::systems::search::{SearchCommand, SearchResult};
 
 /// Tracks the revision counters used to determine when data has changed.
 #[derive(Default)]
@@ -123,7 +124,7 @@ mod tests {
 	use std::sync::mpsc;
 
 	use super::*;
-	use crate::systems::search::SearchCommand;
+	use crate::search::runtime::SearchCommand;
 
 	#[test]
 	fn partial_completion_does_not_finalize_query() {

@@ -4,10 +4,10 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult};
-use crate::extensions::api::{SearchData, SearchStream, stream_files};
+use crate::search::{SearchData, SearchStream, stream_files};
 
 /// Launches the background search worker thread and returns communication channels.
-pub(crate) fn spawn(
+pub fn spawn(
 	mut data: SearchData,
 ) -> (
 	Sender<SearchCommand>,

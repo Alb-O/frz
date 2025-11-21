@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use crate::extensions::api::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
+use crate::streams::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
 
 /// Batch of search matches emitted by a producer.
 #[derive(Clone)]
@@ -62,7 +62,7 @@ pub struct SearchMarker;
 pub type SearchAction = ViewAction<SearchViewTarget>;
 pub type SearchResult = StreamEnvelope<SearchMarker, SearchAction>;
 
-/// Handle used by extensions to stream search results back to the UI.
+/// Handle used to stream search results back to the UI.
 pub struct SearchStream<'a> {
 	inner: DataStream<'a, SearchMarker, SearchAction>,
 }

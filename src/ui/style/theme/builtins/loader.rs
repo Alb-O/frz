@@ -2,7 +2,7 @@ use anyhow::{Context, Result, bail};
 use include_dir::{Dir, File};
 
 use super::config::{ThemeConfig, ThemeDocument};
-use crate::tui::theme::types::{Theme, ThemeRegistration};
+use crate::ui::style::theme::types::{Theme, ThemeRegistration};
 
 pub(super) struct BuiltinThemes {
 	pub(super) registrations: Vec<ThemeRegistration>,

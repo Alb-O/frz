@@ -11,7 +11,7 @@ use super::App;
 use crate::systems::filesystem::{
 	IndexResult, IndexUpdate, IndexView, ProgressSnapshot, merge_update,
 };
-use crate::tui::components::IndexProgress;
+use crate::ui::components::IndexProgress;
 
 impl<'a> App<'a> {
 	const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
@@ -96,7 +96,7 @@ impl<'a> App<'a> {
 	}
 
 	fn record_index_progress_update(&mut self, progress: ProgressSnapshot) {
-		let files_key = crate::extensions::api::FILES_DATASET_KEY;
+		let files_key = crate::search::FILES_DATASET_KEY;
 		self.index_progress
 			.record_indexed(&[(files_key, progress.indexed_files)]);
 		self.index_progress
@@ -186,7 +186,7 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::extensions::api::{FileRow, MatchBatch, SearchData, SearchViewV2};
+	use crate::search::{FileRow, MatchBatch, SearchData, SearchViewV2};
 	use crate::systems::filesystem::ProgressSnapshot;
 
 	fn wait_for_results(app: &mut App) {

@@ -6,7 +6,7 @@ use ratatui::widgets::Cell;
 use unicode_truncate::UnicodeTruncateStr;
 use unicode_width::UnicodeWidthStr;
 
-use crate::extensions::api::TruncationStyle;
+use crate::search::TruncationStyle;
 
 /// Build a table cell that highlights matching indices within `text`.
 pub fn highlight_cell(

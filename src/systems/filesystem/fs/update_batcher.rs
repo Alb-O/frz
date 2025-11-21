@@ -5,7 +5,7 @@ use std::time::Instant;
 use super::super::{IndexKind, IndexResult, IndexStream, IndexUpdate};
 use super::cache::CacheWriter;
 use super::{DISPATCH_INTERVAL, MAX_BATCH_SIZE, MIN_BATCH_SIZE};
-use crate::extensions::api::FileRow;
+use crate::search::FileRow;
 
 pub(super) struct UpdateBatcher {
 	pending_files: Vec<FileRow>,

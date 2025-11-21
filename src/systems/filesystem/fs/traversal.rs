@@ -12,7 +12,7 @@ use super::FilesystemOptions;
 use super::cache::{CacheHandle, CacheWriter};
 use super::cached_stream::stream_cached_entry;
 use super::update_batcher::UpdateBatcher;
-use crate::extensions::api::{FileRow, SearchData};
+use crate::search::{FileRow, SearchData};
 
 pub fn spawn_filesystem_index(
 	root: PathBuf,

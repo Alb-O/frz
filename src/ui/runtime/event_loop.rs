@@ -7,7 +7,7 @@ use std::time::Duration;
 use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
-use crate::extensions::api::{SearchData, SearchOutcome};
+use crate::search::{SearchData, SearchOutcome};
 use crate::ui::App;
 
 /// Construct an [`App`] for the provided data and run it to completion.

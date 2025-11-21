@@ -3,8 +3,8 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-use crate::tui::input::SearchInput;
-use crate::tui::theme::Theme;
+use crate::ui::input::SearchInput;
+use crate::ui::style::Theme;
 
 /// Render metadata for a tab header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

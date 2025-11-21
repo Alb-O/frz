@@ -1,9 +1,10 @@
-pub(crate) use crate::extensions::api::SearchResult;
-use crate::extensions::api::{SearchData, StreamAction};
+use crate::search::SearchData;
+pub use crate::search::SearchResult;
+use crate::streams::StreamAction;
 
 /// Commands understood by the background search worker.
 #[derive(Debug)]
-pub(crate) enum SearchCommand {
+pub enum SearchCommand {
 	/// Run a fuzzy search for the provided query.
 	Query {
 		/// Identifier that allows the UI to correlate responses with the originating query.

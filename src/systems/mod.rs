@@ -1,4 +1,3 @@
-//! Long-lived background systems that extensions can opt into.
+//! Long-lived background systems that power indexing.
 
 pub mod filesystem;
-pub mod search;

@@ -4,13 +4,12 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
 
 use super::App;
-use crate::logging;
-use crate::systems::search;
-use crate::tui::components::tables::TableSpec;
-use crate::tui::components::{
+use crate::ui::components::rows::build_file_rows;
+use crate::ui::components::tables::TableSpec;
+use crate::ui::components::{
 	InputContext, ProgressState, TabItem, render_input_with_tabs, render_table,
 };
-use crate::tui::tables::rows::build_file_rows;
+use crate::{logging, search};
 
 impl<'a> App<'a> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -42,7 +41,7 @@ impl<'a> App<'a> {
 			pane_title: self.ui.pane().map(|pane| pane.mode_title.as_str()),
 			tabs: &tabs,
 			area: layout[0],
-			theme: &self.theme,
+			theme: &self.style.theme,
 		};
 		let progress_state = ProgressState {
 			progress_text: &progress_text,
@@ -79,7 +78,7 @@ impl<'a> App<'a> {
 
 		// Default headers and widths if not customized
 		let default_headers = vec!["Path".into(), "Score".into()];
-		let default_widths = vec![Constraint::Percentage(92), Constraint::Length(8)];
+		let default_widths = vec![Constraint::Min(20), Constraint::Length(8)];
 
 		let widths = self.tab_buffers.widths.as_ref().unwrap_or(&default_widths);
 		let headers = self
@@ -94,7 +93,7 @@ impl<'a> App<'a> {
 			&self.tab_buffers.scores,
 			&self.data.files,
 			highlight_state,
-			self.theme.highlight_style(),
+			self.style.theme.highlight_style(),
 			Some(&column_widths),
 		);
 
@@ -104,7 +103,7 @@ impl<'a> App<'a> {
 			rows,
 		};
 
-		render_table(frame, area, &mut self.table_state, spec, &self.theme);
+		render_table(frame, area, &mut self.table_state, spec, &self.style.theme);
 	}
 
 	fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {
