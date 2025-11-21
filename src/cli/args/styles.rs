@@ -15,7 +15,7 @@ pub(super) fn long_version() -> &'static str {
 		Err(err) => format!("unavailable ({err})"),
 	};
 
-	let mut details = format!("frz {}", env!("CARGO_PKG_VERSION"));
+	let mut details = env!("CARGO_PKG_VERSION").to_string();
 	let _ = writeln!(details);
 	let _ = writeln!(details, "config directory: {config_dir}");
 	let _ = writeln!(details, "data directory: {data_dir}");
@@ -29,5 +29,6 @@ pub(super) fn cli_styles() -> Styles {
 		.header(AnsiColor::Green.on_default().effects(Effects::BOLD))
 		.usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
 		.literal(AnsiColor::Cyan.on_default())
-		.placeholder(AnsiColor::Yellow.on_default())
+		.placeholder(AnsiColor::Cyan.on_default())
+		.valid(AnsiColor::Cyan.on_default())
 }

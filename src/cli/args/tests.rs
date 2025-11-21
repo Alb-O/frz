@@ -1,11 +1,10 @@
 use clap::{CommandFactory, FromArgMatches};
 
-use super::command::tinted_cli_command;
 use super::{CliArgs, OutputFormat};
 
 #[test]
 fn command_supports_custom_styles() {
-	let command = tinted_cli_command();
+	let command = CliArgs::command();
 	assert!(command.get_about().is_some());
 }
 
