@@ -45,17 +45,7 @@ impl<'a> App<'a> {
 	}
 
 	fn switch_mode(&mut self) {
-		let tabs = self.ui.tabs();
-		if tabs.is_empty() {
-			return;
-		}
-		let current = tabs
-			.iter()
-			.position(|tab| tab.mode == self.mode)
-			.unwrap_or(0);
-		let next = (current + 1) % tabs.len();
-		let next_mode = tabs[next].mode;
-		self.set_mode(next_mode);
+		// No-op now that we only have one mode
 	}
 
 	fn move_selection_up(&mut self) {

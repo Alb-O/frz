@@ -6,6 +6,9 @@ use anyhow::Result;
 use super::file::{FileRow, tags_for_relative_path};
 use super::fs::{Fs, OsFs};
 
+/// Dataset key for the files collection.
+pub const FILES_DATASET_KEY: &str = "files";
+
 /// Data displayed in the search interface, including files.
 #[derive(Debug, Default, Clone)]
 pub struct SearchData {
@@ -27,7 +30,7 @@ impl SearchData {
 	#[must_use]
 	pub fn id_map_for_dataset(&self, key: &str) -> Option<HashMap<u64, usize>> {
 		match key {
-			crate::extensions::builtin::files::DATASET_KEY => {
+			FILES_DATASET_KEY => {
 				let mut map = HashMap::new();
 				for (index, row) in self.files.iter().enumerate() {
 					if let Some(id) = row.id {

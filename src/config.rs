@@ -104,8 +104,6 @@ fn build_filesystem_options(cli: &CliArgs) -> FilesystemOptions {
 }
 
 fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
-	use frz::extensions::builtin::files;
-
 	let preset = cli.ui_preset.as_ref().map(|p| p.as_str());
 	let mut ui = ui_from_preset(preset)?;
 
@@ -121,8 +119,7 @@ fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
 		|| cli.files_hint.is_some()
 		|| cli.files_table_title.is_some()
 		|| cli.files_count_label.is_some())
-		&& let Some(mode) = ui.mode_by_id(files::DATASET_KEY)
-		&& let Some(pane) = ui.pane_mut(mode)
+		&& let Some(pane) = ui.pane_mut()
 	{
 		if let Some(title) = &cli.files_mode_title {
 			pane.mode_title = title.clone();

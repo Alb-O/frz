@@ -3,14 +3,12 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-use crate::extensions::api::SearchMode;
 use crate::tui::input::SearchInput;
 use crate::tui::theme::Theme;
 
 /// Render metadata for a tab header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TabItem<'a> {
-	pub mode: SearchMode,
 	pub label: &'a str,
 }
 
@@ -19,7 +17,6 @@ pub struct InputContext<'a> {
 	pub search_input: &'a SearchInput<'a>,
 	pub input_title: Option<&'a str>,
 	pub pane_title: Option<&'a str>,
-	pub mode: SearchMode,
 	pub tabs: &'a [TabItem<'a>],
 	pub area: Rect,
 	pub theme: &'a Theme,
@@ -42,7 +39,6 @@ pub fn render_input_with_tabs(
 		search_input,
 		input_title,
 		pane_title,
-		mode,
 		tabs,
 		area,
 		theme,
@@ -89,7 +85,7 @@ pub fn render_input_with_tabs(
 		width: tabs_area.width.saturating_sub(1),
 		..tabs_area
 	};
-	let selected = selected_tab_index(mode, tabs);
+	let selected = 0; // Only one tab now
 
 	let tab_titles = build_tab_titles(theme, selected, tabs);
 
@@ -127,10 +123,6 @@ fn layout_constraints(
 			ratatui::layout::Constraint::Length(tabs_width),
 		]
 	}
-}
-
-fn selected_tab_index(mode: SearchMode, tabs: &[TabItem<'_>]) -> usize {
-	tabs.iter().position(|tab| tab.mode == mode).unwrap_or(0)
 }
 
 fn build_tab_titles(theme: &Theme, selected: usize, tabs: &[TabItem<'_>]) -> Vec<Line<'static>> {

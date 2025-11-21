@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use crate::extensions::api::{SearchData, SearchMode, StreamAction};
+use crate::extensions::api::{SearchData, StreamAction};
 use crate::systems::filesystem::{IndexUpdate, merge_update};
 use crate::systems::search::{SearchCommand, SearchResult};
 
@@ -62,14 +62,14 @@ impl SearchRuntime {
 		self.revisions.last_user_input = self.revisions.input;
 	}
 
-	pub(crate) fn issue_search(&mut self, query: String, mode: SearchMode) {
+	pub(crate) fn issue_search(&mut self, query: String) {
 		self.next_query_id = self.next_query_id.saturating_add(1);
 		let id = self.next_query_id;
 		self.current_query_id = Some(id);
 		self.in_flight = true;
 		self.revisions.pending_result = self.revisions.input;
 		self.latest_query_id.store(id, AtomicOrdering::Release);
-		let _ = self.tx.send(SearchCommand::Query { id, query, mode });
+		let _ = self.tx.send(SearchCommand::Query { id, query });
 	}
 
 	pub(crate) fn should_refresh_after_index_update(&self) -> bool {
@@ -123,7 +123,6 @@ mod tests {
 	use std::sync::mpsc;
 
 	use super::*;
-	use crate::extensions::builtin::files;
 	use crate::systems::search::SearchCommand;
 
 	#[test]
@@ -134,7 +133,7 @@ mod tests {
 		let mut runtime = SearchRuntime::new(command_tx, result_rx, Arc::clone(&latest));
 
 		runtime.mark_query_dirty();
-		runtime.issue_search("example".into(), files::mode());
+		runtime.issue_search("example".into());
 		assert!(runtime.is_in_flight());
 		assert!(runtime.has_unapplied_input());
 

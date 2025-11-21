@@ -66,10 +66,8 @@ impl<'a> App<'a> {
 		match update.cached_data.take() {
 			Some(data) => {
 				self.data = data;
-				for state in self.tab_states.values_mut() {
-					state.filtered.clear();
-					state.scores.clear();
-				}
+				self.tab_buffers.filtered.clear();
+				self.tab_buffers.scores.clear();
 				self.table_state.select(None);
 				self.index_progress
 					.refresh_from_data(&self.data, self.dataset_totals());
@@ -80,10 +78,8 @@ impl<'a> App<'a> {
 			None => {
 				if update.reset {
 					self.index_progress = IndexProgress::with_unknown_totals();
-					for state in self.tab_states.values_mut() {
-						state.filtered.clear();
-						state.scores.clear();
-					}
+					self.tab_buffers.filtered.clear();
+					self.tab_buffers.scores.clear();
 					self.table_state.select(None);
 				}
 
@@ -100,7 +96,7 @@ impl<'a> App<'a> {
 	}
 
 	fn record_index_progress_update(&mut self, progress: ProgressSnapshot) {
-		let files_key = crate::extensions::builtin::files::DATASET_KEY;
+		let files_key = crate::extensions::api::FILES_DATASET_KEY;
 		self.index_progress
 			.record_indexed(&[(files_key, progress.indexed_files)]);
 		self.index_progress
@@ -253,7 +249,6 @@ mod tests {
 
 	#[test]
 	fn row_id_map_tracks_incremental_index_updates() {
-		let files_mode = crate::extensions::builtin::files::mode();
 		let mut data = SearchData::new();
 		let first = FileRow::filesystem("src/lib.rs", Vec::<String>::new());
 		let second = FileRow::filesystem("src/main.rs", Vec::<String>::new());
@@ -263,12 +258,8 @@ mod tests {
 		wait_for_results(&mut app);
 
 		let first_id = first.id.expect("expected stable id for first file");
-		let map = app
-			.row_id_maps
-			.get(&files_mode)
-			.expect("expected row id map for files mode");
 		assert_eq!(
-			map.get(&first_id),
+			app.row_id_map.get(&first_id),
 			Some(&0),
 			"initial row id map should track the first file",
 		);
@@ -287,17 +278,13 @@ mod tests {
 
 		let changed = <App as IndexView>::apply_index_update(&mut app, update);
 		assert!(changed, "index update should modify the data set");
-		let map = app
-			.row_id_maps
-			.get(&files_mode)
-			.expect("expected updated row id map");
 		assert_eq!(
-			map.get(&first_id),
+			app.row_id_map.get(&first_id),
 			Some(&0),
 			"first file should keep its index",
 		);
 		assert_eq!(
-			map.get(&second_id),
+			app.row_id_map.get(&second_id),
 			Some(&1),
 			"second file should be mapped to the appended slot",
 		);
@@ -307,13 +294,8 @@ mod tests {
 			ids: Some(vec![second_id]),
 			scores: vec![10],
 		};
-		<App as SearchViewV2>::replace_matches_v2(&mut app, files_mode, batch);
-		let filtered = app
-			.tab_states
-			.get(&files_mode)
-			.expect("tab state for files")
-			.filtered
-			.clone();
+		<App as SearchViewV2>::replace_matches_v2(&mut app, batch);
+		let filtered = app.tab_buffers.filtered.clone();
 		assert_eq!(
 			filtered,
 			vec![1],
@@ -323,7 +305,6 @@ mod tests {
 
 	#[test]
 	fn row_id_map_rebuilds_when_cached_data_applied() {
-		let files_mode = crate::extensions::builtin::files::mode();
 		let first = FileRow::filesystem("src/lib.rs", Vec::<String>::new());
 		let second = FileRow::filesystem("src/main.rs", Vec::<String>::new());
 
@@ -357,25 +338,16 @@ mod tests {
 		let changed = <App as IndexView>::apply_index_update(&mut app, update);
 		assert!(changed, "cached data should replace the in-memory dataset");
 
-		let map = app
-			.row_id_maps
-			.get(&files_mode)
-			.expect("row id map should exist after cached data");
-		assert_eq!(map.get(&second_id), Some(&0));
-		assert_eq!(map.get(&first_id), Some(&1));
+		assert_eq!(app.row_id_map.get(&second_id), Some(&0));
+		assert_eq!(app.row_id_map.get(&first_id), Some(&1));
 
 		let batch = MatchBatch {
 			indices: vec![1],
 			ids: Some(vec![first_id]),
 			scores: vec![5],
 		};
-		<App as SearchViewV2>::replace_matches_v2(&mut app, files_mode, batch);
-		let filtered = app
-			.tab_states
-			.get(&files_mode)
-			.expect("tab state for files")
-			.filtered
-			.clone();
+		<App as SearchViewV2>::replace_matches_v2(&mut app, batch);
+		let filtered = app.tab_buffers.filtered.clone();
 		assert_eq!(
 			filtered,
 			vec![1],

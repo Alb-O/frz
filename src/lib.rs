@@ -15,7 +15,7 @@ pub use systems::filesystem::FilesystemOptions;
 pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
 
 pub use crate::extensions::api::{
-	FileRow, SearchData, SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
+	FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle,
 };
 pub use crate::tui::components::{progress, tables, tabs};
 pub use crate::tui::input::SearchInput;

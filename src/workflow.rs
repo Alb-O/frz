@@ -1,5 +1,4 @@
 use anyhow::Result;
-use frz::extensions::builtin::files;
 use frz::{SearchOutcome, SearchUi};
 
 use crate::config::Config;
@@ -36,7 +35,7 @@ impl SearchWorkflow {
 
 		if let Some(headers) = file_headers {
 			let refs: Vec<&str> = headers.iter().map(|h| h.as_str()).collect();
-			search_ui = search_ui.with_headers_for(files::mode(), refs);
+			search_ui = search_ui.with_headers(refs);
 		}
 
 		Ok(Self { search_ui })

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
 use anyhow::Result;
@@ -6,7 +5,7 @@ use ratatui::layout::Constraint;
 
 use super::App;
 use super::config::UiConfig;
-use crate::extensions::api::{SearchData, SearchMode, SearchOutcome};
+use crate::extensions::api::{SearchData, SearchOutcome};
 use crate::systems::filesystem::{FilesystemOptions, IndexResult, spawn_filesystem_index};
 pub use crate::tui::theme::Theme;
 
@@ -16,8 +15,8 @@ pub use crate::tui::theme::Theme;
 pub struct SearchUi {
 	data: SearchData,
 	input_title: Option<String>,
-	headers: HashMap<SearchMode, Vec<String>>,
-	widths: HashMap<SearchMode, Vec<Constraint>>,
+	headers: Option<Vec<String>>,
+	widths: Option<Vec<Constraint>>,
 	ui_config: Option<UiConfig>,
 	theme: Option<Theme>,
 	bat_theme: Option<String>,
@@ -32,8 +31,8 @@ impl SearchUi {
 		Self {
 			data,
 			input_title: None,
-			headers: HashMap::new(),
-			widths: HashMap::new(),
+			headers: None,
+			widths: None,
 			ui_config: None,
 			theme: None,
 			bat_theme: None,
@@ -62,13 +61,13 @@ impl SearchUi {
 		self
 	}
 
-	pub fn with_headers_for(self, mode: SearchMode, headers: Vec<&str>) -> Self {
-		let headers = headers.into_iter().map(|s| s.to_string()).collect();
-		self.with_headers(mode, headers)
+	pub fn with_headers(mut self, headers: Vec<&str>) -> Self {
+		self.headers = Some(headers.into_iter().map(|s| s.to_string()).collect());
+		self
 	}
 
-	pub fn with_widths_for(mut self, mode: SearchMode, widths: Vec<Constraint>) -> Self {
-		self.widths.insert(mode, widths);
+	pub fn with_widths(mut self, widths: Vec<Constraint>) -> Self {
+		self.widths = Some(widths);
 		self
 	}
 
@@ -103,11 +102,11 @@ impl SearchUi {
 		if let Some(title) = self.input_title {
 			app.input_title = Some(title);
 		}
-		for (mode, headers) in self.headers {
-			app.set_headers_for(mode, headers);
+		if let Some(headers) = self.headers {
+			app.set_headers(headers);
 		}
-		for (mode, widths) in self.widths {
-			app.set_widths_for(mode, widths);
+		if let Some(widths) = self.widths {
+			app.set_widths(widths);
 		}
 		if let Some(ui) = self.ui_config {
 			app.ui = ui;
@@ -121,10 +120,5 @@ impl SearchUi {
 		}
 
 		app.run()
-	}
-
-	fn with_headers(mut self, mode: SearchMode, headers: Vec<String>) -> Self {
-		self.headers.insert(mode, headers);
-		self
 	}
 }

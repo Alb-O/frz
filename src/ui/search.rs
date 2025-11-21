@@ -2,7 +2,7 @@ use std::sync::mpsc::TryRecvError;
 use std::time::Instant;
 
 use super::App;
-use crate::extensions::api::{MatchBatch, SearchMode, SearchResult, SearchView, SearchViewV2};
+use crate::extensions::api::{MatchBatch, SearchResult, SearchView, SearchViewV2};
 use crate::systems::filesystem::IndexUpdate;
 
 impl<'a> App<'a> {
@@ -52,8 +52,7 @@ impl<'a> App<'a> {
 
 	fn issue_search(&mut self) {
 		let query = self.search_input.text().to_string();
-		let mode = self.mode;
-		self.search.issue_search(query, mode);
+		self.search.issue_search(query);
 	}
 
 	pub(crate) fn settle_initial_results(&mut self, has_results: bool) {
@@ -66,20 +65,18 @@ impl<'a> App<'a> {
 }
 
 impl<'a> SearchView for App<'a> {
-	fn replace_matches(&mut self, mode: SearchMode, indices: Vec<usize>, scores: Vec<u16>) {
-		self.apply_match_batch(mode, indices, None, scores);
+	fn replace_matches(&mut self, indices: Vec<usize>, scores: Vec<u16>) {
+		self.apply_match_batch(indices, None, scores);
 	}
 
-	fn clear_matches(&mut self, mode: SearchMode) {
-		self.ensure_tab_buffers();
-		let entry = self.tab_states.entry(mode).or_default();
-		entry.filtered.clear();
-		entry.scores.clear();
+	fn clear_matches(&mut self) {
+		self.tab_buffers.filtered.clear();
+		self.tab_buffers.scores.clear();
 		self.settle_initial_results(false);
 		self.ensure_selection();
 	}
 
-	fn record_completion(&mut self, _mode: SearchMode, complete: bool) {
+	fn record_completion(&mut self, complete: bool) {
 		self.search.record_result_completion(complete);
 	}
 
@@ -89,12 +86,12 @@ impl<'a> SearchView for App<'a> {
 }
 
 impl<'a> SearchViewV2 for App<'a> {
-	fn replace_matches_v2(&mut self, mode: SearchMode, batch: MatchBatch) {
+	fn replace_matches_v2(&mut self, batch: MatchBatch) {
 		let MatchBatch {
 			indices,
 			ids,
 			scores,
 		} = batch;
-		self.apply_match_batch(mode, indices, ids, scores);
+		self.apply_match_batch(indices, ids, scores);
 	}
 }

@@ -1,16 +1,16 @@
 use frizbee::Options;
 use ratatui::Frame;
-use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
 
 use super::App;
-use crate::extensions::api::SearchMode;
-use crate::extensions::builtin::files;
 use crate::logging;
 use crate::systems::search;
+use crate::tui::components::tables::TableSpec;
 use crate::tui::components::{
-	InputContext, ProgressState, TabItem, TableRenderContext, render_input_with_tabs, render_table,
+	InputContext, ProgressState, TabItem, render_input_with_tabs, render_table,
 };
+use crate::tui::tables::rows::build_file_rows;
 
 impl<'a> App<'a> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {
@@ -33,15 +33,13 @@ impl<'a> App<'a> {
 			.tabs()
 			.iter()
 			.map(|tab| TabItem {
-				mode: tab.mode,
 				label: tab.tab_label.as_str(),
 			})
 			.collect::<Vec<_>>();
 		let input_ctx = InputContext {
 			search_input: &self.search_input,
 			input_title: self.input_title.as_deref(),
-			pane_title: self.ui.pane(self.mode).map(|pane| pane.mode_title.as_str()),
-			mode: self.mode,
+			pane_title: self.ui.pane().map(|pane| pane.mode_title.as_str()),
 			tabs: &tabs,
 			area: layout[0],
 			theme: &self.theme,
@@ -69,33 +67,45 @@ impl<'a> App<'a> {
 	}
 
 	fn progress_status(&mut self) -> (String, bool) {
-		let mut labels = Vec::new();
-		for tab in self.ui.tabs() {
-			labels.push((tab.mode.id(), tab.pane.count_label.clone()));
-		}
+		let labels = vec![("files", "Files".to_string())];
 		self.index_progress.status(&labels)
 	}
 
 	fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
-		let highlight_owned = self.highlight_for_query(dataset_len(&self.data, self.mode));
+		let highlight_owned = self.highlight_for_query(self.data.files.len());
 		let highlight_state = highlight_owned
 			.as_ref()
 			.map(|(text, config)| (text.as_str(), *config));
-		let state = self.tab_states.entry(self.mode).or_default();
 
-		let spec = match self.mode {
-			SearchMode::Files => files::table(
-				TableRenderContext {
-					area,
-					filtered: &state.filtered,
-					scores: &state.scores,
-					headers: state.headers.as_ref(),
-					widths: state.widths.as_ref(),
-					highlight: highlight_state,
-					data: &self.data,
-				},
-				&self.theme,
-			),
+		// Default headers and widths if not customized
+		let default_headers = vec!["Path".into(), "Tags".into(), "Score".into()];
+		let default_widths = vec![
+			Constraint::Percentage(60),
+			Constraint::Percentage(30),
+			Constraint::Length(8),
+		];
+
+		let widths = self.tab_buffers.widths.as_ref().unwrap_or(&default_widths);
+		let headers = self
+			.tab_buffers
+			.headers
+			.as_ref()
+			.unwrap_or(&default_headers);
+		let column_widths = resolve_column_widths(area, widths);
+
+		let rows = build_file_rows(
+			&self.tab_buffers.filtered,
+			&self.tab_buffers.scores,
+			&self.data.files,
+			highlight_state,
+			self.theme.highlight_style(),
+			Some(&column_widths),
+		);
+
+		let spec = TableSpec {
+			headers: headers.clone(),
+			widths: widths.clone(),
+			rows,
 		};
 
 		render_table(frame, area, &mut self.table_state, spec, &self.theme);
@@ -111,8 +121,21 @@ impl<'a> App<'a> {
 	}
 }
 
-fn dataset_len(data: &crate::extensions::api::SearchData, mode: SearchMode) -> usize {
-	match mode {
-		SearchMode::Files => data.files.len(),
+fn resolve_column_widths(area: Rect, widths: &[Constraint]) -> Vec<u16> {
+	if widths.is_empty() || area.width == 0 {
+		return Vec::new();
 	}
+
+	let layout_area = Rect {
+		x: 0,
+		y: 0,
+		width: area.width,
+		height: 1,
+	};
+	Layout::horizontal(widths.to_vec())
+		.spacing(1)
+		.split(layout_area)
+		.iter()
+		.map(|rect| rect.width)
+		.collect()
 }
