@@ -4,7 +4,6 @@ use ratatui::layout::{Constraint, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
-use unicode_width::UnicodeWidthStr;
 
 use crate::extensions::api::SearchData;
 pub use crate::tui::tables::rows::*;
@@ -39,16 +38,13 @@ pub fn render_table(
 	spec: TableSpec<'_>,
 	theme: &Theme,
 ) {
-	let highlight_spacing = HighlightSpacing::WhenSelected;
-	let selection_width = selection_column_width(table_state, &highlight_spacing);
 	render_configured_table(
 		frame,
 		area,
 		table_state,
-		highlight_spacing,
+		HighlightSpacing::WhenSelected,
 		theme,
 		spec,
-		selection_width,
 	);
 }
 
@@ -59,7 +55,6 @@ fn render_configured_table(
 	highlight_spacing: HighlightSpacing,
 	theme: &Theme,
 	spec: TableSpec<'_>,
-	selection_width: u16,
 ) {
 	let header_cells = spec.headers.into_iter().map(Cell::from).collect::<Vec<_>>();
 	let header = Row::new(header_cells)
@@ -70,9 +65,6 @@ fn render_configured_table(
 	let mut widths = spec.widths;
 	if widths.is_empty() {
 		widths = vec![Constraint::Fill(1)];
-	}
-	if selection_width > 0 {
-		widths.insert(0, Constraint::Length(selection_width));
 	}
 
 	let table = Table::new(spec.rows, widths)
@@ -125,18 +117,4 @@ fn render_header_separator(frame: &mut Frame, area: Rect, theme: &Theme, header_
 	];
 	let para = Paragraph::new(Text::from(Line::from(spans)));
 	frame.render_widget(para, sep_rect);
-}
-
-fn selection_column_width(state: &ratatui::widgets::TableState, spacing: &HighlightSpacing) -> u16 {
-	let has_selection = state.selected().is_some();
-	let should_add = match spacing {
-		HighlightSpacing::Always => true,
-		HighlightSpacing::WhenSelected => has_selection,
-		HighlightSpacing::Never => false,
-	};
-	if should_add {
-		UnicodeWidthStr::width(HIGHLIGHT_SYMBOL) as u16
-	} else {
-		0
-	}
 }
