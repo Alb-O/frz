@@ -64,9 +64,7 @@ impl RawConfig {
 			input_title: ui.input_title,
 			initial_query: ui.initial_query,
 			theme: ui.theme,
-			start_mode: ui.start_mode,
 			ui: ui.ui,
-			facet_headers: ui.facet_headers,
 			file_headers: ui.file_headers,
 		};
 

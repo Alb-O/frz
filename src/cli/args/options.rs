@@ -1,22 +1,5 @@
 use clap::ValueEnum;
 
-/// Search modes accepted via the command line.
-#[derive(Copy, Clone, Debug, ValueEnum)]
-pub(crate) enum ModeArg {
-	Attributes,
-	Files,
-}
-
-impl ModeArg {
-	/// Return the string representation consumed by configuration loading.
-	pub(crate) fn as_str(self) -> &'static str {
-		match self {
-			ModeArg::Attributes => "attributes",
-			ModeArg::Files => "files",
-		}
-	}
-}
-
 /// Predefined UI presets selectable from the CLI.
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub(crate) enum UiPresetArg {

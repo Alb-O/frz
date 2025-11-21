@@ -56,21 +56,11 @@ pub(super) fn print_summary(config: &ResolvedConfig) {
 			.as_deref()
 			.unwrap_or("(use the library default)")
 	);
-	println!(
-		"  Start mode: {}",
-		config
-			.start_mode
-			.map(|mode| mode.id().to_string())
-			.unwrap_or_else(|| "(auto)".to_string())
-	);
 	if let Some(title) = &config.input_title {
 		println!("  Prompt title: {title}");
 	}
 	if !config.initial_query.is_empty() {
 		println!("  Initial query: {}", config.initial_query);
-	}
-	if let Some(headers) = &config.facet_headers {
-		println!("  attribute headers: {}", headers.join(", "));
 	}
 	if let Some(headers) = &config.file_headers {
 		println!("  File headers: {}", headers.join(", "));
@@ -103,9 +93,7 @@ mod tests {
 			input_title: Some("Title".into()),
 			initial_query: "foo".into(),
 			theme: Some("dark".into()),
-			start_mode: None,
 			ui: UiConfig::default(),
-			facet_headers: Some(vec!["col1".into()]),
 			file_headers: Some(vec!["col2".into()]),
 		};
 

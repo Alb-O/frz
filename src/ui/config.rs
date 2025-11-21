@@ -72,7 +72,7 @@ pub struct UiConfig {
 impl Default for UiConfig {
 	fn default() -> Self {
 		let mut config = Self {
-			filter_label: "Filter attributes".to_string(),
+			filter_label: "Filter files".to_string(),
 			detail_panel_title: "Selection details".to_string(),
 			tabs: Vec::new(),
 			index: HashMap::new(),

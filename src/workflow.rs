@@ -35,9 +35,7 @@ impl SearchUiFactory {
 			input_title,
 			initial_query,
 			theme,
-			start_mode,
 			ui,
-			facet_headers: _,
 			file_headers,
 		} = config;
 
@@ -46,7 +44,6 @@ impl SearchUiFactory {
 			.with_ui_config(ui)
 			.with_initial_query(initial_query)
 			.with_theme(theme)
-			.with_start_mode(start_mode)
 			.with_headers(files::mode(), file_headers);
 
 		Ok(builder.finish())
@@ -77,13 +74,6 @@ impl SearchUiFactory {
 	fn with_theme(mut self, theme: Option<String>) -> Self {
 		if let Some(theme) = theme {
 			self.search_ui = self.search_ui.with_theme_name(&theme);
-		}
-		self
-	}
-
-	fn with_start_mode(mut self, mode: Option<SearchMode>) -> Self {
-		if let Some(mode) = mode {
-			self.search_ui = self.search_ui.with_start_mode(mode);
 		}
 		self
 	}

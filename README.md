@@ -30,7 +30,6 @@ use frz::extensions::builtin::files;
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)
     .with_ui_config(UiConfig::tags_and_files())
-    .with_start_mode(files::mode())
     .run()?;
 
 if let Some(file) = outcome.selected_file() {
@@ -75,7 +74,6 @@ allowed_extensions = ["rs", "toml"]
 
 [ui]
 theme = "solarized"
-start_mode = "files"
 detail_panel_title = "Entry details"
 ```
 

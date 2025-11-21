@@ -21,7 +21,6 @@ pub struct SearchUi {
 	ui_config: Option<UiConfig>,
 	theme: Option<Theme>,
 	bat_theme: Option<String>,
-	start_mode: Option<SearchMode>,
 	index_updates: Option<Receiver<IndexResult>>,
 }
 
@@ -38,7 +37,6 @@ impl SearchUi {
 			ui_config: None,
 			theme: None,
 			bat_theme: None,
-			start_mode: None,
 			index_updates: None,
 		}
 	}
@@ -55,7 +53,6 @@ impl SearchUi {
 		let root = path.into();
 		let (data, updates) = spawn_filesystem_index(root, options)?;
 		let mut ui = Self::new(data);
-		ui.start_mode = Some(crate::extensions::builtin::files::mode());
 		ui.index_updates = Some(updates);
 		Ok(ui)
 	}
@@ -99,11 +96,6 @@ impl SearchUi {
 		self
 	}
 
-	pub fn with_start_mode(mut self, mode: SearchMode) -> Self {
-		self.start_mode = Some(mode);
-		self
-	}
-
 	/// Run the interactive search UI with the configured options.
 	pub fn run(mut self) -> Result<SearchOutcome> {
 		// Build an App and apply optional customizations, then run it.
@@ -123,9 +115,6 @@ impl SearchUi {
 		}
 		if let Some(theme) = self.theme {
 			app.set_theme_with_bat(theme, self.bat_theme.clone());
-		}
-		if let Some(mode) = self.start_mode {
-			app.set_mode(mode);
 		}
 		if let Some(updates) = self.index_updates.take() {
 			app.set_index_updates(updates);

@@ -1,5 +1,4 @@
-use anyhow::{Result, anyhow, bail};
-use frz::extensions::api::SearchMode;
+use anyhow::{Result, bail};
 use frz::{PaneUiConfig, UiConfig};
 
 use super::raw::PaneSection;
@@ -38,19 +37,6 @@ pub(super) fn apply_pane_config(target: &mut PaneUiConfig, pane: PaneSection) {
 	}
 }
 
-/// Parse a start mode string into a strongly typed [`SearchMode`].
-pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
-	let trimmed = value.trim();
-	if trimmed.is_empty() {
-		bail!("start mode cannot be empty");
-	}
-	let id = trimmed.to_ascii_lowercase();
-	SearchMode::all()
-		.into_iter()
-		.find(|mode| mode.id() == id)
-		.ok_or_else(|| anyhow!("unknown start mode '{trimmed}'"))
-}
-
 #[cfg(test)]
 mod tests {
 	use frz::extensions::builtin::files;
@@ -67,12 +53,6 @@ mod tests {
 		let config_files = config.pane(files_mode).unwrap();
 		let default_files = default.pane(files_mode).unwrap();
 		assert_eq!(config_files.mode_title, default_files.mode_title);
-	}
-
-	#[test]
-	fn parse_mode_supports_known_variants() {
-		assert_eq!(parse_mode("FILES").unwrap(), files::mode());
-		assert!(parse_mode("unknown").is_err());
 	}
 
 	#[test]

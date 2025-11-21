@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::builder::BoolishValueParser;
 use clap::{ArgAction, ColorChoice, Parser};
 
-use super::options::{ModeArg, OutputFormat, UiPresetArg};
+use super::options::{OutputFormat, UiPresetArg};
 use super::styles::{cli_styles, long_version};
 
 /// Command-line arguments accepted by the `frz` binary.
@@ -60,13 +60,6 @@ pub(crate) struct CliArgs {
 	)]
 	pub(crate) theme: Option<String>,
 	#[arg(
-		short = 'm',
-		long = "start-mode",
-		value_enum,
-		help = "Choose the initial search mode (default: match the library heuristic)"
-	)]
-	pub(crate) start_mode: Option<ModeArg>,
-	#[arg(
 		short = 'u',
 		long = "ui-preset",
 		value_enum,
@@ -85,30 +78,6 @@ pub(crate) struct CliArgs {
 		help = "Override the detail panel title (default: preset value)"
 	)]
 	pub(crate) detail_title: Option<String>,
-	#[arg(
-		long = "attributes-mode-title",
-		value_name = "TEXT",
-		help = "Set the attributes pane title (default: preset value)"
-	)]
-	pub(crate) attributes_mode_title: Option<String>,
-	#[arg(
-		long = "attributes-hint",
-		value_name = "TEXT",
-		help = "Set the hint for the attributes pane (default: preset value)"
-	)]
-	pub(crate) attributes_hint: Option<String>,
-	#[arg(
-		long = "attributes-table-title",
-		value_name = "TEXT",
-		help = "Set the table title for attributes (default: preset value)"
-	)]
-	pub(crate) attributes_table_title: Option<String>,
-	#[arg(
-		long = "attributes-count-label",
-		value_name = "TEXT",
-		help = "Set the count label for attributes (default: preset value)"
-	)]
-	pub(crate) attributes_count_label: Option<String>,
 	#[arg(
 		long = "files-mode-title",
 		value_name = "TEXT",
@@ -133,13 +102,6 @@ pub(crate) struct CliArgs {
 		help = "Set the count label for files (default: preset value)"
 	)]
 	pub(crate) files_count_label: Option<String>,
-	#[arg(
-		long = "attribute-headers",
-		value_delimiter = ',',
-		value_name = "HEADER",
-		help = "Comma-separated attribute table headers (default: preset value)"
-	)]
-	pub(crate) facet_headers: Option<Vec<String>>,
 	#[arg(
 		long = "file-headers",
 		value_delimiter = ',',

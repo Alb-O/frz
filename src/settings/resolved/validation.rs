@@ -50,9 +50,7 @@ mod tests {
 			input_title: None,
 			initial_query: String::new(),
 			theme: None,
-			start_mode: None,
 			ui: UiConfig::default(),
-			facet_headers: None,
 			file_headers: None,
 		};
 
@@ -80,9 +78,7 @@ mod tests {
 			input_title: None,
 			initial_query: String::new(),
 			theme: None,
-			start_mode: None,
 			ui: UiConfig::default(),
-			facet_headers: None,
 			file_headers: None,
 		};
 

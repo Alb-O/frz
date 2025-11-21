@@ -7,7 +7,7 @@ use crate::cli::CliArgs;
 
 #[test]
 fn cli_overrides_take_precedence() {
-	let mut cli = CliArgs::parse_from(["frz", "--start-mode", "files"]);
+	let mut cli = CliArgs::parse_from(["frz"]);
 	cli.root = Some(PathBuf::from("/tmp"));
 	cli.hidden = Some(false);
 	cli.follow_symlinks = Some(true);
@@ -25,15 +25,10 @@ fn cli_overrides_take_precedence() {
 	cli.theme = Some("dark".into());
 	cli.filter_label = Some("filter".into());
 	cli.detail_title = Some("detail".into());
-	cli.attributes_mode_title = Some("attribute".into());
-	cli.attributes_hint = Some("hint".into());
-	cli.attributes_table_title = Some("table".into());
-	cli.attributes_count_label = Some("count".into());
 	cli.files_mode_title = Some("file".into());
 	cli.files_hint = Some("file hint".into());
 	cli.files_table_title = Some("files table".into());
 	cli.files_count_label = Some("files count".into());
-	cli.facet_headers = Some(vec!["a".into()]);
 	cli.file_headers = Some(vec!["b".into()]);
 
 	let mut config = RawConfig::default();
@@ -43,7 +38,5 @@ fn cli_overrides_take_precedence() {
 	assert_eq!(config.ui.input_title, cli.title);
 	assert_eq!(config.ui.initial_query, cli.initial_query);
 	assert_eq!(config.ui.theme, cli.theme);
-	assert_eq!(config.ui.start_mode, Some("files".into()));
-	assert_eq!(config.ui.facet_headers, cli.facet_headers);
 	assert_eq!(config.ui.file_headers, cli.file_headers);
 }

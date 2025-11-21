@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use frz::{FilesystemOptions, SearchMode, UiConfig};
+use frz::{FilesystemOptions, UiConfig};
 
 mod errors;
 mod sources;
@@ -19,9 +19,7 @@ pub struct ResolvedConfig {
 	pub input_title: Option<String>,
 	pub initial_query: String,
 	pub theme: Option<String>,
-	pub start_mode: Option<SearchMode>,
 	pub ui: UiConfig,
-	pub facet_headers: Option<Vec<String>>,
 	pub file_headers: Option<Vec<String>>,
 }
 
