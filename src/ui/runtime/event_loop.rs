@@ -43,10 +43,6 @@ impl<'a> App<'a> {
 		let mut pending_events = VecDeque::new();
 
 		let result: Result<SearchOutcome> = 'event_loop: loop {
-			self.pump_index_updates();
-			self.pump_search_results();
-			self.throbber_state.calc_next();
-
 			loop {
 				match event_rx.try_recv() {
 					Ok(Event::Resize(_, _)) => {}
@@ -57,8 +53,6 @@ impl<'a> App<'a> {
 					}
 				}
 			}
-
-			terminal.draw(|frame| self.draw(frame))?;
 
 			let mut maybe_outcome = None;
 			while let Some(event) = pending_events.pop_front() {
@@ -77,6 +71,12 @@ impl<'a> App<'a> {
 			if let Some(outcome) = maybe_outcome {
 				break Ok(outcome);
 			}
+
+			self.pump_index_updates();
+			self.pump_search_results();
+			self.throbber_state.calc_next();
+
+			terminal.draw(|frame| self.draw(frame))?;
 
 			thread::sleep(Duration::from_millis(16));
 		};
