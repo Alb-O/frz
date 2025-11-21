@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use std::time::Instant;
@@ -6,11 +5,9 @@ use std::time::Instant;
 use super::super::{IndexKind, IndexResult, IndexStream, IndexUpdate};
 use super::cache::CacheWriter;
 use super::{DISPATCH_INTERVAL, MAX_BATCH_SIZE, MIN_BATCH_SIZE};
-use crate::extensions::api::{AttributeRow, FileRow};
+use crate::extensions::api::FileRow;
 
 pub(super) struct UpdateBatcher {
-	facet_counts: BTreeMap<String, usize>,
-	pending_attributes: BTreeMap<String, usize>,
 	pending_files: Vec<FileRow>,
 	indexed_files: usize,
 	last_dispatch: Instant,
@@ -21,8 +18,6 @@ pub(super) struct UpdateBatcher {
 impl UpdateBatcher {
 	pub fn new(emit_reset: bool, cache_writer: Option<CacheWriter>) -> Self {
 		Self {
-			facet_counts: BTreeMap::new(),
-			pending_attributes: BTreeMap::new(),
 			pending_files: Vec::new(),
 			indexed_files: 0,
 			last_dispatch: Instant::now(),
@@ -36,12 +31,6 @@ impl UpdateBatcher {
 			writer.record(&file);
 		}
 
-		for tag in &file.tags {
-			let count = self.facet_counts.entry(tag.clone()).or_insert(0);
-			*count += 1;
-			self.pending_attributes.insert(tag.clone(), *count);
-		}
-
 		self.indexed_files += 1;
 		self.pending_files.push(file);
 	}
@@ -51,7 +40,7 @@ impl UpdateBatcher {
 			return true;
 		}
 
-		if !self.emit_reset && self.pending_files.is_empty() && self.pending_attributes.is_empty() {
+		if !self.emit_reset && self.pending_files.is_empty() {
 			return false;
 		}
 
@@ -59,32 +48,15 @@ impl UpdateBatcher {
 	}
 
 	pub fn flush(&mut self, tx: &Sender<IndexResult>, complete: bool) -> bool {
-		if !complete
-			&& !self.emit_reset
-			&& self.pending_files.is_empty()
-			&& self.pending_attributes.is_empty()
-		{
+		if !complete && !self.emit_reset && self.pending_files.is_empty() {
 			return true;
 		}
 
 		let files_vec = std::mem::take(&mut self.pending_files);
 		let files: Arc<[FileRow]> = files_vec.into();
-		let attributes: Arc<[AttributeRow]> = if self.pending_attributes.is_empty() {
-			Arc::default()
-		} else {
-			let collected: Vec<AttributeRow> = self
-				.pending_attributes
-				.iter()
-				.map(|(name, count)| AttributeRow::new(name.clone(), *count))
-				.collect();
-			self.pending_attributes.clear();
-			collected.into()
-		};
 
 		let progress = super::super::ProgressSnapshot {
-			indexed_attributes: self.facet_counts.len(),
 			indexed_files: self.indexed_files,
-			total_attributes: complete.then_some(self.facet_counts.len()),
 			total_files: complete.then_some(self.indexed_files),
 			complete,
 		};
@@ -98,7 +70,6 @@ impl UpdateBatcher {
 		if !stream.send_update(
 			IndexUpdate {
 				files,
-				attributes,
 				progress,
 				reset,
 				cached_data: None,

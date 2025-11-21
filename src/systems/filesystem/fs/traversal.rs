@@ -12,7 +12,7 @@ use super::FilesystemOptions;
 use super::cache::{CacheHandle, CacheWriter};
 use super::cached_stream::stream_cached_entry;
 use super::update_batcher::UpdateBatcher;
-use crate::extensions::api::{AttributeRow, FileRow, SearchData, tags_for_relative_path};
+use crate::extensions::api::{FileRow, SearchData, tags_for_relative_path};
 
 pub fn spawn_filesystem_index(
 	root: PathBuf,
@@ -50,21 +50,17 @@ pub fn spawn_filesystem_index(
 				}
 
 				let files: Arc<[FileRow]> = preview.data.files.clone().into();
-				let attributes: Arc<[AttributeRow]> = preview.data.attributes.clone().into();
 				let progress = ProgressSnapshot {
-					indexed_attributes: attributes.len(),
 					indexed_files: files.len(),
-					total_attributes: preview_is_complete.then_some(attributes.len()),
 					total_files: preview_is_complete.then_some(files.len()),
 					complete: preview_is_complete,
 				};
 
-				if !files.is_empty() || !attributes.is_empty() {
+				if !files.is_empty() {
 					let stream = IndexStream::new(&tx, 0, IndexKind::Preview);
 					let _ = stream.send_update(
 						IndexUpdate {
 							files,
-							attributes,
 							progress,
 							reset: true,
 							cached_data: Some(preview.data),

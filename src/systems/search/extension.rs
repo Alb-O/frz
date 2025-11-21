@@ -1,7 +1,7 @@
 //! Public-facing search system APIs that extensions can opt into using.
 
 pub use crate::extensions::api::search::config_for_query;
-pub use crate::extensions::api::{SearchStream, stream_attributes, stream_files};
+pub use crate::extensions::api::{SearchStream, stream_files};
 
 /// Threshold after which pre-filtering should be enabled for large data sets.
 pub const PREFILTER_ENABLE_THRESHOLD: usize =

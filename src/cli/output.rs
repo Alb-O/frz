@@ -11,7 +11,6 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
 
 	match &outcome.selection {
 		Some(SearchSelection::File(file)) => println!("{}", file.path),
-		Some(SearchSelection::Attribute(attribute)) => println!("attribute: {}", attribute.name),
 		None => println!("No selection"),
 	}
 }
@@ -24,11 +23,6 @@ pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
 			"path": file.path,
 			"tags": file.tags,
 			"display_tags": file.display_tags,
-		}),
-		Some(SearchSelection::Attribute(attribute)) => json!({
-			"type": "attribute",
-			"name": attribute.name,
-			"count": attribute.count,
 		}),
 		None => serde_json::Value::Null,
 	};
@@ -50,7 +44,7 @@ pub(crate) fn print_json(outcome: &SearchOutcome) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-	use frz::{AttributeRow, FileRow};
+	use frz::FileRow;
 	use serde_json::Value;
 
 	use super::*;
@@ -68,23 +62,5 @@ mod tests {
 		assert_eq!(value["selection"]["type"], "file");
 		assert_eq!(value["selection"]["path"], "path");
 		assert_eq!(value["selection"]["tags"][0], "a");
-	}
-
-	#[test]
-	fn json_format_includes_attribute_selection() {
-		let outcome = SearchOutcome {
-			accepted: true,
-			query: "test".into(),
-			selection: Some(SearchSelection::Attribute(AttributeRow::new(
-				"attribute",
-				3,
-			))),
-		};
-
-		let json = format_outcome_json(&outcome).expect("json");
-		let value: Value = serde_json::from_str(&json).expect("parse");
-		assert_eq!(value["selection"]["type"], "attribute");
-		assert_eq!(value["selection"]["name"], "attribute");
-		assert_eq!(value["selection"]["count"], 3);
 	}
 }

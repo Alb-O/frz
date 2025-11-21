@@ -1,19 +1,17 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-use super::attribute::AttributeRow;
 use super::file::{FileRow, tags_for_relative_path};
 use super::fs::{Fs, OsFs};
 
-/// Data displayed in the search interface, including attributes and files.
+/// Data displayed in the search interface, including files.
 #[derive(Debug, Default, Clone)]
 pub struct SearchData {
 	pub context_label: Option<String>,
 	pub root: Option<PathBuf>,
 	pub initial_query: String,
-	pub attributes: Vec<AttributeRow>,
 	pub files: Vec<FileRow>,
 }
 
@@ -32,15 +30,6 @@ impl SearchData {
 			crate::extensions::builtin::files::DATASET_KEY => {
 				let mut map = HashMap::new();
 				for (index, row) in self.files.iter().enumerate() {
-					if let Some(id) = row.id {
-						map.insert(id, index);
-					}
-				}
-				Some(map)
-			}
-			crate::extensions::builtin::attributes::DATASET_KEY => {
-				let mut map = HashMap::new();
-				for (index, row) in self.attributes.iter().enumerate() {
 					if let Some(id) = row.id {
 						map.insert(id, index);
 					}
@@ -70,13 +59,6 @@ impl SearchData {
 	#[must_use]
 	pub fn with_initial_query(mut self, query: impl Into<String>) -> Self {
 		self.initial_query = query.into();
-		self
-	}
-
-	/// Replace the attribute rows with a new collection.
-	#[must_use]
-	pub fn with_attributes(mut self, attributes: Vec<AttributeRow>) -> Self {
-		self.attributes = attributes;
 		self
 	}
 
@@ -125,7 +107,6 @@ impl SearchData {
 	{
 		let root = root.as_ref();
 		let mut files = Vec::new();
-		let mut facet_counts: BTreeMap<String, usize> = BTreeMap::new();
 
 		for entry in fs.walk(root)? {
 			let relative = entry?;
@@ -133,25 +114,15 @@ impl SearchData {
 			let display = relative.to_string_lossy().replace('\\', "/");
 			let file = FileRow::filesystem(display, tags);
 
-			for tag in &file.tags {
-				*facet_counts.entry(tag.clone()).or_default() += 1;
-			}
-
 			files.push(file);
 		}
 
 		files.sort_by(|a, b| a.path.cmp(&b.path));
 
-		let attributes = facet_counts
-			.into_iter()
-			.map(|(name, count)| AttributeRow::new(name, count))
-			.collect();
-
 		Ok(Self {
 			context_label: Some(root.display().to_string()),
 			root: Some(root.to_path_buf()),
 			initial_query: String::new(),
-			attributes,
 			files,
 		})
 	}
@@ -286,17 +257,14 @@ mod tests {
 
 	#[test]
 	fn builder_methods_replace_data() {
-		let attributes = vec![AttributeRow::new("tag", 1)];
 		let files = vec![FileRow::new("file", Vec::<String>::new())];
 		let data = SearchData::new()
 			.with_context("context")
 			.with_initial_query("query")
-			.with_attributes(attributes.clone())
 			.with_files(files.clone());
 
 		assert_eq!(data.context_label.as_deref(), Some("context"));
 		assert_eq!(data.initial_query, "query");
-		assert_eq!(data.attributes[0].name, "tag");
 		assert_eq!(data.files[0].path, "file");
 	}
 
@@ -308,8 +276,6 @@ mod tests {
 		assert_eq!(data.context_label.as_deref(), Some("/virtual"));
 		assert_eq!(data.files.len(), 3);
 		assert_eq!(data.files[0].path, "a/b.txt");
-		assert!(data.attributes.iter().any(|attr| attr.name == "*.txt"));
-		assert!(data.attributes.iter().any(|attr| attr.name == "a"));
 		Ok(())
 	}
 
@@ -329,8 +295,6 @@ mod tests {
 		let data = SearchData::from_filesystem(root)?;
 
 		assert!(data.files.iter().any(|f| f.path.ends_with("file.txt")));
-		assert!(data.attributes.iter().any(|attr| attr.name == "*.txt"));
-		assert!(data.attributes.iter().any(|attr| attr.name == "a"));
 		Ok(())
 	}
 
@@ -341,8 +305,6 @@ mod tests {
 
 		assert_eq!(data.files.len(), 10usize.pow(4));
 		assert!(data.files.first().unwrap().path.starts_with("n0_0"));
-		assert!(data.attributes.iter().any(|attr| attr.name == "*.txt"));
-		assert!(data.attributes.iter().any(|attr| attr.name == "n0_0"));
 		Ok(())
 	}
 

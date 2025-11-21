@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::super::{IndexKind, IndexStream, IndexUpdate, ProgressSnapshot};
 use super::MAX_BATCH_SIZE;
 use super::cache::CachedEntry;
-use crate::extensions::api::{AttributeRow, FileRow};
+use crate::extensions::api::FileRow;
 
 pub(super) fn stream_cached_entry(
 	entry: CachedEntry,
@@ -13,14 +13,12 @@ pub(super) fn stream_cached_entry(
 	let stream = IndexStream::new(tx, 0, IndexKind::Preview);
 	let data = entry.data;
 	let total_files = data.files.len();
-	let total_attributes = data.attributes.len();
 
-	if total_files == 0 && total_attributes == 0 {
+	if total_files == 0 {
 		return;
 	}
 
 	let start_index = preview_len.unwrap_or(0).min(total_files);
-	let attributes: Arc<[AttributeRow]> = data.attributes.into();
 	let mut files = data.files;
 
 	if start_index > 0 {
@@ -29,9 +27,7 @@ pub(super) fn stream_cached_entry(
 
 	if files.is_empty() {
 		let progress = ProgressSnapshot {
-			indexed_attributes: total_attributes,
 			indexed_files: total_files,
-			total_attributes: Some(total_attributes),
 			total_files: Some(total_files),
 			complete: false,
 		};
@@ -39,7 +35,6 @@ pub(super) fn stream_cached_entry(
 		let _ = stream.send_update(
 			IndexUpdate {
 				files: Arc::from(Vec::<FileRow>::new()),
-				attributes,
 				progress,
 				reset: preview_len.is_none(),
 				cached_data: None,
@@ -58,16 +53,13 @@ pub(super) fn stream_cached_entry(
 		dispatched += chunk_len;
 
 		let progress = ProgressSnapshot {
-			indexed_attributes: total_attributes,
 			indexed_files: dispatched,
-			total_attributes: Some(total_attributes),
 			total_files: Some(total_files),
 			complete: false,
 		};
 
 		let update = IndexUpdate {
 			files: chunk.into(),
-			attributes: attributes.clone(),
 			progress,
 			reset: preview_len.is_none() && first_batch,
 			cached_data: None,

@@ -12,7 +12,7 @@ use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
 use crate::extensions::api::{SearchData, SearchMode, SearchSelection};
-use crate::extensions::builtin::{self, attributes, files};
+use crate::extensions::builtin::{self, files};
 use crate::systems::filesystem::IndexResult;
 use crate::systems::search;
 use crate::tui::components::IndexProgress;
@@ -84,15 +84,9 @@ impl<'a> App<'a> {
 			.tabs()
 			.first()
 			.map(|tab| tab.mode)
-			.unwrap_or(SearchMode::Attributes);
+			.unwrap_or(SearchMode::Files);
 
-		index_progress.refresh_from_data(
-			&data,
-			[
-				(attributes::DATASET_KEY, data.attributes.len()),
-				(files::DATASET_KEY, data.files.len()),
-			],
-		);
+		index_progress.refresh_from_data(&data, [(files::DATASET_KEY, data.files.len())]);
 
 		let mut app = Self {
 			data,
@@ -177,7 +171,6 @@ impl<'a> App<'a> {
 		let state = self.tab_states.get(&self.mode)?;
 		let index = *state.filtered.get(selected)?;
 		match self.mode {
-			SearchMode::Attributes => attributes::selection(&self.data, index),
 			SearchMode::Files => files::selection(&self.data, index),
 		}
 	}
@@ -197,9 +190,6 @@ impl<'a> App<'a> {
 	/// Rebuild the stable-id lookup tables from the current dataset.
 	pub(crate) fn rebuild_row_id_maps(&mut self) {
 		self.row_id_maps.clear();
-		if let Some(map) = self.data.id_map_for_dataset(attributes::DATASET_KEY) {
-			self.row_id_maps.insert(SearchMode::Attributes, map);
-		}
 		if let Some(map) = self.data.id_map_for_dataset(files::DATASET_KEY) {
 			self.row_id_maps.insert(SearchMode::Files, map);
 		}
@@ -247,7 +237,6 @@ impl<'a> App<'a> {
 			.iter()
 			.map(|meta| {
 				let count = match meta.mode {
-					SearchMode::Attributes => self.data.attributes.len(),
 					SearchMode::Files => self.data.files.len(),
 				};
 				(meta.dataset_key, count)
@@ -271,15 +260,10 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::extensions::api::{AttributeRow, FileRow, MatchBatch, SearchViewV2};
+	use crate::extensions::api::{FileRow, MatchBatch, SearchViewV2};
 
 	fn sample_data() -> SearchData {
 		let mut data = SearchData::new();
-		data.attributes = vec![
-			AttributeRow::new("alpha", 3),
-			AttributeRow::new("beta", 5),
-			AttributeRow::new("gamma", 2),
-		];
 		data.files = vec![
 			FileRow::new("src/main.rs", ["alpha", "beta"]),
 			FileRow::new("src/lib.rs", ["beta"]),
@@ -305,20 +289,12 @@ mod tests {
 		let data = sample_data();
 		let mut app = App::new(data);
 		prime_and_wait_for_results(&mut app);
-		let attributes_ready = app
-			.tab_states
-			.get(&crate::extensions::builtin::attributes::mode())
-			.map(|state| !state.filtered.is_empty())
-			.unwrap_or(false);
 		let files_ready = app
 			.tab_states
 			.get(&crate::extensions::builtin::files::mode())
 			.map(|state| !state.filtered.is_empty())
 			.unwrap_or(false);
-		assert!(
-			attributes_ready || files_ready,
-			"expected initial search results to populate"
-		);
+		assert!(files_ready, "expected initial search results to populate");
 	}
 
 	#[test]

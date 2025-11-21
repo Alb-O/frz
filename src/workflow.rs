@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use frz::extensions::builtin::{attributes, files};
+use frz::extensions::builtin::files;
 use frz::{FilesystemOptions, SearchMode, SearchOutcome, SearchUi, UiConfig};
 
 use crate::settings::ResolvedConfig;
@@ -37,7 +37,7 @@ impl SearchUiFactory {
 			theme,
 			start_mode,
 			ui,
-			facet_headers,
+			facet_headers: _,
 			file_headers,
 		} = config;
 
@@ -47,7 +47,6 @@ impl SearchUiFactory {
 			.with_initial_query(initial_query)
 			.with_theme(theme)
 			.with_start_mode(start_mode)
-			.with_headers(attributes::mode(), facet_headers)
 			.with_headers(files::mode(), file_headers);
 
 		Ok(builder.finish())

@@ -91,27 +91,15 @@ impl Default for UiConfig {
 }
 
 impl UiConfig {
-	/// Build a configuration with built-in panes for tag and file searching.
+	/// Build a configuration with built-in panes for file searching.
 	#[must_use]
 	pub fn tags_and_files() -> Self {
 		let mut config = Self {
-			filter_label: "Filter tag".to_string(),
+			filter_label: "Filter files".to_string(),
 			detail_panel_title: "Selection details".to_string(),
 			tabs: Vec::new(),
 			index: HashMap::new(),
 		};
-
-		let attributes = crate::extensions::builtin::attributes::mode();
-		config.register_tab(TabUiConfig::new(
-			attributes,
-			"Tags",
-			PaneUiConfig::new(
-				"Tag search",
-				"Type to filter tags. Press Tab to view files.",
-				"Matching tags",
-				"Tags",
-			),
-		));
 
 		let files = crate::extensions::builtin::files::mode();
 		config.register_tab(TabUiConfig::new(
@@ -212,12 +200,11 @@ impl UiConfig {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::extensions::builtin::{attributes, files};
+	use crate::extensions::builtin::files;
 
 	#[test]
 	fn tags_and_files_registers_tabs() {
 		let config = UiConfig::tags_and_files();
-		assert!(config.tab(attributes::mode()).is_some());
 		assert!(config.tab(files::mode()).is_some());
 	}
 }

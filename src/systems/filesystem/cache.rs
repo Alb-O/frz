@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::collections::hash_map::DefaultHasher;
 use std::fs;
 use std::hash::{Hash, Hasher};
@@ -11,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use super::FilesystemOptions;
 use crate::app_dirs;
-use crate::extensions::api::{AttributeRow, FileRow, SearchData};
+use crate::extensions::api::{FileRow, SearchData};
 
 pub(super) const CACHE_TTL: Duration = Duration::from_secs(60);
 const CACHE_VERSION: u32 = 1;
@@ -82,7 +81,6 @@ pub(super) struct CacheWriter {
 	fingerprint: u64,
 	context_label: Option<String>,
 	files: Vec<CacheFileEntry>,
-	attributes: BTreeMap<String, usize>,
 	preview_path: PathBuf,
 }
 
@@ -95,7 +93,6 @@ impl CacheWriter {
 			fingerprint,
 			context_label,
 			files: Vec::new(),
-			attributes: BTreeMap::new(),
 			preview_path,
 		}
 	}
@@ -105,11 +102,6 @@ impl CacheWriter {
 			path: file.path.clone(),
 			tags: file.tags.clone(),
 		});
-
-		for tag in &file.tags {
-			let count = self.attributes.entry(tag.clone()).or_insert(0);
-			*count += 1;
-		}
 	}
 
 	pub fn finish(self) -> Result<()> {
@@ -123,28 +115,12 @@ impl CacheWriter {
 			.unwrap_or_default()
 			.as_secs();
 
-		let attributes = self
-			.attributes
-			.into_iter()
-			.map(|(name, count)| CacheAttributeEntry { name, count })
-			.collect::<Vec<_>>();
-
 		let preview_files: Vec<CacheFileEntry> = self
 			.files
 			.iter()
 			.take(CACHE_PREVIEW_LIMIT)
 			.cloned()
 			.collect();
-		let mut preview_attributes = BTreeMap::new();
-		for file in &preview_files {
-			for tag in &file.tags {
-				*preview_attributes.entry(tag.clone()).or_insert(0) += 1;
-			}
-		}
-		let preview_attributes = preview_attributes
-			.into_iter()
-			.map(|(name, count)| CacheAttributeEntry { name, count })
-			.collect::<Vec<_>>();
 		let preview_complete = preview_files.len() == self.files.len();
 
 		let payload = CachePayload {
@@ -154,7 +130,7 @@ impl CacheWriter {
 			context_label: self.context_label.clone(),
 			complete: true,
 			files: self.files,
-			attributes,
+			attributes: Vec::new(),
 		};
 
 		let preview_payload = CachePayload {
@@ -164,7 +140,7 @@ impl CacheWriter {
 			context_label: self.context_label,
 			complete: preview_complete,
 			files: preview_files,
-			attributes: preview_attributes,
+			attributes: Vec::new(),
 		};
 
 		write_payload(&self.path, &payload)?;
@@ -181,6 +157,7 @@ struct CachePayload {
 	#[serde(default)]
 	complete: bool,
 	files: Vec<CacheFileEntry>,
+	#[serde(default)]
 	attributes: Vec<CacheAttributeEntry>,
 }
 
@@ -233,11 +210,6 @@ fn load_payload(path: &Path, fingerprint: u64) -> Option<CachedEntry> {
 		.files
 		.into_iter()
 		.map(|entry| FileRow::filesystem(entry.path, entry.tags))
-		.collect();
-	data.attributes = payload
-		.attributes
-		.into_iter()
-		.map(|entry| AttributeRow::new(entry.name, entry.count))
 		.collect();
 
 	Some(CachedEntry {

@@ -4,9 +4,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use super::commands::{SearchCommand, SearchResult};
-use crate::extensions::api::{
-	SearchData, SearchMode, SearchStream, stream_attributes, stream_files,
-};
+use crate::extensions::api::{SearchData, SearchMode, SearchStream, stream_files};
 
 /// Launches the background search worker thread and returns communication channels.
 pub(crate) fn spawn(
@@ -49,9 +47,6 @@ fn handle_command(
 		SearchCommand::Query { id, query, mode } => {
 			let stream = SearchStream::new(result_tx, id, mode);
 			match mode {
-				SearchMode::Attributes => {
-					stream_attributes(data, &query, stream, latest_query_id.as_ref())
-				}
 				SearchMode::Files => stream_files(data, &query, stream, latest_query_id.as_ref()),
 			}
 		}

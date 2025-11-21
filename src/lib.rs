@@ -16,7 +16,7 @@ pub use systems::search::extension::{self as search_system, SearchStream};
 pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
 
 pub use crate::extensions::api::{
-	AttributeRow, FileRow, SearchData, SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
+	FileRow, SearchData, SearchMode, SearchOutcome, SearchSelection, TruncationStyle,
 };
 pub use crate::tui::components::{progress, tables, tabs};
 pub use crate::tui::input::SearchInput;

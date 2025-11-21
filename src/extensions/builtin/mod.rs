@@ -1,4 +1,3 @@
-pub mod attributes;
 pub mod files;
 
 use crate::extensions::api::SearchMode;
@@ -26,23 +25,12 @@ pub fn all_metadata() -> &'static [ModeMetadata] {
 	&BUILTIN_METADATA
 }
 
-const BUILTIN_METADATA: [ModeMetadata; 2] = [
-	ModeMetadata {
-		mode: SearchMode::Attributes,
-		tab_label: "Tags",
-		mode_title: "Tag search",
-		hint: "Type to filter tags. Press Tab to view files.",
-		table_title: "Matching tags",
-		count_label: "Tags",
-		dataset_key: attributes::DATASET_KEY,
-	},
-	ModeMetadata {
-		mode: SearchMode::Files,
-		tab_label: "Files",
-		mode_title: "File search",
-		hint: "Type to filter files by path or tag. Press Tab to view tags.",
-		table_title: "Matching files",
-		count_label: "Files",
-		dataset_key: files::DATASET_KEY,
-	},
-];
+const BUILTIN_METADATA: [ModeMetadata; 1] = [ModeMetadata {
+	mode: SearchMode::Files,
+	tab_label: "Files",
+	mode_title: "File search",
+	hint: "Type to filter files by path or tag.",
+	table_title: "Matching files",
+	count_label: "Files",
+	dataset_key: files::DATASET_KEY,
+}];

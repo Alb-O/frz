@@ -4,7 +4,6 @@ use frizbee::match_list;
 
 use super::aggregator::ScoreAggregator;
 use super::alphabetical::AlphabeticalCollector;
-use super::attribute::AttributeRow;
 use super::config::config_for_query;
 use super::file::FileRow;
 use super::stream::SearchStream;
@@ -17,16 +16,6 @@ pub trait Dataset {
 
 	/// Return the searchable key associated with `index`.
 	fn key_for(&self, index: usize) -> &str;
-}
-
-impl Dataset for [AttributeRow] {
-	fn len(&self) -> usize {
-		<[AttributeRow]>::len(self)
-	}
-
-	fn key_for(&self, index: usize) -> &str {
-		&self[index].name
-	}
 }
 
 impl Dataset for [FileRow] {
@@ -50,19 +39,6 @@ where
 	fn key_for(&self, index: usize) -> &str {
 		<T as Dataset>::key_for(*self, index)
 	}
-}
-
-/// Streams attribute matches for the given query back to the UI thread.
-pub fn stream_attributes(
-	data: &SearchData,
-	query: &str,
-	stream: SearchStream<'_>,
-	latest_query_id: &AtomicU64,
-) -> bool {
-	let attributes = data.attributes.as_slice();
-	stream_dataset(attributes, query, stream, latest_query_id, move |index| {
-		attributes[index].name.clone()
-	})
 }
 
 /// Streams file matches for the given query back to the UI thread.

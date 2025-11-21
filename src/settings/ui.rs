@@ -53,7 +53,7 @@ pub(super) fn parse_mode(value: &str) -> Result<SearchMode> {
 
 #[cfg(test)]
 mod tests {
-	use frz::extensions::builtin::{attributes, files};
+	use frz::extensions::builtin::files;
 
 	use super::*;
 
@@ -63,15 +63,14 @@ mod tests {
 		let default = UiConfig::default();
 
 		assert_eq!(config.filter_label, default.filter_label);
-		let attributes_mode = attributes::mode();
-		let config_attributes = config.pane(attributes_mode).unwrap();
-		let default_attributes = default.pane(attributes_mode).unwrap();
-		assert_eq!(config_attributes.mode_title, default_attributes.mode_title);
+		let files_mode = files::mode();
+		let config_files = config.pane(files_mode).unwrap();
+		let default_files = default.pane(files_mode).unwrap();
+		assert_eq!(config_files.mode_title, default_files.mode_title);
 	}
 
 	#[test]
 	fn parse_mode_supports_known_variants() {
-		assert_eq!(parse_mode("attributes").unwrap(), attributes::mode());
 		assert_eq!(parse_mode("FILES").unwrap(), files::mode());
 		assert!(parse_mode("unknown").is_err());
 	}

@@ -19,7 +19,7 @@ impl<'a> App<'a> {
 
 	pub(crate) fn set_index_updates(&mut self, updates: Receiver<IndexResult>) {
 		self.index_updates = Some(updates);
-		if self.data.attributes.is_empty() && self.data.files.is_empty() {
+		if self.data.files.is_empty() {
 			self.index_progress = IndexProgress::with_unknown_totals();
 		} else {
 			self.index_progress
@@ -87,8 +87,7 @@ impl<'a> App<'a> {
 					self.table_state.select(None);
 				}
 
-				let update_changed =
-					update.reset || !update.files.is_empty() || !update.attributes.is_empty();
+				let update_changed = update.reset || !update.files.is_empty();
 				if update_changed {
 					merge_update(&mut self.data, &update);
 					self.rebuild_row_id_maps();
@@ -101,16 +100,11 @@ impl<'a> App<'a> {
 	}
 
 	fn record_index_progress_update(&mut self, progress: ProgressSnapshot) {
-		let attributes_key = crate::extensions::builtin::attributes::DATASET_KEY;
 		let files_key = crate::extensions::builtin::files::DATASET_KEY;
-		self.index_progress.record_indexed(&[
-			(attributes_key, progress.indexed_attributes),
-			(files_key, progress.indexed_files),
-		]);
-		self.index_progress.set_totals(&[
-			(attributes_key, progress.total_attributes),
-			(files_key, progress.total_files),
-		]);
+		self.index_progress
+			.record_indexed(&[(files_key, progress.indexed_files)]);
+		self.index_progress
+			.set_totals(&[(files_key, progress.total_files)]);
 		if progress.complete {
 			self.index_progress.mark_complete();
 		}
@@ -196,7 +190,7 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::extensions::api::{AttributeRow, FileRow, MatchBatch, SearchData, SearchViewV2};
+	use crate::extensions::api::{FileRow, MatchBatch, SearchData, SearchViewV2};
 	use crate::systems::filesystem::ProgressSnapshot;
 
 	fn wait_for_results(app: &mut App) {
@@ -220,11 +214,8 @@ mod tests {
 		assert_eq!(app.filtered_len(), 0);
 		let update = IndexUpdate {
 			files: vec![FileRow::filesystem("src/lib.rs", ["alpha"])].into(),
-			attributes: vec![AttributeRow::new("alpha", 1)].into(),
 			progress: ProgressSnapshot {
-				indexed_attributes: 1,
 				indexed_files: 1,
-				total_attributes: Some(1),
 				total_files: Some(1),
 				complete: true,
 			},
@@ -285,11 +276,8 @@ mod tests {
 		let second_id = second.id.expect("expected stable id for second file");
 		let update = IndexUpdate {
 			files: Arc::from(vec![second.clone()]),
-			attributes: Arc::from(Vec::<AttributeRow>::new()),
 			progress: ProgressSnapshot {
-				indexed_attributes: 0,
 				indexed_files: 0,
-				total_attributes: None,
 				total_files: None,
 				complete: false,
 			},
@@ -349,7 +337,6 @@ mod tests {
 			context_label: None,
 			root: None,
 			initial_query: String::new(),
-			attributes: Vec::new(),
 			files: vec![second.clone(), first.clone()],
 		};
 
@@ -358,11 +345,8 @@ mod tests {
 
 		let update = IndexUpdate {
 			files: Arc::from(Vec::<FileRow>::new()),
-			attributes: Arc::from(Vec::<AttributeRow>::new()),
 			progress: ProgressSnapshot {
-				indexed_attributes: 0,
 				indexed_files: 0,
-				total_attributes: None,
 				total_files: None,
 				complete: false,
 			},

@@ -5,7 +5,7 @@ use ratatui::widgets::Paragraph;
 
 use super::App;
 use crate::extensions::api::SearchMode;
-use crate::extensions::builtin::{attributes, files};
+use crate::extensions::builtin::files;
 use crate::logging;
 use crate::systems::search;
 use crate::tui::components::{
@@ -84,18 +84,6 @@ impl<'a> App<'a> {
 		let state = self.tab_states.entry(self.mode).or_default();
 
 		let spec = match self.mode {
-			SearchMode::Attributes => attributes::table(
-				TableRenderContext {
-					area,
-					filtered: &state.filtered,
-					scores: &state.scores,
-					headers: state.headers.as_ref(),
-					widths: state.widths.as_ref(),
-					highlight: highlight_state,
-					data: &self.data,
-				},
-				&self.theme,
-			),
 			SearchMode::Files => files::table(
 				TableRenderContext {
 					area,
@@ -125,7 +113,6 @@ impl<'a> App<'a> {
 
 fn dataset_len(data: &crate::extensions::api::SearchData, mode: SearchMode) -> usize {
 	match mode {
-		SearchMode::Attributes => data.attributes.len(),
 		SearchMode::Files => data.files.len(),
 	}
 }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use frz::extensions::builtin::{attributes, files};
+use frz::extensions::builtin::files;
 use frz::{SearchMode, UiConfig};
 use serde::Deserialize;
 
@@ -114,12 +114,6 @@ impl UiSection {
 		}
 		if let Some(detail) = self.detail_panel_title {
 			ui.detail_panel_title = detail;
-		}
-		if let Some(pane) = self.attributes
-			&& let Some(mode) = ui.mode_by_id(attributes::DATASET_KEY)
-			&& let Some(target) = ui.pane_mut(mode)
-		{
-			apply_pane_config(target, pane);
 		}
 		if let Some(pane) = self.files
 			&& let Some(mode) = ui.mode_by_id(files::DATASET_KEY)
