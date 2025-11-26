@@ -13,7 +13,7 @@ default = []
 
 [dependencies]
 ratatui = "0.29"
-frizbee = { version = "0.5" }
+frizbee = { version = "0.6" }
 anyhow = "1"
 ignore = "0.4"
 throbber-widgets-tui = "0.9"

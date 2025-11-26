@@ -34,7 +34,7 @@ impl FileRow {
 
 	fn from_parts(path: String, truncate: TruncationStyle) -> Self {
 		let search_text = path.clone();
-		let id = Some(super::identity::stable_hash64(&path));
+		let id = Some(super::stable_hash64(&path));
 		Self {
 			id,
 			path,
