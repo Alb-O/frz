@@ -11,18 +11,24 @@
     , ...
     }:
     {
-      rust-project.crates."frz".crane.args = {
-        buildInputs = lib.optionals pkgs.stdenv.isDarwin (
-          with pkgs.darwin.apple_sdk.frameworks;
-          [
-            IOKit
-          ]
-        );
-      };
-      # Ensure the path for the top-level crate is set so default-crates logic
-      # doesn't try to read an undefined path (this fixes errors when the crate
-      # is referenced by the rust-flake module).
-      rust-project.crates."frz".path = ../../.;
-      packages.default = self'.packages.frz;
+      rust-project.crates =
+        let
+          darwinInputs =
+            lib.optionals pkgs.stdenv.isDarwin (
+              with pkgs.darwin.apple_sdk.frameworks;
+              [ IOKit ]
+            );
+        in
+        {
+          "frz" = {
+            path = ../../crates/frz;
+            crane.args.buildInputs = darwinInputs;
+          };
+          "frz-cli" = {
+            path = ../../crates/frz-cli;
+            crane.args.buildInputs = darwinInputs;
+          };
+        };
+      packages.default = self'.packages.frz-cli;
     };
 }

@@ -505,22 +505,29 @@ version = "0.4.0"
 dependencies = [
  "anyhow",
  "bat",
- "clap",
  "dirs",
  "frizbee",
  "ignore",
  "include_dir",
- "indexmap",
  "ratatui",
  "serde",
  "serde_json",
  "tempfile",
- "thiserror 2.0.17",
  "throbber-widgets-tui",
  "toml",
  "tui-textarea",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
+]
+
+[[package]]
+name = "frz-cli"
+version = "0.4.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "frz",
+ "serde_json",
 ]
 
 [[package]]

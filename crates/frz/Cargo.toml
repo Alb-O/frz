@@ -1,0 +1,31 @@
+[package]
+name = "frz"
+version = "0.4.0"
+edition = "2024"
+description = "TUI fuzzy finder revolving around tabular data, utilising Saghen's Frizbee crate for matching"
+license = "MIT"
+homepage = "https://github.com/Alb-O/frz"
+repository = "https://github.com/Alb-O/frz"
+authors = ["Albert O'Shea"]
+
+[dependencies]
+anyhow = "1.0"
+bat = { version = "0.24", default-features = false, features = ["regex-fancy"] }
+dirs = "6.0"
+frizbee = { version = "0.6" }
+ignore = "0.4"
+include_dir = "0.7"
+ratatui = "0.29"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+throbber-widgets-tui = "0.9"
+toml = "0.9"
+tui-textarea = "0.7"
+unicode-truncate = "2"
+unicode-width = "0.2"
+
+[dev-dependencies]
+tempfile = "3.23"
+
+[lints]
+workspace = true
