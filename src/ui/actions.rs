@@ -5,6 +5,7 @@ use super::App;
 use crate::search::SearchOutcome;
 
 impl<'a> App<'a> {
+	/// Process a keyboard event and return a result if the user exits.
 	pub(crate) fn handle_key(&mut self, key: KeyEvent) -> Result<Option<SearchOutcome>> {
 		match key.code {
 			KeyCode::Esc => {

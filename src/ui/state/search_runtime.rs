@@ -34,6 +34,7 @@ pub(crate) struct SearchRuntime {
 }
 
 impl SearchRuntime {
+	/// Create a new search runtime with the provided communication channels.
 	pub(crate) fn new(
 		tx: Sender<SearchCommand>,
 		rx: Receiver<SearchResult>,

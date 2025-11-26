@@ -57,6 +57,7 @@ impl<M, T: ?Sized> StreamEnvelope<M, StreamAction<T>> {
 
 /// Sink that can consume [`StreamAction`] payloads.
 pub trait EnvelopeSink<T: ?Sized> {
+	/// Consume an action and apply it to the target.
 	fn apply(&mut self, action: StreamAction<T>);
 }
 

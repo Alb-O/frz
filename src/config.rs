@@ -59,6 +59,7 @@ impl Config {
 	}
 }
 
+/// Resolve the filesystem root directory from CLI args, validating it exists and is a directory.
 fn resolve_root(cli: &CliArgs) -> Result<PathBuf> {
 	let mut root = match &cli.root {
 		Some(path) => path.clone(),
@@ -81,6 +82,7 @@ fn resolve_root(cli: &CliArgs) -> Result<PathBuf> {
 	Ok(root)
 }
 
+/// Construct filesystem scanning options from CLI arguments with appropriate defaults.
 fn build_filesystem_options(cli: &CliArgs) -> FilesystemOptions {
 	let allowed_extensions = cli
 		.extensions
@@ -103,6 +105,7 @@ fn build_filesystem_options(cli: &CliArgs) -> FilesystemOptions {
 	}
 }
 
+/// Build UI configuration from CLI arguments, applying preset and overrides.
 fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
 	let preset = cli.ui_preset.as_ref().map(|p| p.as_str());
 	let mut ui = ui_from_preset(preset)?;
@@ -138,6 +141,7 @@ fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
 	Ok(ui)
 }
 
+/// Resolve a UI preset name to its configuration.
 fn ui_from_preset(preset: Option<&str>) -> Result<UiConfig> {
 	match preset {
 		None | Some("default") => Ok(UiConfig::default()),
@@ -145,6 +149,7 @@ fn ui_from_preset(preset: Option<&str>) -> Result<UiConfig> {
 	}
 }
 
+/// Extract a default title from the root directory name.
 fn default_title_for(root: &Path) -> String {
 	root.file_name()
 		.and_then(|name| name.to_str())
@@ -152,6 +157,7 @@ fn default_title_for(root: &Path) -> String {
 		.to_string()
 }
 
+/// Normalize file extensions by removing leading dots and filtering empty values.
 fn sanitize_extensions(exts: Vec<String>) -> Vec<String> {
 	exts.into_iter()
 		.map(|ext| {
@@ -162,6 +168,7 @@ fn sanitize_extensions(exts: Vec<String>) -> Vec<String> {
 		.collect()
 }
 
+/// Trim and filter empty header strings.
 fn sanitize_headers(headers: Vec<String>) -> Vec<String> {
 	headers
 		.into_iter()

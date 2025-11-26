@@ -25,6 +25,7 @@ pub struct ProgressSnapshot {
 	pub complete: bool,
 }
 
+/// Merge an index update into the search data, resetting if indicated.
 pub fn merge_update(data: &mut SearchData, update: &IndexUpdate) {
 	if update.reset {
 		data.files.clear();

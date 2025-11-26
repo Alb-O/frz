@@ -12,9 +12,13 @@ pub const FILES_DATASET_KEY: &str = "files";
 /// Data displayed in the search interface, including files.
 #[derive(Debug, Default, Clone)]
 pub struct SearchData {
+	/// Label describing the search context.
 	pub context_label: Option<String>,
+	/// Root directory path that relative file paths are resolved against.
 	pub root: Option<PathBuf>,
+	/// Query text to display when the UI starts.
 	pub initial_query: String,
+	/// File entries available for searching and selection.
 	pub files: Vec<FileRow>,
 }
 

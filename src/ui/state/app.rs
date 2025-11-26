@@ -32,11 +32,15 @@ impl<'a> Drop for App<'a> {
 /// call-sites interact with a focused surface area while the underlying state
 /// remains centralized here.
 pub struct App<'a> {
+	/// Current search data including files and metadata.
 	pub data: SearchData,
+	/// Text input widget for the search filter.
 	pub search_input: SearchInput<'a>,
+	/// Selection state for the results table.
 	pub table_state: TableState,
 	pub(crate) input_title: Option<String>,
 	pub(crate) ui: UiConfig,
+	/// Current style and theme configuration.
 	pub style: crate::ui::style::StyleConfig,
 	pub(crate) bat_theme: Option<String>,
 	pub(crate) throbber_state: ThrobberState,

@@ -54,6 +54,9 @@ pub fn stream_files(
 	})
 }
 
+/// Perform fuzzy matching on a dataset, emitting batches of ranked matches to the stream.
+///
+/// Returns `true` if streaming completed successfully, `false` if the receiver hung up.
 fn stream_dataset<D, F>(
 	dataset: D,
 	query: &str,
@@ -112,6 +115,9 @@ where
 	aggregator.finish()
 }
 
+/// Stream results in alphabetical order when no query is provided.
+///
+/// Returns `true` if streaming completed successfully, `false` if the receiver hung up.
 fn stream_alphabetical<F>(
 	total: usize,
 	stream: SearchStream<'_>,
@@ -148,6 +154,7 @@ where
 	collector.finish()
 }
 
+/// Check if this query has been superseded by a newer one.
 fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
 	latest_query_id.load(AtomicOrdering::Acquire) != id
 }

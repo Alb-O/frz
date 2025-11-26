@@ -80,6 +80,7 @@ impl Default for UiConfig {
 
 impl UiConfig {
 	/// Register a new tab definition with this configuration.
+	/// Register a new tab definition with this configuration.
 	pub fn register_tab(&mut self, tab: TabUiConfig) {
 		self.tabs.push(tab);
 	}
@@ -96,6 +97,7 @@ impl UiConfig {
 		self.tabs.first().map(|tab| &tab.pane)
 	}
 
+	/// Mutably look up pane metadata for the single tab.
 	/// Mutably look up pane metadata for the single tab.
 	pub fn pane_mut(&mut self) -> Option<&mut PaneUiConfig> {
 		self.tabs.first_mut().map(|tab| &mut tab.pane)

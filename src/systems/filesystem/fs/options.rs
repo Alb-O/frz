@@ -4,18 +4,30 @@ use std::num::NonZeroUsize;
 use std::path::Path;
 use std::thread;
 
+/// Configuration options for filesystem scanning and filtering.
 #[derive(Debug, Clone)]
 pub struct FilesystemOptions {
+	/// Include hidden files and directories.
 	pub include_hidden: bool,
+	/// Follow symbolic links during traversal.
 	pub follow_symlinks: bool,
+	/// Respect .ignore files.
 	pub respect_ignore_files: bool,
+	/// Respect .gitignore files.
 	pub git_ignore: bool,
+	/// Respect global gitignore settings.
 	pub git_global: bool,
+	/// Respect git exclude files.
 	pub git_exclude: bool,
+	/// Directory names to always ignore.
 	pub global_ignores: Vec<String>,
+	/// Number of threads for parallel indexing.
 	pub threads: Option<usize>,
+	/// Maximum directory traversal depth.
 	pub max_depth: Option<usize>,
+	/// File extensions to filter by.
 	pub allowed_extensions: Option<Vec<String>>,
+	/// Label describing the search context.
 	pub context_label: Option<String>,
 }
 
@@ -54,6 +66,7 @@ impl Default for FilesystemOptions {
 }
 
 impl FilesystemOptions {
+	/// Set a default context label from the root path if not already configured.
 	pub fn ensure_context_label(&mut self, root: &Path) -> Option<String> {
 		if self.context_label.is_none() {
 			self.context_label = Some(root.display().to_string());
@@ -61,6 +74,7 @@ impl FilesystemOptions {
 		self.context_label.clone()
 	}
 
+	/// Build a set of allowed extensions if configured.
 	pub fn extension_filter(&self) -> Option<HashSet<String>> {
 		self.allowed_extensions.as_ref().map(|extensions| {
 			extensions
@@ -71,6 +85,7 @@ impl FilesystemOptions {
 		})
 	}
 
+	/// Create a set of directory names to globally ignore.
 	pub fn global_ignore_set(&self) -> HashSet<OsString> {
 		self.global_ignores
 			.iter()
@@ -78,6 +93,7 @@ impl FilesystemOptions {
 			.collect()
 	}
 
+	/// Resolve the effective thread count, defaulting to available parallelism.
 	pub fn thread_count(&self) -> usize {
 		self.threads
 			.filter(|threads| *threads > 0)
@@ -85,6 +101,7 @@ impl FilesystemOptions {
 	}
 }
 
+/// Normalize an extension by trimming and removing leading dots.
 pub fn normalize_extension(ext: &str) -> String {
 	ext.trim().trim_start_matches('.').to_ascii_lowercase()
 }

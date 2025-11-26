@@ -5,7 +5,9 @@
 //! through the module hierarchy.
 
 pub mod app_dirs;
+/// Search pipeline and results aggregation.
 pub mod search;
+/// Message envelopes and streaming primitives.
 pub mod streams;
 mod systems;
 pub mod ui;

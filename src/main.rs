@@ -1,3 +1,5 @@
+//! Command-line entry point for the frz file finder application.
+
 mod cli;
 mod config;
 mod workflow;
@@ -8,6 +10,7 @@ use config::Config;
 use frz::ui::style;
 use workflow::SearchWorkflow;
 
+/// Entry point for the frz command-line application.
 fn main() -> Result<()> {
 	let cli = parse_cli();
 

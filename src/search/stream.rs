@@ -5,12 +5,16 @@ use crate::streams::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
 /// Batch of search matches emitted by a producer.
 #[derive(Clone)]
 pub struct MatchBatch {
+	/// Indices of matched rows.
 	pub indices: Vec<usize>,
+	/// Stable identifiers for matched rows if available.
 	pub ids: Option<Vec<u64>>,
+	/// Relevance scores for each match.
 	pub scores: Vec<u16>,
 }
 
 impl MatchBatch {
+	/// Check if the batch contains no matches.
 	#[must_use]
 	pub fn is_empty(&self) -> bool {
 		let ids_empty = self.ids.as_ref().is_none_or(|ids| ids.is_empty());
@@ -45,6 +49,7 @@ pub trait SearchView {
 /// Optional extension for [`SearchView`] implementors that understand stable
 /// row identifiers.
 pub trait SearchViewV2 {
+	/// Replace matches using a batch with stable row identifiers.
 	fn replace_matches_v2(&mut self, batch: MatchBatch);
 }
 
@@ -60,6 +65,7 @@ pub struct SearchMarker;
 
 /// Aggregated search results emitted back to the UI layer.
 pub type SearchAction = ViewAction<SearchViewTarget>;
+/// Search result envelope containing actions.
 pub type SearchResult = StreamEnvelope<SearchMarker, SearchAction>;
 
 /// Handle used to stream search results back to the UI.

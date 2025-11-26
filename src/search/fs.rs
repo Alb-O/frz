@@ -40,8 +40,10 @@ impl Drop for FsIter {
 /// Implementations can fabricate directory trees for tests or forward to the OS
 /// with additional behaviour such as `.gitignore` support.
 pub trait Fs {
+	/// Iterator type yielding filesystem paths.
 	type Iter: Iterator<Item = io::Result<PathBuf>> + Send + 'static;
 
+	/// Walk the filesystem rooted at the provided path.
 	fn walk(&self, root: &Path) -> io::Result<Self::Iter>;
 }
 

@@ -45,6 +45,7 @@ impl SearchUi {
 		Self::filesystem_with_options(path.as_ref().to_path_buf(), FilesystemOptions::default())
 	}
 
+	/// Create a search UI with custom filesystem scanning options.
 	pub fn filesystem_with_options(
 		path: impl Into<std::path::PathBuf>,
 		options: FilesystemOptions,
@@ -56,31 +57,37 @@ impl SearchUi {
 		Ok(ui)
 	}
 
+	/// Set the title displayed above the filter input.
 	pub fn with_input_title(mut self, title: impl Into<String>) -> Self {
 		self.input_title = Some(title.into());
 		self
 	}
 
+	/// Set column headers for the results table.
 	pub fn with_headers(mut self, headers: Vec<&str>) -> Self {
 		self.headers = Some(headers.into_iter().map(|s| s.to_string()).collect());
 		self
 	}
 
+	/// Set column widths for the results table.
 	pub fn with_widths(mut self, widths: Vec<Constraint>) -> Self {
 		self.widths = Some(widths);
 		self
 	}
 
+	/// Apply a complete UI configuration override.
 	pub fn with_ui_config(mut self, config: UiConfig) -> Self {
 		self.ui_config = Some(config);
 		self
 	}
 
+	/// Pre-populate the filter input with an initial query.
 	pub fn with_initial_query(mut self, query: impl Into<String>) -> Self {
 		self.data.initial_query = query.into();
 		self
 	}
 
+	/// Select a theme by name.
 	pub fn with_theme_name(mut self, name: &str) -> Self {
 		if let Some(theme) = crate::ui::style::by_name(name) {
 			self.theme = Some(theme);
@@ -89,6 +96,7 @@ impl SearchUi {
 		self
 	}
 
+	/// Set a custom theme.
 	pub fn with_theme(mut self, theme: Theme) -> Self {
 		self.theme = Some(theme);
 		self.bat_theme = None;

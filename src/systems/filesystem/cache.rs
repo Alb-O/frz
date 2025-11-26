@@ -18,12 +18,14 @@ const CACHE_NAMESPACE: &str = "filesystem";
 const CACHE_PREVIEW_LIMIT: usize = 512;
 const CACHE_PREVIEW_EXTENSION: &str = "preview.json";
 
+/// Handle for persisting and retrieving indexed filesystem results.
 #[derive(Clone)]
 pub(super) struct CacheHandle {
 	path: PathBuf,
 	fingerprint: u64,
 }
 
+/// Cached search data retrieved from disk storage.
 pub(super) struct CachedEntry {
 	pub data: SearchData,
 	pub indexed_at: SystemTime,
@@ -31,6 +33,7 @@ pub(super) struct CachedEntry {
 }
 
 impl CachedEntry {
+	/// Calculate time until cache should be reindexed.
 	pub fn reindex_delay(&self) -> Duration {
 		match SystemTime::now().duration_since(self.indexed_at) {
 			Ok(age) => CACHE_TTL.saturating_sub(age),
@@ -38,12 +41,14 @@ impl CachedEntry {
 		}
 	}
 
+	/// Whether the cached data represents a complete filesystem index.
 	pub fn is_complete(&self) -> bool {
 		self.complete
 	}
 }
 
 impl CacheHandle {
+	/// Resolve a cache file location for the given root and options if cache directory exists.
 	pub fn resolve(root: &Path, options: &FilesystemOptions) -> Option<Self> {
 		let base = app_dirs::get_cache_dir().ok()?;
 		let fingerprint = fingerprint_for(root, options);
@@ -52,10 +57,12 @@ impl CacheHandle {
 		Some(Self { path, fingerprint })
 	}
 
+	/// Load cached entry from disk if it exists and is valid.
 	pub fn load(&self) -> Option<CachedEntry> {
 		load_payload(&self.path, self.fingerprint)
 	}
 
+	/// Create a writer for accumulating and persisting cache data.
 	pub fn writer(&self, context_label: Option<String>) -> Option<CacheWriter> {
 		Some(CacheWriter::new(
 			self.path.clone(),
@@ -64,6 +71,7 @@ impl CacheHandle {
 		))
 	}
 
+	/// Load a preview of cached entries (limited subset for quick display).
 	pub fn load_preview(&self) -> Option<CachedEntry> {
 		let preview_path = self.preview_path();
 		load_payload(&preview_path, self.fingerprint)
@@ -76,6 +84,7 @@ impl CacheHandle {
 	}
 }
 
+/// Accumulator for batching file entries before writing cache to disk.
 pub(super) struct CacheWriter {
 	path: PathBuf,
 	fingerprint: u64,

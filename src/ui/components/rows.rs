@@ -14,6 +14,7 @@ pub fn highlight_for_refs(needle: &str, config: &Config, text: &str) -> Option<V
 	match_indices(needle, text, config).map(|m| m.indices)
 }
 
+/// Build table rows for the filtered file results.
 #[must_use]
 pub fn build_file_rows<'a>(
 	filtered_files: &'a [usize],

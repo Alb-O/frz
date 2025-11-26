@@ -11,8 +11,11 @@ use crate::ui::style::Theme;
 
 /// Context for rendering the preview pane.
 pub struct PreviewContext<'a> {
+	/// Preview text content to render.
 	pub content: &'a PreviewContent,
+	/// Vertical scroll offset.
 	pub scroll_offset: usize,
+	/// Bat color theme.
 	pub theme: &'a Theme,
 }
 

@@ -19,6 +19,7 @@ pub fn highlight_cell(
 	highlight_cell_with_prefix(text, indices, max_width, truncation, highlight_style, None)
 }
 
+/// Build a table cell with highlighted indices and optional prefix spans.
 pub fn highlight_cell_with_prefix<'a>(
 	text: &'a str,
 	indices: Option<Vec<usize>>,

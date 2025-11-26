@@ -15,9 +15,10 @@
         ];
         packages = with pkgs; [
           just
-          nixd # Nix language server
+          nixd
           bacon
           cargo-edit
+          cargo-sort
         ];
       };
     };

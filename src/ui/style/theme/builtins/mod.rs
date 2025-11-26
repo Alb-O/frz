@@ -12,6 +12,7 @@ use crate::ui::style::theme::types::{Theme, ThemeRegistration};
 const BUILTIN_THEME_DIR: Dir =
 	include_dir!("$CARGO_MANIFEST_DIR/src/ui/style/theme/builtins/themes");
 
+/// Get the default built-in theme.
 pub fn default_theme() -> Theme {
 	builtin_themes().default_theme
 }

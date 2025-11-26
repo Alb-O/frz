@@ -9,10 +9,12 @@ mod actions;
 mod builder;
 pub mod components;
 mod config;
+/// Syntax highlighting and text styling utilities.
 pub mod highlight;
 mod indexing;
 pub mod input;
-pub mod render;
+/// Terminal frame rendering orchestration.
+mod render;
 mod runtime;
 mod search;
 mod state;

@@ -1,8 +1,10 @@
 /// Represents a row in the file results table.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FileRow {
+	/// Stable identifier for this file row, derived from the path.
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub id: Option<u64>,
+	/// Filesystem path being represented.
 	pub path: String,
 	search_text: String,
 	truncate: TruncationStyle,
@@ -47,7 +49,9 @@ impl FileRow {
 /// Controls how a path should be truncated before it is rendered.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum TruncationStyle {
+	/// Truncate from the left side.
 	Left,
+	/// Truncate from the right side.
 	Right,
 }
 

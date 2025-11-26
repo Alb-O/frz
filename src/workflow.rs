@@ -9,6 +9,7 @@ pub(crate) struct SearchWorkflow {
 }
 
 impl SearchWorkflow {
+	/// Build workflow from configuration, applying UI settings and initial state.
 	pub(crate) fn from_config(config: Config) -> Result<Self> {
 		let Config {
 			root,
@@ -41,6 +42,7 @@ impl SearchWorkflow {
 		Ok(Self { search_ui })
 	}
 
+	/// Run the interactive search UI and return the final outcome.
 	pub(crate) fn run(self) -> Result<SearchOutcome> {
 		self.search_ui.run()
 	}

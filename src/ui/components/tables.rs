@@ -14,19 +14,29 @@ const TABLE_COLUMN_SPACING: u16 = 1;
 
 /// Fully materialized table configuration.
 pub struct TableSpec<'a> {
+	/// Column headers.
 	pub headers: Vec<String>,
+	/// Column width constraints.
 	pub widths: Vec<Constraint>,
+	/// Rendered table rows.
 	pub rows: Vec<Row<'a>>,
 }
 
 /// Argument bundle describing the data a table render should use.
 pub struct TableRenderContext<'a> {
+	/// Rendering area.
 	pub area: Rect,
+	/// Indices of filtered rows to display.
 	pub filtered: &'a [usize],
+	/// Relevance scores for each row.
 	pub scores: &'a [u16],
+	/// Optional custom column headers.
 	pub headers: Option<&'a Vec<String>>,
+	/// Optional column width constraints.
 	pub widths: Option<&'a Vec<Constraint>>,
+	/// Optional highlight configuration for search terms.
 	pub highlight: Option<(&'a str, Config)>,
+	/// Data source for the table.
 	pub data: &'a SearchData,
 }
 

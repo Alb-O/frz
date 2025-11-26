@@ -9,23 +9,33 @@ use crate::ui::style::Theme;
 /// Render metadata for a tab header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TabItem<'a> {
+	/// Text label displayed on the tab.
 	pub label: &'a str,
 }
 
 /// Argument bundle for rendering the input area.
 pub struct InputContext<'a> {
+	/// The search input widget.
 	pub search_input: &'a SearchInput<'a>,
+	/// Title shown above the input.
 	pub input_title: Option<&'a str>,
+	/// Pane title if available.
 	pub pane_title: Option<&'a str>,
+	/// Tab headers to display.
 	pub tabs: &'a [TabItem<'a>],
+	/// Rendering area.
 	pub area: Rect,
+	/// Color theme.
 	pub theme: &'a Theme,
 }
 
 /// Progress information for the prompt progress indicator.
 pub struct ProgressState<'a> {
+	/// Text describing the progress state.
 	pub progress_text: &'a str,
+	/// Whether the operation is complete.
 	pub progress_complete: bool,
+	/// Spinner animation state.
 	pub throbber_state: &'a ThrobberState,
 }
 
