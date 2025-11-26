@@ -192,6 +192,17 @@ impl<'a> App<'a> {
 		ids: Option<Vec<u64>>,
 		scores: Vec<u16>,
 	) {
+		// Track the path of the currently selected item before updating results
+		let old_selected_path = if self.preview_enabled {
+			self.current_selection().map(|sel| match sel {
+				SearchSelection::File(file) => {
+					self.data.resolve_file_path(&file).display().to_string()
+				}
+			})
+		} else {
+			None
+		};
+
 		let filtered = if let Some(ids) = ids {
 			let ids_len = ids.len();
 			let mut resolved: Vec<usize> = ids
@@ -216,6 +227,20 @@ impl<'a> App<'a> {
 		let has_results = !self.tab_buffers.filtered.is_empty();
 		self.settle_initial_results(has_results);
 		self.ensure_selection();
+
+		// Update preview if enabled and the selected item changed
+		if self.preview_enabled {
+			let new_selected_path = self.current_selection().map(|sel| match sel {
+				SearchSelection::File(file) => {
+					self.data.resolve_file_path(&file).display().to_string()
+				}
+			});
+
+			// Trigger preview update if the selected item changed (or if we didn't have one before)
+			if old_selected_path != new_selected_path {
+				self.update_preview();
+			}
+		}
 	}
 
 	/// Gather total counts for each registered dataset.
