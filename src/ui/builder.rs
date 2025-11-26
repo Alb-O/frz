@@ -21,6 +21,7 @@ pub struct SearchUi {
 	theme: Option<Theme>,
 	bat_theme: Option<String>,
 	index_updates: Option<Receiver<IndexResult>>,
+	preview_enabled: bool,
 }
 
 impl SearchUi {
@@ -35,6 +36,7 @@ impl SearchUi {
 			theme: None,
 			bat_theme: None,
 			index_updates: None,
+			preview_enabled: false,
 		}
 	}
 
@@ -93,6 +95,12 @@ impl SearchUi {
 		self
 	}
 
+	/// Enable the preview pane by default when the UI starts.
+	pub fn with_preview(mut self) -> Self {
+		self.preview_enabled = true;
+		self
+	}
+
 	/// Run the interactive search UI with the configured options.
 	pub fn run(mut self) -> Result<SearchOutcome> {
 		// Build an App and apply optional customizations, then run it.
@@ -115,6 +123,9 @@ impl SearchUi {
 		}
 		if let Some(updates) = self.index_updates.take() {
 			app.set_index_updates(updates);
+		}
+		if self.preview_enabled {
+			app.enable_preview();
 		}
 
 		app.run()

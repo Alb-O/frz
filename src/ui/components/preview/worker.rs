@@ -1,0 +1,202 @@
+//! Background worker for generating syntax-highlighted previews.
+//!
+//! This module provides an asynchronous preview generation system that runs in a
+//! background thread, preventing the UI from blocking while bat processes files.
+
+use std::path::PathBuf;
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::thread;
+
+use bat::assets::HighlightingAssets;
+
+use super::content::PreviewContent;
+use super::highlight::highlight_with_bat;
+
+/// Commands sent to the preview worker thread.
+pub enum PreviewCommand {
+	/// Request a preview for a file.
+	Generate {
+		/// Unique ID for this preview request (for deduplication).
+		id: u64,
+		/// Path to the file to preview.
+		path: PathBuf,
+		/// Optional bat theme name.
+		theme: Option<String>,
+		/// Maximum number of lines to render.
+		max_lines: usize,
+	},
+	/// Shut down the worker thread.
+	Shutdown,
+}
+
+/// Results sent back from the preview worker thread.
+pub struct PreviewResult {
+	/// The ID of the request this result corresponds to.
+	pub id: u64,
+	/// The generated preview content.
+	pub content: PreviewContent,
+}
+
+/// Spawns the background preview worker thread and returns communication channels.
+pub fn spawn() -> (Sender<PreviewCommand>, Receiver<PreviewResult>) {
+	let (command_tx, command_rx) = std::sync::mpsc::channel();
+	let (result_tx, result_rx) = std::sync::mpsc::channel();
+
+	thread::Builder::new()
+		.name("preview-worker".into())
+		.spawn(move || worker_loop(command_rx, result_tx))
+		.expect("failed to spawn preview worker thread");
+
+	(command_tx, result_rx)
+}
+
+fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewResult>) {
+	// Load highlighting assets once and reuse them for all previews.
+	// This is the most expensive part of bat initialization.
+	let assets = HighlightingAssets::from_binary();
+
+	while let Ok(command) = command_rx.recv() {
+		match command {
+			PreviewCommand::Generate {
+				id,
+				path,
+				theme,
+				max_lines,
+			} => {
+				let content = generate_preview_impl(&path, theme.as_deref(), max_lines, &assets);
+				// If the receiver is gone, just exit gracefully
+				if result_tx.send(PreviewResult { id, content }).is_err() {
+					break;
+				}
+			}
+			PreviewCommand::Shutdown => break,
+		}
+	}
+}
+
+/// Maximum file size to preview (in bytes). Larger files are skipped.
+const MAX_PREVIEW_SIZE: u64 = 512 * 1024; // 512 KB
+
+/// Generate syntax-highlighted preview content for a file.
+fn generate_preview_impl(
+	path: &std::path::Path,
+	bat_theme: Option<&str>,
+	max_lines: usize,
+	assets: &HighlightingAssets,
+) -> PreviewContent {
+	let path_str = path.display().to_string();
+
+	// Check file metadata
+	let metadata = match std::fs::metadata(path) {
+		Ok(m) => m,
+		Err(e) => return PreviewContent::error(&path_str, format!("Cannot access: {e}")),
+	};
+
+	if !metadata.is_file() {
+		return PreviewContent::error(&path_str, "Not a file");
+	}
+
+	if metadata.len() > MAX_PREVIEW_SIZE {
+		return PreviewContent::error(
+			&path_str,
+			format!("File too large ({} KB)", metadata.len() / 1024),
+		);
+	}
+
+	// Read file content
+	let content = match std::fs::read_to_string(path) {
+		Ok(c) => c,
+		Err(_) => {
+			// Try reading as bytes for binary detection
+			match std::fs::read(path) {
+				Ok(bytes) => {
+					if is_binary(&bytes) {
+						return PreviewContent::error(&path_str, "Binary file");
+					}
+					String::from_utf8_lossy(&bytes).into_owned()
+				}
+				Err(e) => return PreviewContent::error(&path_str, format!("Cannot read: {e}")),
+			}
+		}
+	};
+
+	// Generate highlighted output using bat
+	let highlighted = highlight_with_bat(path, &content, bat_theme, max_lines, assets);
+
+	PreviewContent {
+		path: path_str,
+		lines: highlighted,
+		error: None,
+	}
+}
+
+/// Check if content appears to be binary.
+fn is_binary(bytes: &[u8]) -> bool {
+	// Check first 8KB for null bytes (common binary indicator)
+	let check_len = bytes.len().min(8192);
+	bytes[..check_len].contains(&0)
+}
+
+/// Runtime for managing preview generation in the background.
+pub struct PreviewRuntime {
+	tx: Sender<PreviewCommand>,
+	rx: Receiver<PreviewResult>,
+	next_id: u64,
+	current_id: Option<u64>,
+}
+
+impl PreviewRuntime {
+	/// Create a new preview runtime with its background worker.
+	pub fn new() -> Self {
+		let (tx, rx) = spawn();
+		Self {
+			tx,
+			rx,
+			next_id: 0,
+			current_id: None,
+		}
+	}
+
+	/// Request a preview for a file. Returns the request ID.
+	pub fn request(&mut self, path: PathBuf, theme: Option<String>, max_lines: usize) -> u64 {
+		self.next_id = self.next_id.wrapping_add(1);
+		let id = self.next_id;
+		self.current_id = Some(id);
+
+		let _ = self.tx.send(PreviewCommand::Generate {
+			id,
+			path,
+			theme,
+			max_lines,
+		});
+
+		id
+	}
+
+	/// Try to receive a completed preview result.
+	pub fn try_recv(&self) -> Result<PreviewResult, TryRecvError> {
+		self.rx.try_recv()
+	}
+
+	/// Check if a result matches the most recent request.
+	pub fn is_current(&self, id: u64) -> bool {
+		self.current_id == Some(id)
+	}
+
+	/// Shut down the preview worker.
+	pub fn shutdown(&self) {
+		let _ = self.tx.send(PreviewCommand::Shutdown);
+	}
+}
+
+impl Default for PreviewRuntime {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl Drop for PreviewRuntime {
+	fn drop(&mut self) {
+		self.shutdown();
+	}
+}

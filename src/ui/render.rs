@@ -8,7 +8,8 @@ use crate::search;
 use crate::ui::components::rows::build_file_rows;
 use crate::ui::components::tables::TableSpec;
 use crate::ui::components::{
-	InputContext, ProgressState, TabItem, render_input_with_tabs, render_table,
+	InputContext, PreviewContext, ProgressState, TabItem, render_input_with_tabs, render_preview,
+	render_table,
 };
 
 impl<'a> App<'a> {
@@ -47,11 +48,32 @@ impl<'a> App<'a> {
 			throbber_state: &self.throbber_state,
 		};
 		render_input_with_tabs(frame, input_ctx, progress_state);
+
 		let results_area = layout[1];
-		self.render_results(frame, results_area);
+
+		// Split horizontally if preview is enabled
+		if self.preview_enabled {
+			let split = Layout::default()
+				.direction(Direction::Horizontal)
+				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+				.split(results_area);
+
+			self.render_results(frame, split[0]);
+			self.render_preview_pane(frame, split[1]);
+		} else {
+			self.render_results(frame, results_area);
+		}
 
 		if self.filtered_len() == 0 {
-			let mut message_area = results_area;
+			let mut message_area = if self.preview_enabled {
+				let split = Layout::default()
+					.direction(Direction::Horizontal)
+					.constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+					.split(results_area);
+				split[0]
+			} else {
+				results_area
+			};
 			const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
 			if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
 				message_area.y += HEADER_AND_DIVIDER_HEIGHT;
@@ -102,6 +124,15 @@ impl<'a> App<'a> {
 		};
 
 		render_table(frame, area, &mut self.table_state, spec, &self.style.theme);
+	}
+
+	fn render_preview_pane(&self, frame: &mut Frame, area: Rect) {
+		let ctx = PreviewContext {
+			content: &self.preview_content,
+			scroll_offset: self.preview_scroll,
+			theme: &self.style.theme,
+		};
+		render_preview(frame, area, ctx);
 	}
 
 	fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Config)> {

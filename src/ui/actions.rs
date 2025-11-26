@@ -1,5 +1,5 @@
 use anyhow::Result;
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::App;
 use crate::search::SearchOutcome;
@@ -26,12 +26,29 @@ impl<'a> App<'a> {
 				self.mark_query_dirty();
 				self.switch_mode();
 			}
+			// Ctrl+P to toggle preview pane
+			KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+				self.toggle_preview();
+			}
 			_ => match key.code {
 				KeyCode::Up => {
 					self.move_selection_up();
+					if self.preview_enabled {
+						self.update_preview();
+					}
 				}
 				KeyCode::Down => {
 					self.move_selection_down();
+					if self.preview_enabled {
+						self.update_preview();
+					}
+				}
+				// Ctrl+Up/Down or Shift+Up/Down to scroll preview
+				KeyCode::PageUp if self.preview_enabled => {
+					self.scroll_preview_up(10);
+				}
+				KeyCode::PageDown if self.preview_enabled => {
+					self.scroll_preview_down(10);
 				}
 				_ => {
 					if self.search_input.input(key) {

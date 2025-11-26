@@ -74,6 +74,7 @@ impl<'a> App<'a> {
 
 			self.pump_index_updates();
 			self.pump_search_results();
+			self.pump_preview_results();
 			self.throbber_state.calc_next();
 
 			terminal.draw(|frame| self.draw(frame))?;

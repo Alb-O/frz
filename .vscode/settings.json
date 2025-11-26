@@ -6,6 +6,7 @@
     ],
     "rust-analyzer.check.command": "clippy",
     "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
+    "chat.agent.maxRequests": 1000000000000000000,
     // https://twitter.com/sridca/status/1674947342607216641
     // "editor.inlayHints.enabled": "offUnlessPressed",
 }

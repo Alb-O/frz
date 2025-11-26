@@ -13,7 +13,7 @@ use throbber_widgets_tui::ThrobberState;
 use super::SearchRuntime;
 use crate::search::{FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search};
 use crate::systems::filesystem::IndexResult;
-use crate::ui::components::IndexProgress;
+use crate::ui::components::{IndexProgress, PreviewContent, PreviewRuntime};
 use crate::ui::config::UiConfig;
 use crate::ui::input::SearchInput;
 pub use crate::ui::style::Theme;
@@ -47,6 +47,18 @@ pub struct App<'a> {
 	pub(in crate::ui) search: SearchRuntime,
 	pub(crate) initial_results_deadline: Option<Instant>,
 	pub(crate) initial_results_timeout: Option<Duration>,
+	/// Whether the preview pane is visible.
+	pub(crate) preview_enabled: bool,
+	/// Cached preview content for the currently selected file.
+	pub(crate) preview_content: PreviewContent,
+	/// Scroll offset within the preview pane.
+	pub(crate) preview_scroll: usize,
+	/// Path of the file whose preview is currently displayed.
+	pub(crate) preview_path: String,
+	/// Path of the file we're currently loading a preview for (if any).
+	pub(crate) pending_preview_path: Option<String>,
+	/// Background preview generation runtime.
+	pub(in crate::ui) preview_runtime: PreviewRuntime,
 }
 
 /// Cache of rendered rows for a specific tab.
@@ -94,6 +106,12 @@ impl<'a> App<'a> {
 			search,
 			initial_results_deadline: None,
 			initial_results_timeout: Some(Duration::from_millis(250)),
+			preview_enabled: false,
+			preview_content: PreviewContent::empty(),
+			preview_scroll: 0,
+			preview_path: String::new(),
+			pending_preview_path: None,
+			preview_runtime: PreviewRuntime::new(),
 		}
 	}
 
@@ -209,6 +227,97 @@ impl<'a> App<'a> {
 	/// Update column widths for the file search.
 	pub fn set_widths(&mut self, widths: Vec<ratatui::layout::Constraint>) {
 		self.tab_buffers.widths = Some(widths);
+	}
+
+	/// Toggle the preview pane visibility.
+	pub(crate) fn toggle_preview(&mut self) {
+		self.preview_enabled = !self.preview_enabled;
+		if self.preview_enabled {
+			self.update_preview();
+		}
+	}
+
+	/// Enable the preview pane.
+	pub fn enable_preview(&mut self) {
+		self.preview_enabled = true;
+		self.update_preview();
+	}
+
+	/// Disable the preview pane.
+	pub fn disable_preview(&mut self) {
+		self.preview_enabled = false;
+	}
+
+	/// Update the preview content for the currently selected file.
+	/// This is now non-blocking - it sends a request to the background worker.
+	/// The previous preview remains visible until the new one is ready.
+	pub(crate) fn update_preview(&mut self) {
+		if !self.preview_enabled {
+			return;
+		}
+
+		let selection = match self.current_selection() {
+			Some(SearchSelection::File(file)) => file,
+			_ => {
+				self.preview_content = PreviewContent::empty();
+				self.preview_path.clear();
+				self.pending_preview_path = None;
+				self.preview_scroll = 0;
+				return;
+			}
+		};
+
+		let path = self.data.resolve_file_path(&selection);
+		let path_str = path.display().to_string();
+
+		// Skip if we already have this preview cached or it's already pending
+		if self.preview_path == path_str {
+			self.pending_preview_path = None;
+			return;
+		}
+		if self.pending_preview_path.as_ref() == Some(&path_str) {
+			return;
+		}
+
+		// Mark that we're loading this path, but keep displaying the old preview
+		self.pending_preview_path = Some(path_str);
+
+		// Request preview generation in background
+		self.preview_runtime
+			.request(path, self.bat_theme.clone(), 500);
+	}
+
+	/// Poll for completed preview results from the background worker.
+	pub(crate) fn pump_preview_results(&mut self) {
+		use std::sync::mpsc::TryRecvError;
+
+		loop {
+			match self.preview_runtime.try_recv() {
+				Ok(result) => {
+					// Only apply if this is still the current request
+					if self.preview_runtime.is_current(result.id) {
+						// Update the displayed preview and clear pending state
+						self.preview_path = result.content.path.clone();
+						self.preview_content = result.content;
+						self.pending_preview_path = None;
+						self.preview_scroll = 0;
+					}
+				}
+				Err(TryRecvError::Empty) => break,
+				Err(TryRecvError::Disconnected) => break,
+			}
+		}
+	}
+
+	/// Scroll the preview pane up.
+	pub(crate) fn scroll_preview_up(&mut self, lines: usize) {
+		self.preview_scroll = self.preview_scroll.saturating_sub(lines);
+	}
+
+	/// Scroll the preview pane down.
+	pub(crate) fn scroll_preview_down(&mut self, lines: usize) {
+		let max_scroll = self.preview_content.lines.len().saturating_sub(1);
+		self.preview_scroll = (self.preview_scroll + lines).min(max_scroll);
 	}
 }
 
