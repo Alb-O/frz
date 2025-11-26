@@ -11,6 +11,8 @@ pub struct PreviewContent {
 	pub lines: Vec<Line<'static>>,
 	/// Error message if preview failed.
 	pub error: Option<String>,
+	/// Whether this content is a placeholder (should be centered).
+	pub is_placeholder: bool,
 }
 
 impl PreviewContent {
@@ -21,6 +23,18 @@ impl PreviewContent {
 			path: String::new(),
 			lines: Vec::new(),
 			error: None,
+			is_placeholder: true,
+		}
+	}
+
+	/// Create a preview for an empty file.
+	#[must_use]
+	pub fn empty_file(path: impl Into<String>) -> Self {
+		Self {
+			path: path.into(),
+			lines: Vec::new(),
+			error: Some("Empty file".into()),
+			is_placeholder: true,
 		}
 	}
 
@@ -31,6 +45,7 @@ impl PreviewContent {
 			path: path.into(),
 			lines: Vec::new(),
 			error: Some(message.into()),
+			is_placeholder: true,
 		}
 	}
 
@@ -41,6 +56,7 @@ impl PreviewContent {
 			path: path.into(),
 			lines: Vec::new(),
 			error: Some("Loading...".into()),
+			is_placeholder: true,
 		}
 	}
 

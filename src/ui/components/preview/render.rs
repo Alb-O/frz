@@ -1,7 +1,7 @@
 //! Preview pane rendering.
 
 use ratatui::Frame;
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
@@ -14,6 +14,22 @@ pub struct PreviewContext<'a> {
 	pub content: &'a PreviewContent,
 	pub scroll_offset: usize,
 	pub theme: &'a Theme,
+}
+
+/// Render a centered placeholder message.
+fn render_centered_placeholder(frame: &mut Frame, area: Rect, message: &str, theme: &Theme) {
+	let style = Style::default().fg(theme
+		.empty_style()
+		.fg
+		.unwrap_or(ratatui::style::Color::Gray));
+
+	// Vertically center by adding blank lines
+	let vertical_padding = area.height.saturating_sub(1) / 2;
+	let mut lines: Vec<Line<'_>> = (0..vertical_padding).map(|_| Line::from("")).collect();
+	lines.push(Line::from(Span::styled(message, style)));
+
+	let para = Paragraph::new(Text::from(lines)).alignment(Alignment::Center);
+	frame.render_widget(para, area);
 }
 
 /// Render the preview pane with syntax-highlighted content.
@@ -32,30 +48,16 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 	let inner = block.inner(area);
 	frame.render_widget(block, area);
 
-	if let Some(error) = &ctx.content.error {
-		let error_text = Text::from(vec![
-			Line::from(""),
-			Line::from(Span::styled(
-				error.clone(),
-				Style::default().fg(ctx
-					.theme
-					.empty_style()
-					.fg
-					.unwrap_or(ratatui::style::Color::Gray)),
-			)),
-		]);
-		let para = Paragraph::new(error_text);
-		frame.render_widget(para, inner);
-		return;
-	}
-
-	if ctx.content.lines.is_empty() {
-		let empty_text = Text::from(vec![
-			Line::from(""),
-			Line::from(Span::styled("No file selected", ctx.theme.empty_style())),
-		]);
-		let para = Paragraph::new(empty_text);
-		frame.render_widget(para, inner);
+	// Handle placeholder states (errors, loading, no selection)
+	if ctx.content.is_placeholder {
+		let message = if let Some(error) = &ctx.content.error {
+			error.as_str()
+		} else if ctx.content.path.is_empty() {
+			"No file selected"
+		} else {
+			"Empty file"
+		};
+		render_centered_placeholder(frame, inner, message, ctx.theme);
 		return;
 	}
 

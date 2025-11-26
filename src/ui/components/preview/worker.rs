@@ -76,15 +76,15 @@ impl PreviewCache {
 	/// Insert a preview into the cache, evicting the oldest if at capacity.
 	fn insert(&mut self, key: CacheKey, content: PreviewContent) {
 		// Evict oldest entry if at capacity
-		if self.entries.len() >= self.capacity && !self.entries.contains_key(&key) {
-			if let Some(oldest_key) = self
+		if self.entries.len() >= self.capacity
+			&& !self.entries.contains_key(&key)
+			&& let Some(oldest_key) = self
 				.entries
 				.iter()
 				.min_by_key(|(_, (order, _))| *order)
 				.map(|(k, _)| k.clone())
-			{
-				self.entries.remove(&oldest_key);
-			}
+		{
+			self.entries.remove(&oldest_key);
 		}
 
 		self.order += 1;
@@ -199,6 +199,11 @@ fn generate_preview_impl(
 		}
 	};
 
+	// Handle empty files
+	if content.is_empty() {
+		return PreviewContent::empty_file(&path_str);
+	}
+
 	// Generate highlighted output using bat
 	let highlighted = highlight_with_bat(path, &content, bat_theme, max_lines, assets);
 
@@ -206,6 +211,7 @@ fn generate_preview_impl(
 		path: path_str,
 		lines: highlighted,
 		error: None,
+		is_placeholder: false,
 	}
 }
 
