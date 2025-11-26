@@ -2,7 +2,11 @@
 //!
 //! This module provides an asynchronous preview generation system that runs in a
 //! background thread, preventing the UI from blocking while bat processes files.
+//!
+//! The worker maintains an LRU cache of recently previewed files, allowing instant
+//! display when revisiting files without re-reading from disk or re-highlighting.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
@@ -11,6 +15,9 @@ use bat::assets::HighlightingAssets;
 
 use super::content::PreviewContent;
 use super::highlight::highlight_with_bat;
+
+/// Maximum number of previews to keep in the LRU cache.
+const CACHE_CAPACITY: usize = 32;
 
 /// Commands sent to the preview worker thread.
 pub enum PreviewCommand {
@@ -29,6 +36,61 @@ pub enum PreviewCommand {
 	Shutdown,
 }
 
+/// Cache key combining path and theme for proper cache invalidation.
+#[derive(Clone, Hash, Eq, PartialEq)]
+struct CacheKey {
+	path: PathBuf,
+	theme: Option<String>,
+}
+
+/// Simple LRU cache for preview content.
+struct PreviewCache {
+	/// Map from cache key to (order, content).
+	entries: HashMap<CacheKey, (u64, PreviewContent)>,
+	/// Counter for LRU ordering (higher = more recent).
+	order: u64,
+	/// Maximum number of entries.
+	capacity: usize,
+}
+
+impl PreviewCache {
+	fn new(capacity: usize) -> Self {
+		Self {
+			entries: HashMap::with_capacity(capacity),
+			order: 0,
+			capacity,
+		}
+	}
+
+	/// Get a cached preview if available, updating its LRU order.
+	fn get(&mut self, key: &CacheKey) -> Option<PreviewContent> {
+		if let Some((order, content)) = self.entries.get_mut(key) {
+			self.order += 1;
+			*order = self.order;
+			Some(content.clone())
+		} else {
+			None
+		}
+	}
+
+	/// Insert a preview into the cache, evicting the oldest if at capacity.
+	fn insert(&mut self, key: CacheKey, content: PreviewContent) {
+		// Evict oldest entry if at capacity
+		if self.entries.len() >= self.capacity && !self.entries.contains_key(&key) {
+			if let Some(oldest_key) = self
+				.entries
+				.iter()
+				.min_by_key(|(_, (order, _))| *order)
+				.map(|(k, _)| k.clone())
+			{
+				self.entries.remove(&oldest_key);
+			}
+		}
+
+		self.order += 1;
+		self.entries.insert(key, (self.order, content));
+	}
+}
 /// Results sent back from the preview worker thread.
 pub struct PreviewResult {
 	/// The ID of the request this result corresponds to.
@@ -55,6 +117,9 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 	// This is the most expensive part of bat initialization.
 	let assets = HighlightingAssets::from_binary();
 
+	// LRU cache for recently previewed files
+	let mut cache = PreviewCache::new(CACHE_CAPACITY);
+
 	while let Ok(command) = command_rx.recv() {
 		match command {
 			PreviewCommand::Generate {
@@ -63,7 +128,21 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 				theme,
 				max_lines,
 			} => {
-				let content = generate_preview_impl(&path, theme.as_deref(), max_lines, &assets);
+				let cache_key = CacheKey {
+					path: path.clone(),
+					theme: theme.clone(),
+				};
+
+				// Check cache first for instant response
+				let content = if let Some(cached) = cache.get(&cache_key) {
+					cached
+				} else {
+					let generated =
+						generate_preview_impl(&path, theme.as_deref(), max_lines, &assets);
+					cache.insert(cache_key, generated.clone());
+					generated
+				};
+
 				// If the receiver is gone, just exit gracefully
 				if result_tx.send(PreviewResult { id, content }).is_err() {
 					break;
