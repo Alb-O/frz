@@ -11,8 +11,7 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
-use crate::search::runtime as search;
-use crate::search::{FILES_DATASET_KEY, SearchData, SearchSelection};
+use crate::search::{FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search};
 use crate::systems::filesystem::IndexResult;
 use crate::ui::components::IndexProgress;
 use crate::ui::config::UiConfig;
@@ -62,7 +61,6 @@ pub(crate) struct TabBuffers {
 impl<'a> App<'a> {
 	/// Construct an [`App`] with the builtin extension catalog.
 	pub fn new(data: SearchData) -> Self {
-		crate::logging::initialize();
 		let mut table_state = TableState::default();
 		table_state.select(Some(0));
 		let initial_query = data.initial_query.clone();

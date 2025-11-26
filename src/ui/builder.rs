@@ -26,8 +26,6 @@ pub struct SearchUi {
 impl SearchUi {
 	/// Create a new search UI for the provided data.
 	pub fn new(data: SearchData) -> Self {
-		crate::logging::initialize();
-
 		Self {
 			data,
 			input_title: None,

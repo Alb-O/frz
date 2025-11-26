@@ -4,17 +4,15 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
 
 use super::App;
+use crate::search;
 use crate::ui::components::rows::build_file_rows;
 use crate::ui::components::tables::TableSpec;
 use crate::ui::components::{
 	InputContext, ProgressState, TabItem, render_input_with_tabs, render_table,
 };
-use crate::{logging, search};
 
 impl<'a> App<'a> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {
-		logging::pump();
-
 		let area = frame.area();
 		let area = area.inner(Margin {
 			vertical: 0,

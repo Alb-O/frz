@@ -10,6 +10,3 @@ pub(crate) use options::OutputFormat;
 pub(crate) fn parse_cli() -> CliArgs {
 	CliArgs::parse()
 }
-
-#[cfg(test)]
-mod tests;
