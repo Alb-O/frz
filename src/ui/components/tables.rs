@@ -1,4 +1,4 @@
-use frizbee::Options;
+use frizbee::Config;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::Style;
@@ -26,7 +26,7 @@ pub struct TableRenderContext<'a> {
 	pub scores: &'a [u16],
 	pub headers: Option<&'a Vec<String>>,
 	pub widths: Option<&'a Vec<Constraint>>,
-	pub highlight: Option<(&'a str, Options)>,
+	pub highlight: Option<(&'a str, Config)>,
 	pub data: &'a SearchData,
 }
 

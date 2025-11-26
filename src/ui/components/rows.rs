@@ -1,4 +1,4 @@
-use frizbee::{Options, match_indices};
+use frizbee::{Config, match_indices};
 use ratatui::style::Style;
 use ratatui::widgets::{Cell, Row};
 
@@ -7,7 +7,7 @@ use crate::ui::highlight::highlight_cell_with_prefix;
 
 /// Create match indices for the provided needle and configuration.
 #[must_use]
-pub fn highlight_for_refs(needle: &str, config: Options, text: &str) -> Option<Vec<usize>> {
+pub fn highlight_for_refs(needle: &str, config: &Config, text: &str) -> Option<Vec<usize>> {
 	if text.is_empty() || needle.is_empty() {
 		return None;
 	}
@@ -19,7 +19,7 @@ pub fn build_file_rows<'a>(
 	filtered_files: &'a [usize],
 	file_scores: &'a [u16],
 	files: &'a [FileRow],
-	highlight_state: Option<(&'a str, Options)>,
+	highlight_state: Option<(&'a str, Config)>,
 	highlight_style: Style,
 	column_widths: Option<&[u16]>,
 ) -> Vec<Row<'a>> {
@@ -30,6 +30,7 @@ pub fn build_file_rows<'a>(
 			let entry = files.get(actual_index)?;
 			let score = file_scores.get(idx).copied().unwrap_or_default();
 			let path_highlight = highlight_state
+				.as_ref()
 				.and_then(|(needle, config)| highlight_for_refs(needle, config, &entry.path));
 			let path_width = column_widths.and_then(|widths| widths.first().copied());
 			Some(Row::new([

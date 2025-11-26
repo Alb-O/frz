@@ -1,5 +1,6 @@
 {
     "window.title": "${rootName}",
+    "editor.rulers": [100],
     "rust-analyzer.files.excludeDirs": [
         ".direnv"
     ],

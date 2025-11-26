@@ -86,12 +86,12 @@ where
 		for index in offset..end {
 			haystacks.push(dataset.key_for(index));
 		}
-		let matches = match_list(trimmed, &haystacks, config);
+		let matches = match_list(trimmed, &haystacks, &config);
 		for entry in matches {
 			if entry.score == 0 {
 				continue;
 			}
-			let index = offset + entry.index_in_haystack as usize;
+			let index = offset + entry.index as usize;
 			aggregator.push(index, entry.score);
 		}
 

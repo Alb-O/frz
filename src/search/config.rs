@@ -1,12 +1,12 @@
-use frizbee::Options;
+use frizbee::Config;
 
 use super::PREFILTER_ENABLE_THRESHOLD;
 
 /// Builds fuzzy matching options for the provided query and dataset size.
-pub fn config_for_query(query: &str, dataset_len: usize) -> Options {
-	let mut config = Options {
+pub fn config_for_query(query: &str, dataset_len: usize) -> Config {
+	let mut config = Config {
 		prefilter: false,
-		..Options::default()
+		..Config::default()
 	};
 
 	let length = query.chars().count();

@@ -1,4 +1,4 @@
-use frizbee::Options;
+use frizbee::Config;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
@@ -74,7 +74,7 @@ impl<'a> App<'a> {
 		let highlight_owned = self.highlight_for_query(self.data.files.len());
 		let highlight_state = highlight_owned
 			.as_ref()
-			.map(|(text, config)| (text.as_str(), *config));
+			.map(|(text, config)| (text.as_str(), config.clone()));
 
 		// Default headers and widths if not customized
 		let default_headers = vec!["Path".into(), "Score".into()];
@@ -106,7 +106,7 @@ impl<'a> App<'a> {
 		render_table(frame, area, &mut self.table_state, spec, &self.style.theme);
 	}
 
-	fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Options)> {
+	fn highlight_for_query(&self, dataset_len: usize) -> Option<(String, Config)> {
 		let query = self.search_input.text().trim();
 		if query.is_empty() {
 			return None;
