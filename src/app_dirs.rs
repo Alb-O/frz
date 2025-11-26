@@ -1,27 +1,18 @@
 //! Resolve configuration, cache, and data directories for `frz`.
 //!
 //! The helpers in this module respect environment overrides while falling back
-//! to platform-appropriate locations provided by the `directories` crate.
+//! to platform-appropriate locations provided by the `dirs` crate.
 
 use std::env;
 use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
-use directories::ProjectDirs;
 
-const QUALIFIER: &str = "io";
-const ORGANIZATION: &str = "albo";
 const APPLICATION: &str = "frz";
 
 const CONFIG_DIR_ENV: &str = "FRZ_CONFIG_DIR";
 const DATA_DIR_ENV: &str = "FRZ_DATA_DIR";
 const CACHE_DIR_ENV: &str = "FRZ_CACHE_DIR";
-
-/// Return the platform-specific directory layout for the application.
-fn project_dirs() -> Result<ProjectDirs> {
-	ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION)
-		.ok_or_else(|| anyhow!("unable to determine project directories for frz"))
-}
 
 /// Resolve an override directory from an environment variable.
 ///
@@ -42,7 +33,8 @@ pub fn get_config_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	Ok(project_dirs()?.config_local_dir().to_path_buf())
+	let base = dirs::config_dir().ok_or_else(|| anyhow!("unable to determine config directory"))?;
+	Ok(base.join(APPLICATION))
 }
 
 /// Return the data directory that stores search indexes and other assets.
@@ -51,7 +43,8 @@ pub fn get_data_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	Ok(project_dirs()?.data_local_dir().to_path_buf())
+	let base = dirs::data_dir().ok_or_else(|| anyhow!("unable to determine data directory"))?;
+	Ok(base.join(APPLICATION))
 }
 
 /// Return the cache directory for temporary files and incremental state.
@@ -60,5 +53,6 @@ pub fn get_cache_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	Ok(project_dirs()?.cache_dir().to_path_buf())
+	let base = dirs::cache_dir().ok_or_else(|| anyhow!("unable to determine cache directory"))?;
+	Ok(base.join(APPLICATION))
 }
