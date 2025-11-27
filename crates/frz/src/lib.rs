@@ -1,21 +1,22 @@
 //! Core crate exports for building and running the `frz` terminal interface.
 //!
-//! The root module primarily re-exports types from the UI and extension
-//! subsystems so that embedders can configure the application without digging
+//! The root module primarily re-exports types from the feature modules
+//! so that embedders can configure the application without digging
 //! through the module hierarchy.
 
 pub mod app_dirs;
-/// Search pipeline and results aggregation.
-pub mod search;
+/// Feature modules containing vertical slices of functionality.
+pub mod features;
 /// Message envelopes and streaming primitives.
 pub mod streams;
-mod systems;
-pub mod ui;
 
-pub use systems::filesystem::FilesystemOptions;
-pub use ui::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
+// Re-exports for public API
+pub use features::filesystem_indexer::FilesystemOptions;
+pub use features::tui_app::{PaneUiConfig, SearchUi, TabUiConfig, UiConfig, run};
 
-pub use crate::search::{FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle};
-pub use crate::ui::components::{progress, rows as utils, tables, tabs};
-pub use crate::ui::input::SearchInput;
-pub use crate::ui::style::{StyleConfig, Theme, builtin_themes, default_theme};
+pub use crate::features::search_pipeline::{
+	FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle,
+};
+pub use crate::features::tui_app::components::{progress, rows as utils, tables, tabs};
+pub use crate::features::tui_app::input::SearchInput;
+pub use crate::features::tui_app::style::{StyleConfig, Theme, builtin_themes, default_theme};
