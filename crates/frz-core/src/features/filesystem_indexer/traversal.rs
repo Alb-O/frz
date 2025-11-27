@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
@@ -102,7 +102,6 @@ pub fn spawn_filesystem_index(
 
 		let (file_tx, file_rx) = mpsc::channel::<FileRow>();
 		let walker_root = Arc::new(root);
-		let threads = options.thread_count();
 		let extension_filter = options.extension_filter().map(Arc::new);
 		let update_tx = tx;
 
@@ -123,24 +122,12 @@ pub fn spawn_filesystem_index(
 			batcher.finalize(&update_tx)
 		});
 
-		let global_ignores = Arc::new(options.global_ignore_set());
-
-		WalkBuilder::new(walker_root.as_path())
-			.hidden(!options.include_hidden)
-			.follow_links(options.follow_symlinks)
-			.git_ignore(options.git_ignore)
-			.git_global(options.git_global)
-			.git_exclude(options.git_exclude)
-			.ignore(options.respect_ignore_files)
-			.parents(true)
-			.threads(threads)
-			.max_depth(options.max_depth)
+		build_walk(walker_root.as_path(), &options)
 			.build_parallel()
 			.run(|| {
 				let sender = file_tx.clone();
 				let root = Arc::clone(&walker_root);
 				let extension_filter = extension_filter.clone();
-				let global_ignores = Arc::clone(&global_ignores);
 				Box::new(move |entry: Result<DirEntry, IgnoreError>| {
 					if let Ok(entry) = entry {
 						let Some(file_type) = entry.file_type() else {
@@ -151,12 +138,6 @@ pub fn spawn_filesystem_index(
 						}
 
 						let path = entry.path();
-						if path
-							.components()
-							.any(|comp| global_ignores.contains(comp.as_os_str()))
-						{
-							return WalkState::Continue;
-						}
 						let relative = path.strip_prefix(root.as_path()).unwrap_or(path);
 						if let Some(filter) = extension_filter.as_ref() {
 							let extension = relative
@@ -185,4 +166,28 @@ pub fn spawn_filesystem_index(
 	});
 
 	Ok((data, rx))
+}
+
+/// Build a configured filesystem walker for the given root and options.
+pub(crate) fn build_walk(root: &Path, options: &FilesystemOptions) -> WalkBuilder {
+	let ignores = options.global_ignore_set();
+	let mut walker = WalkBuilder::new(root);
+
+	walker
+		.hidden(!options.include_hidden)
+		.follow_links(options.follow_symlinks)
+		.git_ignore(options.git_ignore)
+		.git_global(options.git_global)
+		.git_exclude(options.git_exclude)
+		.ignore(options.respect_ignore_files)
+		.parents(true)
+		.threads(options.thread_count())
+		.max_depth(options.max_depth);
+
+	if !ignores.is_empty() {
+		let ignores = Arc::new(ignores);
+		walker.filter_entry(move |entry| !ignores.contains(entry.file_name()));
+	}
+
+	walker
 }

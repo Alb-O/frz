@@ -2,7 +2,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, mpsc};
 use std::{io, thread};
 
-use ignore::{DirEntry, Error as IgnoreError, WalkBuilder, WalkState};
+use ignore::{DirEntry, Error as IgnoreError, WalkState};
+
+use crate::features::filesystem_indexer::{FilesystemOptions, build_walk};
 
 /// Iterator over filesystem paths produced by an [`Fs`] implementation.
 pub struct FsIter {
@@ -57,17 +59,10 @@ impl Fs for OsFs {
 		let root = root.to_path_buf();
 		let walker_root = Arc::new(root.clone());
 		let (tx, rx) = mpsc::channel();
-		let threads = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+		let options = FilesystemOptions::default();
 
 		let worker = thread::spawn(move || {
-			WalkBuilder::new(walker_root.as_path())
-				.hidden(false)
-				.git_ignore(true)
-				.git_global(true)
-				.git_exclude(true)
-				.ignore(true)
-				.parents(true)
-				.threads(threads)
+			build_walk(walker_root.as_path(), &options)
 				.build_parallel()
 				.run(|| {
 					let sender = tx.clone();

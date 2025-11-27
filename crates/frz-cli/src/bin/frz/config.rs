@@ -90,19 +90,30 @@ fn build_filesystem_options(cli: &CliArgs) -> FilesystemOptions {
 		.map(|exts| sanitize_extensions(exts.clone()))
 		.filter(|exts| !exts.is_empty());
 
-	FilesystemOptions {
-		include_hidden: cli.hidden.unwrap_or(true),
-		follow_symlinks: cli.follow_symlinks.unwrap_or(false),
-		respect_ignore_files: cli.respect_ignore_files.unwrap_or(true),
-		git_ignore: cli.git_ignore.unwrap_or(true),
-		git_global: cli.git_global.unwrap_or(true),
-		git_exclude: cli.git_exclude.unwrap_or(true),
-		threads: cli.threads,
-		max_depth: cli.max_depth,
-		allowed_extensions,
-		context_label: cli.context_label.clone(),
-		global_ignores: cli.global_ignores.clone().unwrap_or_default(),
+	let mut options = FilesystemOptions::default();
+
+	options.include_hidden = cli.hidden.unwrap_or(options.include_hidden);
+	options.follow_symlinks = cli.follow_symlinks.unwrap_or(options.follow_symlinks);
+	options.respect_ignore_files = cli
+		.respect_ignore_files
+		.unwrap_or(options.respect_ignore_files);
+	options.git_ignore = cli.git_ignore.unwrap_or(options.git_ignore);
+	options.git_global = cli.git_global.unwrap_or(options.git_global);
+	options.git_exclude = cli.git_exclude.unwrap_or(options.git_exclude);
+	options.threads = cli.threads;
+	options.max_depth = cli.max_depth;
+	options.allowed_extensions = allowed_extensions;
+	options.context_label = cli.context_label.clone();
+
+	if let Some(extra_ignores) = cli.global_ignores.as_ref() {
+		for ignore in extra_ignores {
+			if !options.global_ignores.contains(ignore) {
+				options.global_ignores.push(ignore.clone());
+			}
+		}
 	}
+
+	options
 }
 
 /// Build UI configuration from CLI arguments, applying preset and overrides.

@@ -16,6 +16,7 @@ use std::time::Duration;
 
 pub use options::FilesystemOptions;
 pub use stream::{IndexKind, IndexResult, IndexStream, IndexView};
+pub(crate) use traversal::build_walk;
 pub use traversal::spawn_filesystem_index;
 
 use crate::features::search_pipeline::{FileRow, SearchData};
