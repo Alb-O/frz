@@ -49,9 +49,14 @@ impl App<'_> {
 				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
 				.split(results_area);
 
+			self.results_area = Some(split[0]);
+			self.preview_area = Some(split[1]);
 			self.render_results(frame, split[0]);
 			self.render_preview_pane(frame, split[1]);
 		} else {
+			self.preview_area = None;
+			self.preview_hovered = false;
+			self.results_area = Some(results_area);
 			self.render_results(frame, results_area);
 		}
 

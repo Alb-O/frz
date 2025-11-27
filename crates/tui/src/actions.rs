@@ -1,6 +1,6 @@
 use anyhow::Result;
 use frz_core::search_pipeline::SearchOutcome;
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 
 use super::App;
 
@@ -60,6 +60,35 @@ impl<'a> App<'a> {
 			},
 		}
 		Ok(None)
+	}
+
+	pub(crate) fn handle_mouse(&mut self, mouse: MouseEvent) {
+		self.update_preview_hover(mouse.column, mouse.row);
+		self.update_results_hover(mouse.column, mouse.row);
+
+		if self.preview_enabled && self.preview_hovered {
+			match mouse.kind {
+				MouseEventKind::ScrollUp => self.scroll_preview_up(3),
+				MouseEventKind::ScrollDown => self.scroll_preview_down(3),
+				_ => {}
+			}
+		} else if self.results_hovered {
+			match mouse.kind {
+				MouseEventKind::ScrollUp => {
+					self.move_selection_up();
+					if self.preview_enabled {
+						self.update_preview();
+					}
+				}
+				MouseEventKind::ScrollDown => {
+					self.move_selection_down();
+					if self.preview_enabled {
+						self.update_preview();
+					}
+				}
+				_ => {}
+			}
+		}
 	}
 
 	fn switch_mode(&mut self) {

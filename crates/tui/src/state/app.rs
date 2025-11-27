@@ -10,6 +10,7 @@ use frz_core::filesystem_indexer::IndexResult;
 use frz_core::search_pipeline::{
 	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
 };
+use ratatui::layout::Rect;
 use ratatui::widgets::{ScrollbarState, TableState};
 use throbber_widgets_tui::ThrobberState;
 
@@ -59,6 +60,14 @@ pub struct App<'a> {
 	pub(crate) preview_scrollbar_state: ScrollbarState,
 	/// Last known viewport height for scroll bounds.
 	pub(crate) preview_viewport_height: usize,
+	/// Last known preview area on screen.
+	pub(crate) preview_area: Option<Rect>,
+	/// Whether the mouse is currently hovering the preview.
+	pub(crate) preview_hovered: bool,
+	/// Last known results area on screen.
+	pub(crate) results_area: Option<Rect>,
+	/// Whether the mouse is currently hovering the results table.
+	pub(crate) results_hovered: bool,
 	/// Path of the file whose preview is currently displayed.
 	pub(crate) preview_path: String,
 	/// Path of the file we're currently loading a preview for (if any).
@@ -113,6 +122,10 @@ impl<'a> App<'a> {
 			preview_scroll: 0,
 			preview_scrollbar_state: ScrollbarState::default(),
 			preview_viewport_height: 1,
+			preview_area: None,
+			preview_hovered: false,
+			results_area: None,
+			results_hovered: false,
 			preview_path: String::new(),
 			pending_preview_path: None,
 			preview_runtime: PreviewRuntime::new(),
@@ -273,6 +286,9 @@ impl<'a> App<'a> {
 	/// Disable the preview pane.
 	pub fn disable_preview(&mut self) {
 		self.preview_enabled = false;
+		self.preview_area = None;
+		self.preview_hovered = false;
+		self.results_hovered = false;
 	}
 
 	/// Update preview visibility based on terminal width.
@@ -382,6 +398,33 @@ impl<'a> App<'a> {
 		} else {
 			scroll.saturating_mul(content_length.saturating_sub(1)) / max_scroll
 		}
+	}
+
+	pub(crate) fn update_preview_hover(&mut self, column: u16, row: u16) {
+		if !self.preview_enabled {
+			self.preview_hovered = false;
+			return;
+		}
+
+		let Some(area) = self.preview_area else {
+			self.preview_hovered = false;
+			return;
+		};
+
+		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
+		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
+		self.preview_hovered = inside_x && inside_y;
+	}
+
+	pub(crate) fn update_results_hover(&mut self, column: u16, row: u16) {
+		let Some(area) = self.results_area else {
+			self.results_hovered = false;
+			return;
+		};
+
+		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
+		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
+		self.results_hovered = inside_x && inside_y;
 	}
 
 	/// Update scrollbar state to match current preview content and scroll position.

@@ -1,6 +1,7 @@
 //! Application runtime and event loop.
 
 use std::collections::VecDeque;
+use std::io::stdout;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::thread;
@@ -8,7 +9,10 @@ use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use frz_core::search_pipeline::{SearchData, SearchOutcome};
-use ratatui::crossterm::event::{self, Event, KeyEventKind};
+use ratatui::crossterm::event::{
+	self, DisableMouseCapture, EnableMouseCapture, Event, KeyEventKind,
+};
+use ratatui::crossterm::execute;
 
 use crate::App;
 
@@ -23,6 +27,7 @@ impl<'a> App<'a> {
 	pub fn run(&mut self) -> Result<SearchOutcome> {
 		let mut terminal = ratatui::init();
 		terminal.clear()?;
+		execute!(stdout(), EnableMouseCapture)?;
 
 		// Auto-enable preview if terminal is wide enough (unless explicitly set)
 		let initial_size = terminal.size()?;
@@ -71,6 +76,9 @@ impl<'a> App<'a> {
 							break;
 						}
 					}
+					Event::Mouse(mouse) => {
+						self.handle_mouse(mouse);
+					}
 					Event::Resize(_, _) => {}
 					_ => {}
 				}
@@ -91,6 +99,7 @@ impl<'a> App<'a> {
 		};
 
 		ratatui::restore();
+		execute!(stdout(), DisableMouseCapture)?;
 
 		event_loop_running.store(false, Ordering::Relaxed);
 		match event_thread.join() {
