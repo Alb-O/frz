@@ -1,7 +1,7 @@
 use std::mem;
 
 use frz_core::search_pipeline::TruncationStyle;
-use ratatui::style::Style;
+use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;
 use unicode_truncate::UnicodeTruncateStr;
@@ -50,10 +50,11 @@ pub fn highlight_cell_with_prefix<'a>(
 	}
 
 	let Some(mut sorted_indices) = indices.filter(|indices| !indices.is_empty()) else {
+		let mut spans = spans_with_dimmed_ellipsis(&display_text);
 		if prefix_spans.is_empty() {
-			return Cell::from(display_text);
+			return Cell::from(Text::from(Line::from(spans)));
 		}
-		prefix_spans.push(Span::raw(display_text));
+		prefix_spans.append(&mut spans);
 		return Cell::from(Text::from(Line::from(prefix_spans)));
 	};
 	sorted_indices.sort_unstable();
@@ -63,9 +64,22 @@ pub fn highlight_cell_with_prefix<'a>(
 	let mut spans = Vec::new();
 
 	for (idx, ch) in display_text.chars().enumerate() {
+		let is_ellipsis = ch == '…';
 		let should_highlight = next.peek().copied() == Some(idx);
 		if should_highlight {
 			next.next();
+		}
+		if is_ellipsis {
+			if !buffer.is_empty() {
+				let style = if highlighted {
+					highlight_style
+				} else {
+					Style::default()
+				};
+				spans.push(Span::styled(mem::take(&mut buffer), style));
+			}
+			spans.push(Span::styled(ch.to_string(), Style::default().dim()));
+			continue;
 		}
 		if should_highlight != highlighted {
 			if !buffer.is_empty() {
@@ -153,6 +167,37 @@ fn truncate_with_highlight(
 	}
 }
 
+fn spans_with_dimmed_ellipsis(text: &str) -> Vec<Span<'static>> {
+	let mut spans = Vec::new();
+	let mut buffer = String::new();
+
+	for ch in text.chars() {
+		if ch == '…' {
+			if !buffer.is_empty() {
+				spans.push(Span::raw(std::mem::take(&mut buffer)));
+			}
+			spans.push(Span::styled(ch.to_string(), Style::default().dim()));
+		} else {
+			buffer.push(ch);
+		}
+	}
+
+	if !buffer.is_empty() {
+		spans.push(Span::raw(buffer));
+	}
+
+	spans
+}
+
+#[cfg(test)]
+pub(crate) fn truncate_for_test(
+	text: &str,
+	max_width: usize,
+	truncation: TruncationStyle,
+) -> String {
+	truncate_with_highlight(text, None, max_width, truncation).0
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -171,5 +216,18 @@ mod tests {
 			truncate_with_highlight("abcdefgh", Some(vec![1, 3, 6]), 5, TruncationStyle::Left);
 		assert_eq!(text, "…efgh");
 		assert_eq!(indices, Some(vec![3]));
+	}
+
+	#[test]
+	fn spans_with_dimmed_ellipsis_styles_only_ellipsis() {
+		let spans = spans_with_dimmed_ellipsis("abc…xyz");
+
+		assert_eq!(spans.len(), 3);
+		assert_eq!(spans[0].content, "abc");
+		assert_eq!(spans[0].style, Style::default());
+		assert_eq!(spans[1].content, "…");
+		assert_eq!(spans[1].style, Style::default().dim());
+		assert_eq!(spans[2].content, "xyz");
+		assert_eq!(spans[2].style, Style::default());
 	}
 }

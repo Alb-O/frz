@@ -8,8 +8,9 @@ use ratatui::widgets::{Block, Borders, Cell, HighlightSpacing, Paragraph, Row, T
 
 use crate::style::Theme;
 
-const HIGHLIGHT_SYMBOL: &str = "▶ ";
-const TABLE_COLUMN_SPACING: u16 = 1;
+pub(crate) const HIGHLIGHT_SYMBOL: &str = "▶ ";
+pub(crate) const TABLE_COLUMN_SPACING: u16 = 1;
+pub(crate) const TABLE_HIGHLIGHT_SPACING: HighlightSpacing = HighlightSpacing::WhenSelected;
 
 /// Fully materialized table configuration.
 pub struct TableSpec<'a> {
@@ -65,7 +66,7 @@ pub fn render_table(
 		frame,
 		inner,
 		table_state,
-		HighlightSpacing::WhenSelected,
+		TABLE_HIGHLIGHT_SPACING,
 		theme,
 		spec,
 	);
