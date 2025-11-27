@@ -4,7 +4,9 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use ratatui::widgets::{
+	Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
+};
 
 use super::content::{PreviewContent, PreviewKind};
 use crate::style::Theme;
@@ -15,6 +17,8 @@ pub struct PreviewContext<'a> {
 	pub content: &'a PreviewContent,
 	/// Vertical scroll offset (for text content).
 	pub scroll_offset: usize,
+	/// Scrollbar state for the preview pane.
+	pub scrollbar_state: &'a mut ScrollbarState,
 	/// Color theme.
 	pub theme: &'a Theme,
 }
@@ -76,6 +80,26 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 
 			let para = Paragraph::new(visible_lines).wrap(Wrap { trim: false });
 			frame.render_widget(para, inner);
+
+			// Render scrollbar only if content overflows
+			let content_length = lines.len();
+			let viewport_height = inner.height as usize;
+
+			if content_length > viewport_height {
+				let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+					.begin_symbol(None)
+					.end_symbol(None)
+					.track_symbol(Some("│"));
+
+				// Render scrollbar aligned to the content's right edge
+				let scrollbar_area = Rect {
+					x: inner.x + inner.width.saturating_sub(1),
+					y: inner.y,
+					width: 1,
+					height: inner.height,
+				};
+				frame.render_stateful_widget(scrollbar, scrollbar_area, ctx.scrollbar_state);
+			}
 		}
 		#[cfg(feature = "media-preview")]
 		PreviewKind::Image { image } => {

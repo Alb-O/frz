@@ -11,7 +11,7 @@ use super::components::{
 	InputContext, PreviewContext, ProgressState, render_input, render_preview, render_table,
 };
 
-impl<'a> App<'a> {
+impl App<'_> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {
 		let area = frame.area();
 		let area = area.inner(Margin {
@@ -129,10 +129,15 @@ impl<'a> App<'a> {
 		render_table(frame, area, &mut self.table_state, spec, &self.style.theme);
 	}
 
-	fn render_preview_pane(&self, frame: &mut Frame, area: Rect) {
+	fn render_preview_pane(&mut self, frame: &mut Frame, area: Rect) {
+		// Update viewport height (accounting for borders)
+		self.preview_viewport_height = area.height.saturating_sub(2) as usize;
+		self.update_scrollbar_state();
+
 		let ctx = PreviewContext {
 			content: &self.preview_content,
 			scroll_offset: self.preview_scroll,
+			scrollbar_state: &mut self.preview_scrollbar_state,
 			theme: &self.style.theme,
 		};
 		render_preview(frame, area, ctx);

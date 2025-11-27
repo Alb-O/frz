@@ -10,7 +10,7 @@ use frz_core::filesystem_indexer::IndexResult;
 use frz_core::search_pipeline::{
 	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
 };
-use ratatui::widgets::TableState;
+use ratatui::widgets::{ScrollbarState, TableState};
 use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
@@ -55,6 +55,10 @@ pub struct App<'a> {
 	pub(crate) preview_content: PreviewContent,
 	/// Scroll offset within the preview pane.
 	pub(crate) preview_scroll: usize,
+	/// Scrollbar state for the preview pane.
+	pub(crate) preview_scrollbar_state: ScrollbarState,
+	/// Last known viewport height for scroll bounds.
+	pub(crate) preview_viewport_height: usize,
 	/// Path of the file whose preview is currently displayed.
 	pub(crate) preview_path: String,
 	/// Path of the file we're currently loading a preview for (if any).
@@ -107,6 +111,8 @@ impl<'a> App<'a> {
 			preview_enabled: false,
 			preview_content: PreviewContent::empty(),
 			preview_scroll: 0,
+			preview_scrollbar_state: ScrollbarState::default(),
+			preview_viewport_height: 1,
 			preview_path: String::new(),
 			pending_preview_path: None,
 			preview_runtime: PreviewRuntime::new(),
@@ -334,6 +340,7 @@ impl<'a> App<'a> {
 						self.preview_content = result.content;
 						self.pending_preview_path = None;
 						self.preview_scroll = 0;
+						self.update_scrollbar_state();
 					}
 				}
 				Err(TryRecvError::Empty) => break,
@@ -345,12 +352,51 @@ impl<'a> App<'a> {
 	/// Scroll the preview pane up.
 	pub(crate) fn scroll_preview_up(&mut self, lines: usize) {
 		self.preview_scroll = self.preview_scroll.saturating_sub(lines);
+		self.update_scrollbar_state();
 	}
 
 	/// Scroll the preview pane down.
 	pub(crate) fn scroll_preview_down(&mut self, lines: usize) {
-		let max_scroll = self.preview_content.line_count().saturating_sub(1);
+		let content_length = self.preview_content.line_count();
+		let max_scroll = self.max_preview_scroll(content_length);
 		self.preview_scroll = (self.preview_scroll + lines).min(max_scroll);
+		self.update_scrollbar_state();
+	}
+
+	fn preview_viewport_len(&self, content_length: usize) -> usize {
+		if content_length == 0 {
+			0
+		} else {
+			self.preview_viewport_height.max(1).min(content_length)
+		}
+	}
+
+	fn max_preview_scroll(&self, content_length: usize) -> usize {
+		let viewport_len = self.preview_viewport_len(content_length);
+		content_length.saturating_sub(viewport_len)
+	}
+
+	fn scrollbar_position(&self, scroll: usize, max_scroll: usize, content_length: usize) -> usize {
+		if max_scroll == 0 || content_length == 0 {
+			0
+		} else {
+			scroll.saturating_mul(content_length.saturating_sub(1)) / max_scroll
+		}
+	}
+
+	/// Update scrollbar state to match current preview content and scroll position.
+	pub(crate) fn update_scrollbar_state(&mut self) {
+		let content_length = self.preview_content.line_count();
+		let viewport_len = self.preview_viewport_len(content_length);
+		let max_scroll = self.max_preview_scroll(content_length);
+		self.preview_scroll = self.preview_scroll.min(max_scroll);
+		let position = self.scrollbar_position(self.preview_scroll, max_scroll, content_length);
+
+		self.preview_scrollbar_state = self
+			.preview_scrollbar_state
+			.content_length(content_length)
+			.viewport_content_length(viewport_len)
+			.position(position);
 	}
 }
 
