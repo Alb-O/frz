@@ -13,8 +13,16 @@
     let
       cargo-sort-wrapper = pkgs.writeShellScriptBin "cargo-sort-wrapper" ''
         set -euo pipefail
-        for file in "$@"; do
-          ${lib.getExe pkgs.cargo-sort} "$(dirname "$file")"
+        opts=()
+        files=()
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            --*) opts+=("$1"); shift ;;
+            *) files+=("$1"); shift ;;
+          esac
+        done
+        for file in "''${files[@]}"; do
+          ${lib.getExe pkgs.cargo-sort} "''${opts[@]}" "$(dirname "$file")"
         done
       '';
     in

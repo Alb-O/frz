@@ -24,6 +24,10 @@ impl<'a> App<'a> {
 		let mut terminal = ratatui::init();
 		terminal.clear()?;
 
+		// Auto-enable preview if terminal is wide enough (unless explicitly set)
+		let initial_size = terminal.size()?;
+		self.update_preview_responsive(initial_size.width);
+
 		self.hydrate_initial_results();
 
 		let (event_tx, event_rx) = mpsc::channel();
@@ -47,7 +51,9 @@ impl<'a> App<'a> {
 		let result: Result<SearchOutcome> = 'event_loop: loop {
 			loop {
 				match event_rx.try_recv() {
-					Ok(Event::Resize(_, _)) => {}
+					Ok(Event::Resize(width, _)) => {
+						self.update_preview_responsive(width);
+					}
 					Ok(event) => pending_events.push_back(event),
 					Err(mpsc::TryRecvError::Empty) => break,
 					Err(mpsc::TryRecvError::Disconnected) => {

@@ -269,8 +269,20 @@ impl<'a> App<'a> {
 		self.preview_enabled = false;
 	}
 
+	/// Update preview visibility based on terminal width.
+	pub(crate) fn update_preview_responsive(&mut self, width: u16) {
+		const MIN_WIDTH_FOR_PREVIEW: u16 = 100;
+
+		let should_enable = width >= MIN_WIDTH_FOR_PREVIEW;
+
+		if should_enable && !self.preview_enabled {
+			self.enable_preview();
+		} else if !should_enable && self.preview_enabled {
+			self.disable_preview();
+		}
+	}
+
 	/// Update the preview content for the currently selected file.
-	/// This is now non-blocking - it sends a request to the background worker.
 	/// The previous preview remains visible until the new one is ready.
 	pub(crate) fn update_preview(&mut self) {
 		if !self.preview_enabled {

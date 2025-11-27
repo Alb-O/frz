@@ -20,11 +20,19 @@
         in
         {
           "frz-core" = {
-            path = ../crates/frz-core;
+            path = ../crates/core;
+            crane.args.buildInputs = darwinInputs;
+          };
+          "frz-stream" = {
+            path = ../crates/stream;
+            crane.args.buildInputs = darwinInputs;
+          };
+          "frz-tui" = {
+            path = ../crates/tui;
             crane.args.buildInputs = darwinInputs;
           };
           "frz-cli" = {
-            path = ../crates/frz-cli;
+            path = ../crates/cli;
             crane.args.buildInputs = darwinInputs;
           };
         };
