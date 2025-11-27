@@ -1,22 +1,22 @@
 [package]
 name = "frz-cli"
-version = "0.4.0"
-edition = "2024"
-description = "Command-line interface for the frz fuzzy finder"
-license = "MIT"
-homepage = "https://github.com/Alb-O/frz"
-repository = "https://github.com/Alb-O/frz"
-authors = ["Albert O'Shea"]
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "frz"
+path = "src/bin/frz/main.rs"
 
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive", "env"] }
 frz = { path = "../frz" }
 serde_json = "1.0"
-
-[[bin]]
-name = "frz"
-path = "src/bin/frz/main.rs"
 
 [lints]
 workspace = true

@@ -1,9 +1,16 @@
 [workspace]
-members = [
-    "crates/frz",
-    "crates/frz-cli",
-]
+members = ["crates/frz", "crates/frz-cli"]
 resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.5.0"
+description = "TUI fuzzy finder revolving around tabular data, utilising Saghen's Frizbee crate for matching"
+license = "MIT"
+homepage = "https://github.com/Alb-O/frz"
+repository = "https://github.com/Alb-O/frz"
+authors = ["Albert O'Shea"]
+readme = "README.md"
 
 [workspace.lints.rust]
 missing_docs = "warn"

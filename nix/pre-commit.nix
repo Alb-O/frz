@@ -8,8 +8,8 @@
     {
       pre-commit.settings = {
         hooks = {
-          nixpkgs-fmt.enable = true;
-          rustfmt.enable = true;
+          treefmt.enable = true;
+          cargo-sort.enable = true;
         };
       };
     };

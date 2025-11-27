@@ -1,17 +1,18 @@
 { ... }:
 {
   perSystem =
-    { config
-    , self'
-    , pkgs
-    , ...
+    {
+      config,
+      self',
+      pkgs,
+      ...
     }:
     {
       devShells.default = pkgs.mkShell {
         name = "frz-shell";
         inputsFrom = [
           self'.devShells.rust
-          config.pre-commit.devShell # See ./nix/modules/pre-commit.nix
+          config.pre-commit.devShell
         ];
         packages = with pkgs; [
           just
