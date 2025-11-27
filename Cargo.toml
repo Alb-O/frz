@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/frz-core", "crates/frz-cli"]
+members = ["crates/frz-cli", "crates/frz-core"]
 resolver = "2"
 
 [workspace.lints.rust]

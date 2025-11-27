@@ -4,11 +4,14 @@
     (inputs.git-hooks + /flake-module.nix)
   ];
   perSystem =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
       pre-commit.settings = {
         hooks = {
-          treefmt.enable = true;
+          treefmt = {
+            enable = true;
+            package = config.treefmt.build.wrapper;
+          };
         };
       };
     };
