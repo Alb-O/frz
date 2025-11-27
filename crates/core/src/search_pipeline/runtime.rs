@@ -65,7 +65,7 @@ fn handle_command(
 	match command {
 		SearchCommand::Query { id, query } => {
 			let stream = SearchStream::new(result_tx, id);
-			stream_files(data, &query, stream, latest_query_id.as_ref())
+			stream_files(data, &query, stream, latest_query_id)
 		}
 		SearchCommand::Update(action) => {
 			action.apply(data);

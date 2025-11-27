@@ -15,6 +15,7 @@
           config.pre-commit.devShell
         ];
         packages = with pkgs; [
+          openssl
           just
           nixd
           bacon

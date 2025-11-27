@@ -44,9 +44,9 @@
 //!
 //! let items = Items(vec!["hello".into(), "world".into()]);
 //! let (tx, rx) = mpsc::channel();
-//! let latest = AtomicU64::new(1);
+//! let latest = std::sync::Arc::new(AtomicU64::new(1));
 //! let stream = SearchStream::new(&tx, 1);
-//! let _ok = stream_dataset(&items, "he", stream, &latest);
+//! let _ok = stream_dataset(&items, "he", stream, &latest, |idx| items.0[idx].clone());
 //! // UI side: drain `rx` and dispatch to a `SearchView`.
 //! ```
 //! [`mpsc`]: std::sync::mpsc
@@ -202,6 +202,11 @@ impl<'a, M: Clone, P: Send + 'static> DataStream<'a, M, P> {
 				complete,
 			})
 			.is_ok()
+	}
+
+	/// Clone the underlying sender so additional producers can emit messages.
+	pub fn clone_sender(&self) -> Sender<StreamEnvelope<M, P>> {
+		self.tx.clone()
 	}
 }
 

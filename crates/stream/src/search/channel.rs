@@ -135,6 +135,12 @@ impl<'a> SearchStream<'a> {
 	) -> bool {
 		self.inner.send(SearchAction::new(handler), complete)
 	}
+
+	/// Clone the underlying sender so background workers can emit new updates.
+	#[must_use]
+	pub fn clone_sender(&self) -> Sender<SearchResult> {
+		self.inner.clone_sender()
+	}
 }
 
 impl<'a> Clone for SearchStream<'a> {

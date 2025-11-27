@@ -1,5 +1,6 @@
 //! ANSI parsing and bat highlighting utilities.
 
+use std::panic::{self, AssertUnwindSafe};
 use std::path::Path;
 
 use bat::assets::HighlightingAssets;
@@ -19,44 +20,9 @@ pub fn highlight_with_bat(
 	max_lines: usize,
 	assets: &HighlightingAssets,
 ) -> Vec<Line<'static>> {
-	let mut output = Vec::new();
-
-	// Build bat Config
-	let theme = bat_theme.unwrap_or("Monokai Extended").to_string();
-	let mut style_components = StyleComponents::default();
-	style_components.insert(StyleComponent::LineNumbers);
-
-	let config = Config {
-		colored_output: true,
-		true_color: true,
-		style_components,
-		theme,
-		visible_lines: VisibleLines::Ranges(LineRanges::all()),
-		term_width: 120,
-		tab_width: 4,
-		..Default::default()
-	};
-
-	let controller = Controller::new(&config, assets);
-	let input = Input::from_reader(Box::new(std::io::Cursor::new(content.to_string())))
-		.with_name(Some(path));
-
-	// Capture output to a string
-	let mut buffer = String::new();
-	if controller.run(vec![input], Some(&mut buffer)).is_ok() {
-		for (i, line) in buffer.lines().enumerate() {
-			if i >= max_lines {
-				output.push(Line::from(Span::styled(
-					"... (truncated)",
-					Style::default(),
-				)));
-				break;
-			}
-			output.push(parse_ansi_line(line));
-		}
-	} else {
-		// Fallback: render without highlighting
-		for (i, line) in content.lines().enumerate() {
+	let render_plain = |text: &str| -> Vec<Line<'static>> {
+		let mut output = Vec::new();
+		for (i, line) in text.lines().enumerate() {
 			if i >= max_lines {
 				output.push(Line::from(Span::styled(
 					"... (truncated)",
@@ -70,9 +36,54 @@ pub fn highlight_with_bat(
 				Span::raw(line.to_string()),
 			]));
 		}
-	}
+		output
+	};
 
-	output
+	let highlight_attempt = panic::catch_unwind(AssertUnwindSafe(|| {
+		// Build bat Config
+		let theme = bat_theme.unwrap_or("Monokai Extended").to_string();
+		let mut style_components = StyleComponents::default();
+		style_components.insert(StyleComponent::LineNumbers);
+
+		let config = Config {
+			colored_output: true,
+			true_color: true,
+			style_components,
+			theme,
+			visible_lines: VisibleLines::Ranges(LineRanges::all()),
+			term_width: 120,
+			tab_width: 4,
+			..Default::default()
+		};
+
+		let controller = Controller::new(&config, assets);
+		let input = Input::from_reader(Box::new(std::io::Cursor::new(content.to_string())))
+			.with_name(Some(path));
+
+		// Capture output to a string
+		let mut buffer = String::new();
+		if controller.run(vec![input], Some(&mut buffer)).is_ok() {
+			let mut output = Vec::new();
+			for (i, line) in buffer.lines().enumerate() {
+				if i >= max_lines {
+					output.push(Line::from(Span::styled(
+						"... (truncated)",
+						Style::default(),
+					)));
+					break;
+				}
+				output.push(parse_ansi_line(line));
+			}
+			output
+		} else {
+			render_plain(content)
+		}
+	}));
+
+	match highlight_attempt {
+		Ok(lines) => lines,
+		Err(_) => render_plain(content),
+	}
 }
 
 /// Parse ANSI escape codes into ratatui spans.

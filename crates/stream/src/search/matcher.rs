@@ -1,5 +1,6 @@
 use std::cmp::{Ordering as CmpOrdering, Reverse};
 use std::collections::BinaryHeap;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use frizbee::{Config, match_list};
@@ -55,6 +56,13 @@ pub fn config_for_query(query: &str, dataset_len: usize) -> Config {
 struct RankedMatch {
 	index: usize,
 	score: u16,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum StreamPassResult {
+	Completed,
+	Aborted,
+	HungUp,
 }
 
 impl Ord for RankedMatch {
@@ -123,7 +131,12 @@ impl<'a> ScoreAggregator<'a> {
 
 	/// Sends a final update for the query.
 	pub fn finish(&mut self) -> bool {
-		self.emit(true)
+		self.finish_with_completion(true)
+	}
+
+	/// Sends a final update for the query with a custom completion flag.
+	pub fn finish_with_completion(&mut self, complete: bool) -> bool {
+		self.emit(complete)
 	}
 
 	fn emit(&mut self, complete: bool) -> bool {
@@ -297,6 +310,122 @@ where
 	}
 }
 
+/// Owned dataset that can be sent across threads for background refinement.
+struct OwnedDataset {
+	entries: Vec<String>,
+}
+
+impl OwnedDataset {
+	fn new(entries: Vec<String>) -> Self {
+		Self { entries }
+	}
+}
+
+impl Dataset for OwnedDataset {
+	fn len(&self) -> usize {
+		self.entries.len()
+	}
+
+	fn key_for(&self, index: usize) -> &str {
+		&self.entries[index]
+	}
+}
+
+fn stream_matches_with_config<D>(
+	dataset: D,
+	trimmed: &str,
+	config: &Config,
+	aggregator: &mut ScoreAggregator<'_>,
+	latest_query_id: &AtomicU64,
+	stream_id: u64,
+	mut owned_keys: Option<&mut Vec<String>>,
+) -> StreamPassResult
+where
+	D: Dataset,
+{
+	let total = dataset.len();
+	let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
+	let mut offset = 0;
+	while offset < total {
+		if should_abort(stream_id, latest_query_id) {
+			return StreamPassResult::Aborted;
+		}
+
+		let end = (offset + MATCH_CHUNK_SIZE).min(total);
+		haystacks.clear();
+		for index in offset..end {
+			let key = dataset.key_for(index);
+			haystacks.push(key);
+			if let Some(keys) = owned_keys.as_deref_mut() {
+				keys.push(key.to_owned());
+			}
+		}
+		let matches = match_list(trimmed, &haystacks, config);
+		for entry in matches {
+			if entry.score == 0 {
+				continue;
+			}
+			let index = offset + entry.index as usize;
+			aggregator.push(index, entry.score);
+		}
+
+		if should_abort(stream_id, latest_query_id) {
+			return StreamPassResult::Aborted;
+		}
+		if !aggregator.flush_partial() {
+			return StreamPassResult::HungUp;
+		}
+
+		offset = end;
+	}
+
+	if should_abort(stream_id, latest_query_id) {
+		return StreamPassResult::Aborted;
+	}
+
+	StreamPassResult::Completed
+}
+
+fn spawn_refined_search(
+	query: String,
+	haystacks: Vec<String>,
+	stream: SearchStream<'_>,
+	latest_query_id: Arc<AtomicU64>,
+) {
+	if haystacks.is_empty() {
+		let _ = stream.send(Vec::new(), Vec::new(), true);
+		return;
+	}
+
+	let tx = stream.clone_sender();
+	let stream_id = stream.id();
+	std::thread::spawn(move || {
+		let stream = SearchStream::new(&tx, stream_id);
+		let dataset = OwnedDataset::new(haystacks);
+
+		let mut config = config_for_query(&query, dataset.len());
+		config.prefilter = false;
+		config.max_typos = None;
+
+		let mut aggregator = ScoreAggregator::new(stream);
+		let outcome = stream_matches_with_config(
+			dataset,
+			&query,
+			&config,
+			&mut aggregator,
+			latest_query_id.as_ref(),
+			stream_id,
+			None,
+		);
+
+		if matches!(outcome, StreamPassResult::Completed)
+			&& !should_abort(stream_id, latest_query_id.as_ref())
+		{
+			let _ = aggregator.finish();
+		}
+	});
+}
+
 /// Perform fuzzy matching on a dataset, emitting batches of ranked matches to the stream.
 ///
 /// Returns `true` if streaming completed successfully, `false` if the receiver hung up.
@@ -304,7 +433,7 @@ pub fn stream_dataset<D, F>(
 	dataset: D,
 	query: &str,
 	stream: SearchStream<'_>,
-	latest_query_id: &AtomicU64,
+	latest_query_id: &Arc<AtomicU64>,
 	alphabetical_key: F,
 ) -> bool
 where
@@ -319,43 +448,52 @@ where
 
 	let total = dataset.len();
 	let config = config_for_query(trimmed, total);
-	let mut aggregator = ScoreAggregator::new(stream);
-	let mut haystacks = Vec::with_capacity(MATCH_CHUNK_SIZE);
-	let mut offset = 0;
-	while offset < total {
-		if should_abort(id, latest_query_id) {
-			return true;
+	if !config.prefilter {
+		let mut aggregator = ScoreAggregator::new(stream);
+		match stream_matches_with_config(
+			dataset,
+			trimmed,
+			&config,
+			&mut aggregator,
+			latest_query_id.as_ref(),
+			id,
+			None,
+		) {
+			StreamPassResult::HungUp => return false,
+			StreamPassResult::Aborted => return true,
+			StreamPassResult::Completed => {}
 		}
 
-		let end = (offset + MATCH_CHUNK_SIZE).min(total);
-		haystacks.clear();
-		for index in offset..end {
-			haystacks.push(dataset.key_for(index));
-		}
-		let matches = match_list(trimmed, &haystacks, &config);
-		for entry in matches {
-			if entry.score == 0 {
-				continue;
-			}
-			let index = offset + entry.index as usize;
-			aggregator.push(index, entry.score);
-		}
-
-		if should_abort(id, latest_query_id) {
-			return true;
-		}
-		if !aggregator.flush_partial() {
-			return false;
-		}
-
-		offset = end;
+		return aggregator.finish();
 	}
 
-	if should_abort(id, latest_query_id) {
-		return true;
+	let mut owned_keys = Vec::with_capacity(total);
+	let mut aggregator = ScoreAggregator::new(stream.clone());
+	match stream_matches_with_config(
+		dataset,
+		trimmed,
+		&config,
+		&mut aggregator,
+		latest_query_id.as_ref(),
+		id,
+		Some(&mut owned_keys),
+	) {
+		StreamPassResult::HungUp => return false,
+		StreamPassResult::Aborted => return true,
+		StreamPassResult::Completed => {}
 	}
 
-	aggregator.finish()
+	if !aggregator.finish_with_completion(false) {
+		return false;
+	}
+
+	spawn_refined_search(
+		trimmed.to_owned(),
+		owned_keys,
+		stream,
+		Arc::clone(latest_query_id),
+	);
+	true
 }
 
 /// Stream results in alphabetical order when no query is provided.
@@ -364,7 +502,7 @@ where
 pub fn stream_alphabetical<F>(
 	total: usize,
 	stream: SearchStream<'_>,
-	latest_query_id: &AtomicU64,
+	latest_query_id: &Arc<AtomicU64>,
 	key_for_index: F,
 ) -> bool
 where
@@ -375,13 +513,13 @@ where
 
 	let mut processed = 0;
 	for index in 0..total {
-		if should_abort(id, latest_query_id) {
+		if should_abort(id, latest_query_id.as_ref()) {
 			return true;
 		}
 		collector.insert(index);
 		processed += 1;
 		if processed % EMPTY_QUERY_BATCH == 0 {
-			if should_abort(id, latest_query_id) {
+			if should_abort(id, latest_query_id.as_ref()) {
 				return true;
 			}
 			if !collector.flush_partial() {
@@ -390,7 +528,7 @@ where
 		}
 	}
 
-	if should_abort(id, latest_query_id) {
+	if should_abort(id, latest_query_id.as_ref()) {
 		return true;
 	}
 
@@ -408,6 +546,29 @@ mod tests {
 	use crate::search::SearchView;
 
 	struct TestDataset(Vec<String>);
+
+	#[derive(Default)]
+	struct StubView {
+		indices: Vec<usize>,
+		scores: Vec<u16>,
+		completions: Vec<bool>,
+	}
+
+	impl SearchView for StubView {
+		fn replace_matches(&mut self, indices: Vec<usize>, scores: Vec<u16>) {
+			self.indices = indices;
+			self.scores = scores;
+		}
+
+		fn clear_matches(&mut self) {
+			self.indices.clear();
+			self.scores.clear();
+		}
+
+		fn record_completion(&mut self, complete: bool) {
+			self.completions.push(complete);
+		}
+	}
 
 	impl Dataset for TestDataset {
 		fn len(&self) -> usize {
@@ -435,34 +596,12 @@ mod tests {
 
 	#[test]
 	fn streams_empty_query_alphabetically() {
-		use std::sync::atomic::AtomicU64;
+		use std::sync::Arc;
 		use std::sync::mpsc::{Receiver, channel};
-
-		struct StubView {
-			indices: Vec<usize>,
-			scores: Vec<u16>,
-			completions: Vec<bool>,
-		}
-
-		impl SearchView for StubView {
-			fn replace_matches(&mut self, indices: Vec<usize>, scores: Vec<u16>) {
-				self.indices = indices;
-				self.scores = scores;
-			}
-
-			fn clear_matches(&mut self) {
-				self.indices.clear();
-				self.scores.clear();
-			}
-
-			fn record_completion(&mut self, complete: bool) {
-				self.completions.push(complete);
-			}
-		}
 
 		let dataset = TestDataset(vec!["b".into(), "a".into()]);
 		let (tx, rx): (_, Receiver<_>) = channel();
-		let latest = AtomicU64::new(1);
+		let latest = Arc::new(AtomicU64::new(1));
 		let stream = SearchStream::new(&tx, 1);
 		stream_dataset(&dataset, "", stream, &latest, |idx| dataset.0[idx].clone());
 
@@ -478,5 +617,46 @@ mod tests {
 		assert_eq!(view.indices, vec![1, 0]); // alphabetical order
 		assert_eq!(view.scores, vec![0, 0]);
 		assert_eq!(view.completions, vec![true]);
+	}
+
+	#[test]
+	fn refined_pass_signals_completion_after_prefilter() {
+		use std::sync::mpsc::channel;
+		use std::time::{Duration, Instant};
+
+		let dataset = TestDataset(
+			(0..=PREFILTER_ENABLE_THRESHOLD)
+				.map(|i| format!("matching-file-{i}"))
+				.collect(),
+		);
+		let (tx, rx) = channel();
+		let latest = Arc::new(AtomicU64::new(1));
+		let stream = SearchStream::new(&tx, 1);
+		stream_dataset(&dataset, "matching", stream, &latest, |idx| {
+			dataset.0[idx].clone()
+		});
+
+		let mut view = StubView::default();
+		let start = Instant::now();
+		while start.elapsed() < Duration::from_secs(2) {
+			match rx.recv_timeout(Duration::from_millis(50)) {
+				Ok(envelope) => {
+					envelope.dispatch(&mut view);
+					if view.completions.last() == Some(&true) {
+						break;
+					}
+				}
+				Err(_) => break,
+			}
+		}
+
+		assert!(
+			view.completions.first() == Some(&false),
+			"prefiltered pass should emit a partial completion"
+		);
+		assert!(
+			view.completions.iter().any(|complete| *complete),
+			"refined pass should eventually mark the stream complete"
+		);
 	}
 }

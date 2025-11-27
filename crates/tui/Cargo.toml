@@ -10,7 +10,7 @@ authors.workspace = true
 
 [dependencies]
 anyhow = "1.0"
-bat = { version = "0.24", default-features = false, features = ["regex-fancy"] }
+bat = { version = "0.24", default-features = false, features = ["regex-onig"] }
 frizbee = { version = "0.6" }
 frz-core.workspace = true
 frz-stream.workspace = true

@@ -1,3 +1,6 @@
+- Do not pipe to dev/null
+- When dealing with dependencies, do not edit Cargo.toml directly (use cargo cli)
+
 # PRODUCTIVITY: Skim any crate APIs/docs through simple cli
 
 - Usage: `ripdoc <COMMAND> [TARGET] [OPTIONS]`

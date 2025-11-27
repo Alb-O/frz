@@ -3,6 +3,7 @@
 //! This feature module contains the fuzzy matching engine, scoring aggregation,
 //! and streaming infrastructure that powers the search experience.
 
+use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
 mod data;
@@ -24,7 +25,7 @@ pub fn stream_files(
 	data: &SearchData,
 	query: &str,
 	stream: SearchStream<'_>,
-	latest_query_id: &AtomicU64,
+	latest_query_id: &Arc<AtomicU64>,
 ) -> bool {
 	struct FileDataset<'a>(&'a [FileRow]);
 
