@@ -8,11 +8,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
+use frz_core::filesystem_indexer::{IndexUpdate, merge_update};
+use frz_core::search_pipeline::runtime::SearchCommand;
+use frz_core::search_pipeline::{SearchData, SearchResult};
 use frz_stream::StreamAction;
-
-use frz_core::features::filesystem_indexer::{IndexUpdate, merge_update};
-use frz_core::features::search_pipeline::runtime::SearchCommand;
-use frz_core::features::search_pipeline::{SearchData, SearchResult};
 
 /// Tracks the revision counters used to determine when data has changed.
 #[derive(Default)]
@@ -133,8 +132,9 @@ impl SearchRuntime {
 mod tests {
 	use std::sync::mpsc;
 
+	use frz_core::search_pipeline::runtime::SearchCommand;
+
 	use super::*;
-	use frz_core::features::search_pipeline::runtime::SearchCommand;
 
 	#[test]
 	fn partial_completion_does_not_finalize_query() {

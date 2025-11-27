@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use super::FilesystemOptions;
 use crate::app_dirs;
-use crate::features::search_pipeline::{FileRow, SearchData};
+use crate::search_pipeline::{FileRow, SearchData};
 
 pub(super) const CACHE_TTL: Duration = Duration::from_secs(60);
 const CACHE_VERSION: u32 = 2;

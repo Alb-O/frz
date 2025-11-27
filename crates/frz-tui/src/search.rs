@@ -1,8 +1,9 @@
 use std::sync::mpsc::TryRecvError;
 
+use frz_core::filesystem_indexer::IndexUpdate;
+use frz_core::search_pipeline::{MatchBatch, SearchResult, SearchView, SearchViewV2};
+
 use super::App;
-use frz_core::features::filesystem_indexer::IndexUpdate;
-use frz_core::features::search_pipeline::{MatchBatch, SearchResult, SearchView, SearchViewV2};
 
 impl<'a> App<'a> {
 	/// Send a search request for the current query text and mode.

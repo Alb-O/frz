@@ -5,12 +5,9 @@
 //! through the module hierarchy.
 
 pub mod app_dirs;
-/// Feature modules containing vertical slices of functionality.
-pub mod features;
+pub mod filesystem_indexer;
+pub mod search_pipeline;
 
-// Re-exports for public API
-pub use features::filesystem_indexer::FilesystemOptions;
-
-pub use crate::features::search_pipeline::{
+pub use crate::search_pipeline::{
 	FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle,
 };

@@ -6,6 +6,10 @@
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
+use frz_core::filesystem_indexer::IndexResult;
+use frz_core::search_pipeline::{
+	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
+};
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
@@ -14,10 +18,6 @@ use crate::components::{IndexProgress, PreviewContent, PreviewRuntime};
 use crate::config::UiConfig;
 use crate::input::SearchInput;
 use crate::style::{StyleConfig, Theme};
-use frz_core::features::filesystem_indexer::IndexResult;
-use frz_core::features::search_pipeline::{
-	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
-};
 
 impl<'a> Drop for App<'a> {
 	fn drop(&mut self) {
@@ -346,8 +346,9 @@ impl<'a> App<'a> {
 mod tests {
 	use std::time::{Duration, Instant};
 
+	use frz_core::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
+
 	use super::*;
-	use frz_core::features::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
 
 	fn sample_data() -> SearchData {
 		let mut data = SearchData::new();

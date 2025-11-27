@@ -7,10 +7,10 @@ use std::thread;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
+use frz_core::search_pipeline::{SearchData, SearchOutcome};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
 use crate::App;
-use frz_core::features::search_pipeline::{SearchData, SearchOutcome};
 
 /// Construct an [`App`] for the provided data and run it to completion.
 pub fn run(data: SearchData) -> Result<SearchOutcome> {

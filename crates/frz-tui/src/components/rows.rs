@@ -1,9 +1,9 @@
 use frizbee::{Config, match_indices};
+use frz_core::search_pipeline::FileRow;
 use ratatui::style::Style;
 use ratatui::widgets::{Cell, Row};
 
 use crate::highlight::highlight_cell_with_prefix;
-use frz_core::features::search_pipeline::FileRow;
 
 /// Create match indices for the provided needle and configuration.
 #[must_use]

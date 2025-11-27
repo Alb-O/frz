@@ -1,12 +1,11 @@
 use std::mem;
 
+use frz_core::search_pipeline::TruncationStyle;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;
 use unicode_truncate::UnicodeTruncateStr;
 use unicode_width::UnicodeWidthStr;
-
-use frz_core::features::search_pipeline::TruncationStyle;
 
 /// Build a table cell that highlights matching indices within `text`.
 pub fn highlight_cell(

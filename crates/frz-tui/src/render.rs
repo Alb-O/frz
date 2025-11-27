@@ -1,4 +1,5 @@
 use frizbee::Config;
+use frz_core::search_pipeline;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
@@ -9,7 +10,6 @@ use super::components::tables::TableSpec;
 use super::components::{
 	InputContext, PreviewContext, ProgressState, render_input, render_preview, render_table,
 };
-use frz_core::features::search_pipeline;
 
 impl<'a> App<'a> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {

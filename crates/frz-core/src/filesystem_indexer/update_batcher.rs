@@ -7,7 +7,7 @@ use super::{
 	DISPATCH_INTERVAL, IndexKind, IndexResult, IndexStream, IndexUpdate, MAX_BATCH_SIZE,
 	MIN_BATCH_SIZE, ProgressSnapshot,
 };
-use crate::features::search_pipeline::FileRow;
+use crate::search_pipeline::FileRow;
 
 pub(super) struct UpdateBatcher {
 	pending_files: Vec<FileRow>,
