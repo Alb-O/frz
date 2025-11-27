@@ -2,67 +2,136 @@
 
 use ratatui::text::Line;
 
+#[cfg(feature = "media-preview")]
+use super::image::ImagePreview;
+
+/// The type of content being previewed.
+#[derive(Debug, Clone)]
+pub enum PreviewKind {
+	/// Syntax-highlighted text content.
+	Text {
+		/// Highlighted lines.
+		lines: Vec<Line<'static>>,
+	},
+	/// Image content (requires `media-preview` feature).
+	#[cfg(feature = "media-preview")]
+	Image {
+		/// Loaded image.
+		image: ImagePreview,
+	},
+	/// Placeholder (loading, error, empty).
+	Placeholder {
+		/// Message to display.
+		message: String,
+	},
+}
+
 /// Cached preview content for a file.
 #[derive(Debug, Clone)]
 pub struct PreviewContent {
-	/// The path that was previewed.
+	/// Path of the previewed file.
 	pub path: String,
-	/// Highlighted lines ready for rendering.
-	pub lines: Vec<Line<'static>>,
-	/// Error message if preview failed.
-	pub error: Option<String>,
-	/// Whether this content is a placeholder (should be centered).
-	pub is_placeholder: bool,
+	/// Content kind.
+	pub kind: PreviewKind,
 }
 
 impl PreviewContent {
-	/// Create an empty preview (no file selected).
+	/// Empty preview (no file selected).
 	#[must_use]
 	pub fn empty() -> Self {
 		Self {
 			path: String::new(),
-			lines: Vec::new(),
-			error: None,
-			is_placeholder: true,
+			kind: PreviewKind::Placeholder {
+				message: String::new(),
+			},
 		}
 	}
 
-	/// Create a preview for an empty file.
+	/// Preview for an empty file.
 	#[must_use]
 	pub fn empty_file(path: impl Into<String>) -> Self {
 		Self {
 			path: path.into(),
-			lines: Vec::new(),
-			error: Some("Empty file".into()),
-			is_placeholder: true,
+			kind: PreviewKind::Placeholder {
+				message: "Empty file".into(),
+			},
 		}
 	}
 
-	/// Create an error preview.
+	/// Error preview.
 	#[must_use]
 	pub fn error(path: impl Into<String>, message: impl Into<String>) -> Self {
 		Self {
 			path: path.into(),
-			lines: Vec::new(),
-			error: Some(message.into()),
-			is_placeholder: true,
+			kind: PreviewKind::Placeholder {
+				message: message.into(),
+			},
 		}
 	}
 
-	/// Create a loading placeholder preview.
+	/// Loading placeholder.
 	#[must_use]
 	pub fn loading(path: impl Into<String>) -> Self {
 		Self {
 			path: path.into(),
-			lines: Vec::new(),
-			error: Some("Loading...".into()),
-			is_placeholder: true,
+			kind: PreviewKind::Placeholder {
+				message: "Loading...".into(),
+			},
 		}
 	}
 
-	/// Check if this preview matches a given path.
+	/// Text preview with highlighted lines.
+	#[must_use]
+	pub fn text(path: impl Into<String>, lines: Vec<Line<'static>>) -> Self {
+		Self {
+			path: path.into(),
+			kind: PreviewKind::Text { lines },
+		}
+	}
+
+	/// Image preview.
+	#[cfg(feature = "media-preview")]
+	#[must_use]
+	pub fn image(path: impl Into<String>, image: ImagePreview) -> Self {
+		Self {
+			path: path.into(),
+			kind: PreviewKind::Image { image },
+		}
+	}
+
+	/// Check if this preview matches a path.
 	#[must_use]
 	pub fn matches(&self, path: &str) -> bool {
 		self.path == path
+	}
+
+	/// Check if this is a placeholder.
+	#[must_use]
+	pub fn is_placeholder(&self) -> bool {
+		matches!(self.kind, PreviewKind::Placeholder { .. })
+	}
+
+	/// Get the placeholder message if any.
+	#[must_use]
+	pub fn error_message(&self) -> Option<&str> {
+		match &self.kind {
+			PreviewKind::Placeholder { message } if !message.is_empty() => Some(message),
+			_ => None,
+		}
+	}
+
+	/// Get text lines if this is a text preview.
+	#[must_use]
+	pub fn lines(&self) -> Option<&[Line<'static>]> {
+		match &self.kind {
+			PreviewKind::Text { lines } => Some(lines),
+			_ => None,
+		}
+	}
+
+	/// Number of text lines (0 for non-text content).
+	#[must_use]
+	pub fn line_count(&self) -> usize {
+		self.lines().map_or(0, |l| l.len())
 	}
 }

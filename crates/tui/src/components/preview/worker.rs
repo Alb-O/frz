@@ -16,6 +16,9 @@ use bat::assets::HighlightingAssets;
 use super::content::PreviewContent;
 use super::highlight::highlight_with_bat;
 
+#[cfg(feature = "media-preview")]
+use super::image::{ImagePreview, is_image_file};
+
 /// Maximum number of previews to keep in the LRU cache.
 const CACHE_CAPACITY: usize = 32;
 
@@ -128,23 +131,38 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 				theme,
 				max_lines,
 			} => {
+				// Before doing any work, drain the channel to get the latest request.
+				// This avoids processing stale requests when the user navigates quickly.
+				let (final_id, final_path, final_theme, final_max_lines) =
+					drain_to_latest(&command_rx, id, path, theme, max_lines);
+
 				let cache_key = CacheKey {
-					path: path.clone(),
-					theme: theme.clone(),
+					path: final_path.clone(),
+					theme: final_theme.clone(),
 				};
 
 				// Check cache first for instant response
 				let content = if let Some(cached) = cache.get(&cache_key) {
 					cached
 				} else {
-					let generated =
-						generate_preview_impl(&path, theme.as_deref(), max_lines, &assets);
+					let generated = generate_preview_impl(
+						&final_path,
+						final_theme.as_deref(),
+						final_max_lines,
+						&assets,
+					);
 					cache.insert(cache_key, generated.clone());
 					generated
 				};
 
 				// If the receiver is gone, just exit gracefully
-				if result_tx.send(PreviewResult { id, content }).is_err() {
+				if result_tx
+					.send(PreviewResult {
+						id: final_id,
+						content,
+					})
+					.is_err()
+				{
 					break;
 				}
 			}
@@ -153,8 +171,52 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 	}
 }
 
+/// Drain the command channel and return the most recent Generate request.
+///
+/// This allows us to skip stale requests when the user navigates quickly,
+/// avoiding expensive processing of files the user has already moved past.
+fn drain_to_latest(
+	rx: &Receiver<PreviewCommand>,
+	mut id: u64,
+	mut path: PathBuf,
+	mut theme: Option<String>,
+	mut max_lines: usize,
+) -> (u64, PathBuf, Option<String>, usize) {
+	// Non-blocking drain of any pending requests
+	loop {
+		match rx.try_recv() {
+			Ok(PreviewCommand::Generate {
+				id: new_id,
+				path: new_path,
+				theme: new_theme,
+				max_lines: new_max_lines,
+			}) => {
+				// Found a newer request, use it instead
+				id = new_id;
+				path = new_path;
+				theme = new_theme;
+				max_lines = new_max_lines;
+			}
+			Ok(PreviewCommand::Shutdown) => {
+				// Put shutdown back for the main loop to handle
+				// (We can't easily do this with mpsc, so just break)
+				break;
+			}
+			Err(_) => {
+				// No more messages
+				break;
+			}
+		}
+	}
+	(id, path, theme, max_lines)
+}
+
 /// Maximum file size to preview (in bytes). Larger files are skipped.
 const MAX_PREVIEW_SIZE: u64 = 512 * 1024; // 512 KB
+
+/// Maximum file size for image preview (in bytes). Larger images are skipped.
+#[cfg(feature = "media-preview")]
+const MAX_IMAGE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB
 
 /// Generate syntax-highlighted preview content for a file.
 fn generate_preview_impl(
@@ -173,6 +235,22 @@ fn generate_preview_impl(
 
 	if !metadata.is_file() {
 		return PreviewContent::error(&path_str, "Not a file");
+	}
+
+	// Handle image files when media-preview is enabled
+	#[cfg(feature = "media-preview")]
+	if is_image_file(path) {
+		if metadata.len() > MAX_IMAGE_SIZE {
+			return PreviewContent::error(
+				&path_str,
+				format!("Image too large ({} MB)", metadata.len() / (1024 * 1024)),
+			);
+		}
+
+		return match ImagePreview::load(path) {
+			Some(image) => PreviewContent::image(&path_str, image),
+			None => PreviewContent::error(&path_str, "Failed to load image"),
+		};
 	}
 
 	if metadata.len() > MAX_PREVIEW_SIZE {
@@ -207,12 +285,7 @@ fn generate_preview_impl(
 	// Generate highlighted output using bat
 	let highlighted = highlight_with_bat(path, &content, bat_theme, max_lines, assets);
 
-	PreviewContent {
-		path: path_str,
-		lines: highlighted,
-		error: None,
-		is_placeholder: false,
-	}
+	PreviewContent::text(&path_str, highlighted)
 }
 
 /// Check if content appears to be binary.

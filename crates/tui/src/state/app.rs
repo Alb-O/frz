@@ -349,7 +349,7 @@ impl<'a> App<'a> {
 
 	/// Scroll the preview pane down.
 	pub(crate) fn scroll_preview_down(&mut self, lines: usize) {
-		let max_scroll = self.preview_content.lines.len().saturating_sub(1);
+		let max_scroll = self.preview_content.line_count().saturating_sub(1);
 		self.preview_scroll = (self.preview_scroll + lines).min(max_scroll);
 	}
 }

@@ -6,16 +6,16 @@ use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
-use super::content::PreviewContent;
+use super::content::{PreviewContent, PreviewKind};
 use crate::style::Theme;
 
 /// Context for rendering the preview pane.
 pub struct PreviewContext<'a> {
-	/// Preview text content to render.
+	/// Preview content to render.
 	pub content: &'a PreviewContent,
-	/// Vertical scroll offset.
+	/// Vertical scroll offset (for text content).
 	pub scroll_offset: usize,
-	/// Bat color theme.
+	/// Color theme.
 	pub theme: &'a Theme,
 }
 
@@ -35,7 +35,7 @@ fn render_centered_placeholder(frame: &mut Frame, area: Rect, message: &str, the
 	frame.render_widget(para, area);
 }
 
-/// Render the preview pane with syntax-highlighted content.
+/// Render the preview pane with syntax-highlighted content or image.
 pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 	let title = if ctx.content.path.is_empty() {
 		" Preview ".to_string()
@@ -52,29 +52,34 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 	let inner = block.inner(area);
 	frame.render_widget(block, area);
 
-	// Handle placeholder states (errors, loading, no selection)
-	if ctx.content.is_placeholder {
-		let message = if let Some(error) = &ctx.content.error {
-			error.as_str()
-		} else if ctx.content.path.is_empty() {
-			"No file selected"
-		} else {
-			"Empty file"
-		};
-		render_centered_placeholder(frame, inner, message, ctx.theme);
-		return;
+	match &ctx.content.kind {
+		PreviewKind::Placeholder { message } => {
+			let msg = if message.is_empty() {
+				if ctx.content.path.is_empty() {
+					"No file selected"
+				} else {
+					"Empty file"
+				}
+			} else {
+				message.as_str()
+			};
+			render_centered_placeholder(frame, inner, msg, ctx.theme);
+		}
+		PreviewKind::Text { lines } => {
+			// Create scrollable view of content
+			let visible_lines: Vec<Line<'_>> = lines
+				.iter()
+				.skip(ctx.scroll_offset)
+				.take(inner.height as usize)
+				.cloned()
+				.collect();
+
+			let para = Paragraph::new(visible_lines).wrap(Wrap { trim: false });
+			frame.render_widget(para, inner);
+		}
+		#[cfg(feature = "media-preview")]
+		PreviewKind::Image { image } => {
+			image.render(frame, inner);
+		}
 	}
-
-	// Create scrollable view of content
-	let visible_lines: Vec<Line<'_>> = ctx
-		.content
-		.lines
-		.iter()
-		.skip(ctx.scroll_offset)
-		.take(inner.height as usize)
-		.cloned()
-		.collect();
-
-	let para = Paragraph::new(visible_lines).wrap(Wrap { trim: false });
-	frame.render_widget(para, inner);
 }

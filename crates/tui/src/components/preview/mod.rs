@@ -1,16 +1,18 @@
-//! File preview pane using the bat library for syntax highlighting.
+//! File preview pane with syntax highlighting and optional image support.
 //!
-//! The preview module renders syntax-highlighted file content in a split-view
-//! panel, similar to fzf's preview functionality. It uses bat's highlighting
-//! engine and theme system which are aligned with frz's built-in themes.
-//!
-//! Preview generation runs in a background thread to avoid blocking the UI.
+//! Uses `bat` for text highlighting. With `media-preview` feature, renders
+//! images via terminal graphics protocols (Kitty, Sixel, iTerm2, halfblocks).
 
 mod content;
 mod highlight;
+#[cfg(feature = "media-preview")]
+pub mod image;
 mod render;
 mod worker;
 
-pub use content::PreviewContent;
+pub use content::{PreviewContent, PreviewKind};
 pub use render::{PreviewContext, render_preview};
 pub use worker::PreviewRuntime;
+
+#[cfg(feature = "media-preview")]
+pub use image::{ImagePreview, is_available as is_image_available, is_image_file, protocol_name};
