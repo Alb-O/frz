@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/frz-cli", "crates/frz-core", "crates/frz-stream", "crates/frz-tui"]
+members = ["crates/cli", "crates/core", "crates/stream", "crates/tui"]
 resolver = "2"
 
 [workspace.lints.rust]
@@ -17,7 +17,7 @@ authors = ["Albert O'Shea"]
 readme = "README.md"
 
 [workspace.dependencies]
-frz-core = { path = "crates/frz-core" }
-frz-stream = { path = "crates/frz-stream" }
-frz-cli = { path = "crates/frz-cli" }
-frz-tui = { path = "crates/frz-tui" }
+frz-core = { path = "crates/core" }
+frz-stream = { path = "crates/stream" }
+frz-cli = { path = "crates/cli" }
+frz-tui = { path = "crates/tui" }
