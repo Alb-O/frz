@@ -9,8 +9,8 @@ use std::time::Duration;
 use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
-use crate::features::search_pipeline::{SearchData, SearchOutcome};
-use crate::features::tui_app::App;
+use crate::App;
+use frz_core::features::search_pipeline::{SearchData, SearchOutcome};
 
 /// Construct an [`App`] for the provided data and run it to completion.
 pub fn run(data: SearchData) -> Result<SearchOutcome> {

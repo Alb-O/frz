@@ -19,6 +19,9 @@ mod search;
 mod state;
 pub mod style;
 
+pub use crate::components::{progress, rows as utils, tables, tabs};
+pub use crate::input::SearchInput;
+pub use crate::style::{StyleConfig, Theme, builtin_themes, default_theme};
 pub use builder::SearchUi;
 pub use config::{PaneUiConfig, TabUiConfig, UiConfig};
 pub use runtime::run;

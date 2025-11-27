@@ -2,8 +2,8 @@ use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-use crate::features::tui_app::input::SearchInput;
-use crate::features::tui_app::style::Theme;
+use crate::input::SearchInput;
+use crate::style::Theme;
 
 /// Argument bundle for rendering the input area.
 pub struct InputContext<'a> {

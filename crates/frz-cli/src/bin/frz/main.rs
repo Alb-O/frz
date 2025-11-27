@@ -7,7 +7,7 @@ mod workflow;
 use anyhow::Result;
 use cli::{OutputFormat, parse_cli, print_json, print_plain};
 use config::Config;
-use frz_core::features::tui_app::style;
+use frz_tui::style;
 use workflow::SearchWorkflow;
 
 /// Entry point for the frz command-line application.

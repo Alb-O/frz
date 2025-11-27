@@ -10,14 +10,14 @@ use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
-use crate::features::filesystem_indexer::IndexResult;
-use crate::features::search_pipeline::{
+use crate::components::{IndexProgress, PreviewContent, PreviewRuntime};
+use crate::config::UiConfig;
+use crate::input::SearchInput;
+use crate::style::{StyleConfig, Theme};
+use frz_core::features::filesystem_indexer::IndexResult;
+use frz_core::features::search_pipeline::{
 	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
 };
-use crate::features::tui_app::components::{IndexProgress, PreviewContent, PreviewRuntime};
-use crate::features::tui_app::config::UiConfig;
-use crate::features::tui_app::input::SearchInput;
-use crate::features::tui_app::style::{StyleConfig, Theme};
 
 impl<'a> Drop for App<'a> {
 	fn drop(&mut self) {
@@ -48,7 +48,7 @@ pub struct App<'a> {
 	pub(crate) tab_buffers: TabBuffers,
 	pub(crate) row_id_map: HashMap<u64, usize>,
 	pub(crate) index_updates: Option<Receiver<IndexResult>>,
-	pub(in crate::features::tui_app) search: SearchRuntime,
+	pub(crate) search: SearchRuntime,
 	/// Whether the preview pane is visible.
 	pub(crate) preview_enabled: bool,
 	/// Cached preview content for the currently selected file.
@@ -60,7 +60,7 @@ pub struct App<'a> {
 	/// Path of the file we're currently loading a preview for (if any).
 	pub(crate) pending_preview_path: Option<String>,
 	/// Background preview generation runtime.
-	pub(in crate::features::tui_app) preview_runtime: PreviewRuntime,
+	pub(crate) preview_runtime: PreviewRuntime,
 }
 
 /// Cache of rendered rows for a specific tab.
@@ -347,7 +347,7 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::features::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
+	use frz_core::features::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
 
 	fn sample_data() -> SearchData {
 		let mut data = SearchData::new();

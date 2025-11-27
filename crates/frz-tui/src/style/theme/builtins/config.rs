@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::Deserialize;
 
 use super::style::StyleConfig;
-use crate::features::tui_app::style::theme::types::{Theme, ThemeRegistration};
+use crate::style::theme::types::{Theme, ThemeRegistration};
 
 #[derive(Debug, Deserialize)]
 pub(super) struct ThemeConfig {

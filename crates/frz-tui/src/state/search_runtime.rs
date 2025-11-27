@@ -10,9 +10,9 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
 use frz_stream::StreamAction;
 
-use crate::features::filesystem_indexer::{IndexUpdate, merge_update};
-use crate::features::search_pipeline::runtime::SearchCommand;
-use crate::features::search_pipeline::{SearchData, SearchResult};
+use frz_core::features::filesystem_indexer::{IndexUpdate, merge_update};
+use frz_core::features::search_pipeline::runtime::SearchCommand;
+use frz_core::features::search_pipeline::{SearchData, SearchResult};
 
 /// Tracks the revision counters used to determine when data has changed.
 #[derive(Default)]
@@ -134,7 +134,7 @@ mod tests {
 	use std::sync::mpsc;
 
 	use super::*;
-	use crate::features::search_pipeline::runtime::SearchCommand;
+	use frz_core::features::search_pipeline::runtime::SearchCommand;
 
 	#[test]
 	fn partial_completion_does_not_finalize_query() {

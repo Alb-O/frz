@@ -506,6 +506,7 @@ dependencies = [
  "anyhow",
  "clap",
  "frz-core",
+ "frz-tui",
  "serde_json",
 ]
 
@@ -514,21 +515,12 @@ name = "frz-core"
 version = "0.5.0"
 dependencies = [
  "anyhow",
- "bat",
  "dirs",
- "frizbee",
  "frz-stream",
  "ignore",
- "include_dir",
- "ratatui",
  "serde",
  "serde_json",
  "tempfile",
- "throbber-widgets-tui",
- "toml",
- "tui-textarea",
- "unicode-truncate 2.0.0",
- "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -536,6 +528,25 @@ name = "frz-stream"
 version = "0.5.0"
 dependencies = [
  "frizbee",
+]
+
+[[package]]
+name = "frz-tui"
+version = "0.5.0"
+dependencies = [
+ "anyhow",
+ "bat",
+ "frizbee",
+ "frz-core",
+ "frz-stream",
+ "include_dir",
+ "ratatui",
+ "serde",
+ "throbber-widgets-tui",
+ "toml",
+ "tui-textarea",
+ "unicode-truncate 2.0.0",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]

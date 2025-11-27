@@ -6,8 +6,10 @@ use ratatui::layout::Constraint;
 use super::App;
 use super::config::UiConfig;
 use super::style::Theme;
-use crate::features::filesystem_indexer::{FilesystemOptions, IndexResult, spawn_filesystem_index};
-use crate::features::search_pipeline::{SearchData, SearchOutcome};
+use frz_core::features::filesystem_indexer::{
+	FilesystemOptions, IndexResult, spawn_filesystem_index,
+};
+use frz_core::features::search_pipeline::{SearchData, SearchOutcome};
 
 /// A small builder for configuring the interactive search UI.
 /// This presents an fzf-like API for setting prompts, column

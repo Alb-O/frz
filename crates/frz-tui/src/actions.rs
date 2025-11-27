@@ -2,7 +2,7 @@ use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::App;
-use crate::features::search_pipeline::SearchOutcome;
+use frz_core::features::search_pipeline::SearchOutcome;
 
 impl<'a> App<'a> {
 	/// Process a keyboard event and return a result if the user exits.

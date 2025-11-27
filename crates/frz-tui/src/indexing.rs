@@ -8,10 +8,10 @@ use super::components::IndexProgress;
 // bounds how many incremental updates we merge in a single frame, while
 // `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
 // yield back to drawing and input handling.
-use crate::features::filesystem_indexer::{
+use frz_core::features::filesystem_indexer::{
 	IndexResult, IndexUpdate, IndexView, ProgressSnapshot, merge_update,
 };
-use crate::features::search_pipeline::FILES_DATASET_KEY;
+use frz_core::features::search_pipeline::FILES_DATASET_KEY;
 
 impl<'a> App<'a> {
 	const MAX_INDEX_UPDATES_PER_TICK: usize = 32;
@@ -138,8 +138,8 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use super::*;
-	use crate::features::filesystem_indexer::ProgressSnapshot;
-	use crate::features::search_pipeline::{FileRow, MatchBatch, SearchData, SearchViewV2};
+	use frz_core::features::filesystem_indexer::ProgressSnapshot;
+	use frz_core::features::search_pipeline::{FileRow, MatchBatch, SearchData, SearchViewV2};
 
 	fn wait_for_results(app: &mut App) {
 		let deadline = Instant::now() + Duration::from_secs(1);

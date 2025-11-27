@@ -9,7 +9,7 @@ use super::components::tables::TableSpec;
 use super::components::{
 	InputContext, PreviewContext, ProgressState, render_input, render_preview, render_table,
 };
-use crate::features::search_pipeline;
+use frz_core::features::search_pipeline;
 
 impl<'a> App<'a> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {

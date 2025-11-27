@@ -1,5 +1,6 @@
 use anyhow::Result;
-use frz_core::{SearchOutcome, SearchUi};
+use frz_core::SearchOutcome;
+use frz_tui::SearchUi;
 
 use crate::config::Config;
 

@@ -14,18 +14,17 @@ TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://githu
 
 ## Architecture
 
-frz is organized into a few focused layers: the `search/` module holds the search
-pipeline (scoring, view types, and filesystem search utilities); `systems/`
-houses long-lived workers such as the filesystem indexer and background search
-engine; and `ui/` provides widgets plus the interactive application
-glue that ties input, rendering, and search results together.
-Visual customization lives under `ui/style`, where themes define terminal color
-schemes and can be combined with other style settings over time.
+The workspace is split into focused crates:
+- `frz-core` hosts the search pipeline, filesystem indexer, and shared data types.
+- `frz-stream` provides the lightweight streaming primitives used by the search and index workers.
+- `frz-tui` contains the ratatui-based UI, themes, and the `SearchUi` builder.
+- `frz-cli` wires everything into the `frz` binary.
 
 ## Quick example
 
 ```rust
-use frz_core::{SearchData, SearchUi, UiConfig};
+use frz_core::SearchData;
+use frz_tui::{SearchUi, UiConfig};
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)

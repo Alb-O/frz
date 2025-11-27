@@ -2,7 +2,8 @@ use std::path::PathBuf;
 use std::{env, fs};
 
 use anyhow::{Context, Result, ensure};
-use frz_core::{FilesystemOptions, UiConfig};
+use frz_core::FilesystemOptions;
+use frz_tui::UiConfig;
 
 use crate::cli::CliArgs;
 

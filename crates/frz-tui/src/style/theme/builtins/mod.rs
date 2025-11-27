@@ -7,10 +7,9 @@ use std::sync::OnceLock;
 use include_dir::{Dir, include_dir};
 use loader::{BuiltinThemes, load_builtin_themes};
 
-use crate::features::tui_app::style::theme::types::{Theme, ThemeRegistration};
+use crate::style::theme::types::{Theme, ThemeRegistration};
 
-const BUILTIN_THEME_DIR: Dir =
-	include_dir!("$CARGO_MANIFEST_DIR/src/features/tui_app/style/theme/builtins/themes");
+const BUILTIN_THEME_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/src/style/theme/builtins/themes");
 
 /// Get the default built-in theme.
 pub fn default_theme() -> Theme {

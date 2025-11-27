@@ -1,0 +1,27 @@
+[package]
+name = "frz-tui"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+anyhow = "1.0"
+bat = { version = "0.24", default-features = false, features = ["regex-fancy"] }
+frizbee = { version = "0.6" }
+frz-core.workspace = true
+frz-stream.workspace = true
+include_dir = "0.7"
+ratatui = "0.29"
+serde = { version = "1.0", features = ["derive"] }
+throbber-widgets-tui = "0.9"
+toml = "0.9"
+tui-textarea = "0.7"
+unicode-truncate = "2"
+unicode-width = "0.2"
+
+[lints]
+workspace = true

@@ -8,7 +8,7 @@ use std::sync::atomic::AtomicU64;
 mod data;
 mod file;
 mod fs;
-pub(crate) mod runtime;
+pub mod runtime;
 
 pub use data::{FILES_DATASET_KEY, SearchData};
 pub use file::{FileRow, SearchOutcome, SearchSelection, TruncationStyle};

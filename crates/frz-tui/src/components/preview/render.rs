@@ -7,7 +7,7 @@ use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 
 use super::content::PreviewContent;
-use crate::features::tui_app::style::Theme;
+use crate::style::Theme;
 
 /// Context for rendering the preview pane.
 pub struct PreviewContext<'a> {
