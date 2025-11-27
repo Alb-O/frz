@@ -40,13 +40,6 @@ pub(crate) struct CliArgs {
 	)]
 	pub(crate) root: Option<PathBuf>,
 	#[arg(
-		short = 't',
-		long,
-		value_name = "TITLE",
-		help = "Set the input prompt title"
-	)]
-	pub(crate) title: Option<String>,
-	#[arg(
 		short = 'q',
 		long,
 		value_name = "QUERY",

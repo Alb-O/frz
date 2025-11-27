@@ -1,28 +1,16 @@
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Tabs;
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
 use crate::features::tui_app::input::SearchInput;
 use crate::features::tui_app::style::Theme;
 
-/// Render metadata for a tab header.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct TabItem<'a> {
-	/// Text label displayed on the tab.
-	pub label: &'a str,
-}
-
 /// Argument bundle for rendering the input area.
 pub struct InputContext<'a> {
 	/// The search input widget.
 	pub search_input: &'a SearchInput<'a>,
-	/// Title shown above the input.
-	pub input_title: Option<&'a str>,
-	/// Pane title if available.
-	pub pane_title: Option<&'a str>,
-	/// Tab headers to display.
-	pub tabs: &'a [TabItem<'a>],
+	/// Placeholder text shown when input is empty.
+	pub placeholder: Option<&'a str>,
 	/// Rendering area.
 	pub area: Rect,
 	/// Color theme.
@@ -39,17 +27,15 @@ pub struct ProgressState<'a> {
 	pub throbber_state: &'a ThrobberState,
 }
 
-/// Render the input row with tabs at the right.
-pub fn render_input_with_tabs(
+/// Render the input row with optional placeholder.
+pub fn render_input(
 	frame: &mut ratatui::Frame,
 	input: InputContext<'_>,
 	progress: ProgressState<'_>,
 ) {
 	let InputContext {
 		search_input,
-		input_title,
-		pane_title,
-		tabs,
+		placeholder,
 		area,
 		theme,
 	} = input;
@@ -59,102 +45,40 @@ pub fn render_input_with_tabs(
 		throbber_state,
 	} = progress;
 
-	let prompt = input_title.or(pane_title).unwrap_or("");
-	let tabs_width = calculate_tabs_width(tabs);
-	let prompt_width = calculate_prompt_width(prompt);
+	search_input.render_textarea(frame, area);
 
-	let constraints = layout_constraints(!prompt.is_empty(), prompt_width, tabs_width);
-
-	let horizontal = ratatui::layout::Layout::default()
-		.direction(ratatui::layout::Direction::Horizontal)
-		.constraints(constraints)
-		.split(area);
-
-	if !prompt.is_empty() {
-		let prompt_text = format!("{} > ", prompt);
-		let prompt_widget =
-			ratatui::widgets::Paragraph::new(prompt_text).style(theme.prompt_style());
-		frame.render_widget(prompt_widget, horizontal[0]);
+	// Placeholder text if input is empty
+	let input_text = search_input.text();
+	if input_text.is_empty()
+		&& let Some(placeholder_text) = placeholder
+	{
+		render_placeholder(frame, area, placeholder_text, theme);
 	}
 
-	let input_index = if prompt.is_empty() { 0 } else { 1 };
-	let input_area = horizontal[input_index];
-	search_input.render_textarea(frame, input_area);
 	render_progress(
 		frame,
-		input_area,
+		area,
 		progress_text,
 		progress_complete,
 		throbber_state,
 		theme,
 	);
-
-	let tabs_area = horizontal[horizontal.len() - 1];
-	let tabs_inner = Rect {
-		x: tabs_area.x.saturating_add(1),
-		width: tabs_area.width.saturating_sub(1),
-		..tabs_area
-	};
-	let selected = 0; // Only one tab now
-
-	let tab_titles = build_tab_titles(theme, selected, tabs);
-
-	let tabs = Tabs::new(tab_titles)
-		.select(selected)
-		.divider("")
-		.padding("", " ")
-		.highlight_style(theme.tab_highlight_style());
-
-	frame.render_widget(tabs, tabs_inner);
 }
 
-fn calculate_prompt_width(prompt: &str) -> u16 {
-	if prompt.is_empty() {
-		0
-	} else {
-		prompt.len() as u16 + 3
+fn render_placeholder(frame: &mut ratatui::Frame, area: Rect, text: &str, theme: &Theme) {
+	if area.width == 0 || area.height == 0 || text.is_empty() {
+		return;
 	}
-}
-
-fn layout_constraints(
-	has_prompt: bool,
-	prompt_width: u16,
-	tabs_width: u16,
-) -> Vec<ratatui::layout::Constraint> {
-	if has_prompt {
-		vec![
-			ratatui::layout::Constraint::Length(prompt_width),
-			ratatui::layout::Constraint::Min(1),
-			ratatui::layout::Constraint::Length(tabs_width),
-		]
-	} else {
-		vec![
-			ratatui::layout::Constraint::Min(1),
-			ratatui::layout::Constraint::Length(tabs_width),
-		]
-	}
-}
-
-fn build_tab_titles(theme: &Theme, selected: usize, tabs: &[TabItem<'_>]) -> Vec<Line<'static>> {
-	let active = theme.header_style();
-	let inactive = theme.tab_inactive_style();
-	tabs.iter()
-		.enumerate()
-		.map(|(index, tab)| {
-			let label = format!(" {} ", tab.label);
-			let style = if index == selected { active } else { inactive };
-			Line::from(label).style(style)
-		})
-		.collect()
-}
-
-fn calculate_tabs_width(tabs: &[TabItem<'_>]) -> u16 {
-	let mut width = 0u16;
-	for tab in tabs {
-		let label_len = tab.label.chars().count() as u16;
-		width = width.saturating_add(label_len.saturating_add(3));
-	}
-	width.max(12)
+	let dimmed_style = theme.empty_style();
+	let available_width = area.width as usize;
+	let display_text: String = text.chars().take(available_width).collect();
+	let buffer = frame.buffer_mut();
+	buffer.set_line(
+		area.left(),
+		area.top(),
+		&Line::from(Span::styled(display_text, dimmed_style)),
+		area.width,
+	);
 }
 
 fn render_progress(

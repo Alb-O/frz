@@ -14,7 +14,6 @@ use crate::features::search_pipeline::{SearchData, SearchOutcome};
 /// headings and column widths before running the interactive picker.
 pub struct SearchUi {
 	data: SearchData,
-	input_title: Option<String>,
 	headers: Option<Vec<String>>,
 	widths: Option<Vec<Constraint>>,
 	ui_config: Option<UiConfig>,
@@ -29,7 +28,6 @@ impl SearchUi {
 	pub fn new(data: SearchData) -> Self {
 		Self {
 			data,
-			input_title: None,
 			headers: None,
 			widths: None,
 			ui_config: None,
@@ -55,12 +53,6 @@ impl SearchUi {
 		let mut ui = Self::new(data);
 		ui.index_updates = Some(updates);
 		Ok(ui)
-	}
-
-	/// Set the title displayed above the filter input.
-	pub fn with_input_title(mut self, title: impl Into<String>) -> Self {
-		self.input_title = Some(title.into());
-		self
 	}
 
 	/// Set column headers for the results table.
@@ -113,9 +105,6 @@ impl SearchUi {
 	pub fn run(mut self) -> Result<SearchOutcome> {
 		// Build an App and apply optional customizations, then run it.
 		let mut app = App::new(self.data);
-		if let Some(title) = self.input_title {
-			app.input_title = Some(title);
-		}
 		if let Some(headers) = self.headers {
 			app.set_headers(headers);
 		}

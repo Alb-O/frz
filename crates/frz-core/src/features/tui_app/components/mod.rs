@@ -7,10 +7,10 @@ pub mod progress;
 pub mod rows;
 /// Table rendering and configuration.
 pub mod tables;
-/// Tab and input widget components.
+/// Input widget components.
 pub mod tabs;
 
 pub use preview::{PreviewContent, PreviewContext, PreviewRuntime, render_preview};
 pub use progress::IndexProgress;
 pub use tables::{TableRenderContext, render_table};
-pub use tabs::{InputContext, ProgressState, TabItem, render_input_with_tabs};
+pub use tabs::{InputContext, ProgressState, render_input};

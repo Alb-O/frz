@@ -14,7 +14,6 @@ impl SearchWorkflow {
 		let Config {
 			root,
 			filesystem,
-			input_title,
 			initial_query,
 			theme,
 			ui,
@@ -22,10 +21,6 @@ impl SearchWorkflow {
 		} = config;
 
 		let mut search_ui = SearchUi::filesystem_with_options(root, filesystem)?;
-
-		if let Some(title) = input_title {
-			search_ui = search_ui.with_input_title(title);
-		}
 
 		search_ui = search_ui.with_ui_config(ui);
 		search_ui = search_ui.with_initial_query(initial_query);

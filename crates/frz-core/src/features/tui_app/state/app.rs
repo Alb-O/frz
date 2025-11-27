@@ -40,7 +40,6 @@ pub struct App<'a> {
 	pub search_input: SearchInput<'a>,
 	/// Selection state for the results table.
 	pub table_state: TableState,
-	pub(crate) input_title: Option<String>,
 	pub(crate) ui: UiConfig,
 	/// Current style and theme configuration.
 	pub style: StyleConfig,
@@ -82,7 +81,6 @@ impl<'a> App<'a> {
 		let mut table_state = TableState::default();
 		table_state.select(Some(0));
 		let initial_query = data.initial_query.clone();
-		let context_label = data.context_label.clone();
 		let mut index_progress = IndexProgress::new();
 		let (search_tx, search_rx, search_latest_query_id) = search::spawn(data.clone());
 		let search = SearchRuntime::new(search_tx, search_rx, search_latest_query_id);
@@ -100,7 +98,6 @@ impl<'a> App<'a> {
 			data,
 			search_input: SearchInput::new(initial_query),
 			table_state,
-			input_title: context_label,
 			ui,
 			style: StyleConfig::default(),
 			bat_theme: None,

@@ -7,8 +7,7 @@ use super::App;
 use super::components::rows::build_file_rows;
 use super::components::tables::TableSpec;
 use super::components::{
-	InputContext, PreviewContext, ProgressState, TabItem, render_input_with_tabs, render_preview,
-	render_table,
+	InputContext, PreviewContext, ProgressState, render_input, render_preview, render_table,
 };
 use crate::features::search_pipeline;
 
@@ -26,19 +25,11 @@ impl<'a> App<'a> {
 			.split(area);
 
 		let (progress_text, progress_complete) = self.progress_status();
-		let tabs = self
-			.ui
-			.tabs()
-			.iter()
-			.map(|tab| TabItem {
-				label: tab.tab_label.as_str(),
-			})
-			.collect::<Vec<_>>();
+		// Use tab label as placeholder
+		let placeholder = self.ui.tabs().first().map(|tab| tab.tab_label.as_str());
 		let input_ctx = InputContext {
 			search_input: &self.search_input,
-			input_title: self.input_title.as_deref(),
-			pane_title: self.ui.pane().map(|pane| pane.mode_title.as_str()),
-			tabs: &tabs,
+			placeholder,
 			area: layout[0],
 			theme: &self.style.theme,
 		};
@@ -47,7 +38,7 @@ impl<'a> App<'a> {
 			progress_complete,
 			throbber_state: &self.throbber_state,
 		};
-		render_input_with_tabs(frame, input_ctx, progress_state);
+		render_input(frame, input_ctx, progress_state);
 
 		let results_area = layout[1];
 
@@ -74,13 +65,24 @@ impl<'a> App<'a> {
 			} else {
 				results_area
 			};
-			const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
-			if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
-				message_area.y += HEADER_AND_DIVIDER_HEIGHT;
-				message_area.height -= HEADER_AND_DIVIDER_HEIGHT;
+			// Account for border (1 top + 1 bottom) and header + divider (2)
+			const BORDER_AND_HEADER_HEIGHT: u16 = 4;
+			if message_area.height > BORDER_AND_HEADER_HEIGHT {
+				// Adjust for top border
+				message_area.y += 1;
+				message_area.x += 1;
+				message_area.width = message_area.width.saturating_sub(2);
+				message_area.height -= 2; // Remove top and bottom borders
 
-				let empty = Paragraph::new("No results").alignment(Alignment::Center);
-				frame.render_widget(empty, message_area);
+				// Now account for header and divider within the inner area
+				const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
+				if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
+					message_area.y += HEADER_AND_DIVIDER_HEIGHT;
+					message_area.height -= HEADER_AND_DIVIDER_HEIGHT;
+
+					let empty = Paragraph::new("No results").alignment(Alignment::Center);
+					frame.render_widget(empty, message_area);
+				}
 			}
 		}
 	}
@@ -121,6 +123,7 @@ impl<'a> App<'a> {
 			headers: headers.clone(),
 			widths: widths.clone(),
 			rows,
+			title: None,
 		};
 
 		render_table(frame, area, &mut self.table_state, spec, &self.style.theme);

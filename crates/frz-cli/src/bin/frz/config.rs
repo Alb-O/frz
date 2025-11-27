@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{env, fs};
 
 use anyhow::{Context, Result, ensure};
@@ -11,7 +11,6 @@ use crate::cli::CliArgs;
 pub struct Config {
 	pub root: PathBuf,
 	pub filesystem: FilesystemOptions,
-	pub input_title: Option<String>,
 	pub initial_query: String,
 	pub theme: Option<String>,
 	pub ui: UiConfig,
@@ -23,13 +22,6 @@ impl Config {
 	pub fn from_cli(cli: &CliArgs) -> Result<Self> {
 		let root = resolve_root(cli)?;
 		let filesystem = build_filesystem_options(cli);
-		let context_label = filesystem.context_label.clone();
-
-		let input_title = cli
-			.title
-			.clone()
-			.or(context_label)
-			.or_else(|| Some(default_title_for(&root)));
 
 		let initial_query = cli.initial_query.clone().unwrap_or_default();
 		let theme = cli.theme.clone();
@@ -50,7 +42,6 @@ impl Config {
 		Ok(Self {
 			root,
 			filesystem,
-			input_title,
 			initial_query,
 			theme,
 			ui,
@@ -158,14 +149,6 @@ fn ui_from_preset(preset: Option<&str>) -> Result<UiConfig> {
 		None | Some("default") => Ok(UiConfig::default()),
 		Some(name) => anyhow::bail!("unknown UI preset: {}", name),
 	}
-}
-
-/// Extract a default title from the root directory name.
-fn default_title_for(root: &Path) -> String {
-	root.file_name()
-		.and_then(|name| name.to_str())
-		.unwrap_or("frz")
-		.to_string()
 }
 
 /// Normalize file extensions by removing leading dots and filtering empty values.

@@ -45,6 +45,7 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 
 	let block = Block::default()
 		.borders(Borders::ALL)
+		.border_set(ratatui::symbols::border::ROUNDED)
 		.border_style(Style::default().fg(ctx.theme.header_fg()))
 		.title(title);
 

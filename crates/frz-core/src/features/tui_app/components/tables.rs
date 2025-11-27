@@ -3,7 +3,7 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{Cell, HighlightSpacing, Paragraph, Row, Table};
+use ratatui::widgets::{Block, Borders, Cell, HighlightSpacing, Paragraph, Row, Table};
 
 use crate::features::search_pipeline::SearchData;
 pub use crate::features::tui_app::components::rows::*;
@@ -20,6 +20,8 @@ pub struct TableSpec<'a> {
 	pub widths: Vec<Constraint>,
 	/// Rendered table rows.
 	pub rows: Vec<Row<'a>>,
+	/// Optional title for the bordered table.
+	pub title: Option<String>,
 }
 
 /// Argument bundle describing the data a table render should use.
@@ -40,7 +42,7 @@ pub struct TableRenderContext<'a> {
 	pub data: &'a SearchData,
 }
 
-/// Render a extension-backed table using the provided dataset definition.
+/// Render the table using the provided dataset definition.
 pub fn render_table(
 	frame: &mut Frame,
 	area: Rect,
@@ -48,9 +50,21 @@ pub fn render_table(
 	spec: TableSpec<'_>,
 	theme: &Theme,
 ) {
+	let mut block = Block::default()
+		.borders(Borders::ALL)
+		.border_set(ratatui::symbols::border::ROUNDED)
+		.border_style(Style::default().fg(theme.header_fg()));
+
+	if let Some(title) = spec.title.clone() {
+		block = block.title(title);
+	}
+
+	let inner = block.inner(area);
+	frame.render_widget(block, area);
+
 	render_configured_table(
 		frame,
-		area,
+		inner,
 		table_state,
 		HighlightSpacing::WhenSelected,
 		theme,
@@ -67,8 +81,9 @@ fn render_configured_table(
 	spec: TableSpec<'_>,
 ) {
 	let header_cells = spec.headers.into_iter().map(Cell::from).collect::<Vec<_>>();
+	let header_style = Style::default().fg(theme.header_fg());
 	let header = Row::new(header_cells)
-		.style(theme.header_style())
+		.style(header_style)
 		.height(1)
 		.bottom_margin(1);
 
@@ -108,23 +123,17 @@ fn render_header_separator(frame: &mut Frame, area: Rect, theme: &Theme, header_
 		width: area.width,
 		height: 1,
 	};
-	let header_bg = theme.header_bg();
-	let base_style = Style::new().bg(header_bg);
 	if width <= 2 {
 		let line = " ".repeat(width);
-		let para = Paragraph::new(line).style(base_style);
+		let para = Paragraph::new(line);
 		frame.render_widget(para, sep_rect);
 		return;
 	}
 
 	let middle = "─".repeat(width - 2);
-	let middle_style = Style::new().bg(header_bg).fg(theme.header_fg());
+	let middle_style = Style::default().fg(theme.header_fg());
 	let middle_span = Span::styled(middle, middle_style);
-	let spans = vec![
-		Span::styled(" ", base_style),
-		middle_span,
-		Span::styled(" ", base_style),
-	];
+	let spans = vec![Span::raw(" "), middle_span, Span::raw(" ")];
 	let para = Paragraph::new(Text::from(Line::from(spans)));
 	frame.render_widget(para, sep_rect);
 }
