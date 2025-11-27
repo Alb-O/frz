@@ -19,8 +19,8 @@
           );
         in
         {
-          "frz" = {
-            path = ../crates/frz;
+          "frz-core" = {
+            path = ../crates/frz-core;
             crane.args.buildInputs = darwinInputs;
           };
           "frz-cli" = {

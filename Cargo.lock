@@ -500,7 +500,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "frz"
+name = "frz-cli"
+version = "0.5.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "frz-core",
+ "serde_json",
+]
+
+[[package]]
+name = "frz-core"
 version = "0.5.0"
 dependencies = [
  "anyhow",
@@ -518,16 +528,6 @@ dependencies = [
  "tui-textarea",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
-]
-
-[[package]]
-name = "frz-cli"
-version = "0.5.0"
-dependencies = [
- "anyhow",
- "clap",
- "frz",
- "serde_json",
 ]
 
 [[package]]

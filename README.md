@@ -25,7 +25,7 @@ schemes and can be combined with other style settings over time.
 ## Quick example
 
 ```rust
-use frz::{SearchData, SearchUi, UiConfig};
+use frz_core::{SearchData, SearchUi, UiConfig};
 
 let data = SearchData::from_filesystem(".")?;
 let outcome = SearchUi::new(data)

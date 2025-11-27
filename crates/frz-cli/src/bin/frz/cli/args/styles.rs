@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use clap::builder::Styles;
 use clap::builder::styling::{AnsiColor, Effects};
-use frz::app_dirs;
+use frz_core::app_dirs;
 
 /// Produce the full version banner including config and data directories.
 pub(super) fn long_version() -> &'static str {
