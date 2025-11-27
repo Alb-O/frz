@@ -1,5 +1,4 @@
 use std::sync::mpsc::{Receiver, TryRecvError};
-use std::thread;
 use std::time::{Duration, Instant};
 
 use super::App;
@@ -111,54 +110,7 @@ impl<'a> App<'a> {
 			return;
 		}
 
-		let waiting_for_initial = self.filtered_len() == 0;
-		if waiting_for_initial {
-			if let Some(timeout) = self.initial_results_timeout {
-				self.initial_results_deadline = Some(Instant::now() + timeout);
-			} else {
-				self.initial_results_deadline = Some(Instant::now());
-			}
-		}
-
 		self.request_search_after_index_update();
-
-		if waiting_for_initial {
-			if self.initial_results_timeout.is_some() {
-				self.wait_for_initial_results();
-			} else {
-				self.initial_results_deadline = None;
-			}
-		}
-	}
-
-	fn wait_for_initial_results(&mut self) {
-		let Some(deadline) = self.initial_results_deadline else {
-			return;
-		};
-
-		if Instant::now() >= deadline {
-			self.initial_results_deadline = None;
-			return;
-		}
-
-		while Instant::now() < deadline {
-			self.pump_search_results();
-			if self.filtered_len() > 0 {
-				return;
-			}
-
-			if !self.search.is_in_flight() {
-				thread::sleep(Duration::from_millis(10));
-				continue;
-			}
-
-			thread::sleep(Duration::from_millis(10));
-		}
-
-		self.pump_search_results();
-		if Instant::now() >= deadline {
-			self.initial_results_deadline = None;
-		}
 	}
 }
 

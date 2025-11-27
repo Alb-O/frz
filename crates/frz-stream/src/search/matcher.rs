@@ -1,17 +1,22 @@
-//! Fuzzy matching engine and result aggregation.
-
 use std::cmp::{Ordering as CmpOrdering, Reverse};
 use std::collections::BinaryHeap;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 
 use frizbee::{Config, match_list};
 
-use super::channel::SearchStream;
-use super::file::FileRow;
-use super::{
-	EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, MAX_RENDERED_RESULTS, PREFILTER_ENABLE_THRESHOLD,
-	SearchData,
-};
+use super::channel::{MatchBatch, SearchStream};
+
+/// Tunable thresholds shared across the search pipeline.
+pub const PREFILTER_ENABLE_THRESHOLD: usize = 1_000;
+
+/// Maximum number of rows rendered in the result table.
+pub const MAX_RENDERED_RESULTS: usize = 2_000;
+
+/// Number of matches processed per scoring chunk.
+pub const MATCH_CHUNK_SIZE: usize = 512;
+
+/// Number of rows processed before emitting a heartbeat for empty queries.
+pub const EMPTY_QUERY_BATCH: usize = 128;
 
 /// Builds fuzzy matching options for the provided query and dataset size.
 pub fn config_for_query(query: &str, dataset_len: usize) -> Config {
@@ -67,28 +72,26 @@ impl PartialOrd for RankedMatch {
 }
 
 /// Maintains the highest scoring matches for a particular query.
-struct ScoreAggregator<'a> {
+pub struct ScoreAggregator<'a> {
 	stream: SearchStream<'a>,
 	heap: BinaryHeap<Reverse<RankedMatch>>,
 	scratch: Vec<RankedMatch>,
 	dirty: bool,
-	sent_any: bool,
 }
 
 impl<'a> ScoreAggregator<'a> {
 	/// Creates a new aggregator that will stream results through `stream`.
-	fn new(stream: SearchStream<'a>) -> Self {
+	pub fn new(stream: SearchStream<'a>) -> Self {
 		Self {
 			stream,
 			heap: BinaryHeap::new(),
 			scratch: Vec::new(),
 			dirty: false,
-			sent_any: false,
 		}
 	}
 
 	/// Inserts a scored match and marks the aggregator as dirty when the result set changes.
-	fn push(&mut self, index: usize, score: u16) {
+	pub fn push(&mut self, index: usize, score: u16) {
 		if self.insert(RankedMatch { index, score }) {
 			self.dirty = true;
 		}
@@ -111,27 +114,19 @@ impl<'a> ScoreAggregator<'a> {
 	}
 
 	/// Emits an incremental update when new matches were observed.
-	fn flush_partial(&mut self) -> bool {
-		if !self.dirty {
-			return true;
-		}
-		self.emit(false)
-	}
-
-	/// Sends a final update for the query.
-	fn finish(&mut self) -> bool {
-		if !self.emit(true) {
-			return false;
+	pub fn flush_partial(&mut self) -> bool {
+		if self.dirty {
+			return self.emit(false);
 		}
 		true
 	}
 
-	fn emit(&mut self, complete: bool) -> bool {
-		if self.heap.is_empty() && !complete && self.sent_any {
-			self.dirty = false;
-			return true;
-		}
+	/// Sends a final update for the query.
+	pub fn finish(&mut self) -> bool {
+		self.emit(true)
+	}
 
+	fn emit(&mut self, complete: bool) -> bool {
 		self.scratch.clear();
 		self.scratch
 			.extend(self.heap.iter().map(|entry| entry.0.clone()));
@@ -145,13 +140,15 @@ impl<'a> ScoreAggregator<'a> {
 			scores.push(entry.score);
 		}
 
-		if self.stream.send(indices, scores, complete) {
-			self.sent_any = true;
-			self.dirty = false;
-			true
-		} else {
-			false
-		}
+		self.dirty = false;
+		self.stream.send_batch(
+			MatchBatch {
+				indices,
+				ids: None,
+				scores,
+			},
+			complete,
+		)
 	}
 }
 
@@ -176,7 +173,7 @@ impl PartialOrd for AlphabeticalEntry {
 }
 
 /// Collects the lexicographically smallest entries for an empty query.
-struct AlphabeticalCollector<'a, F>
+pub struct AlphabeticalCollector<'a, F>
 where
 	F: FnMut(usize) -> String,
 {
@@ -186,7 +183,6 @@ where
 	heap: BinaryHeap<AlphabeticalEntry>,
 	scratch: Vec<AlphabeticalEntry>,
 	dirty: bool,
-	sent_any: bool,
 }
 
 impl<'a, F> AlphabeticalCollector<'a, F>
@@ -194,7 +190,7 @@ where
 	F: FnMut(usize) -> String,
 {
 	/// Creates a collector that will emit at most [`MAX_RENDERED_RESULTS`] entries.
-	fn new(stream: SearchStream<'a>, total: usize, key_for_index: F) -> Self {
+	pub fn new(stream: SearchStream<'a>, total: usize, key_for_index: F) -> Self {
 		Self {
 			stream,
 			limit: MAX_RENDERED_RESULTS.min(total),
@@ -202,12 +198,11 @@ where
 			heap: BinaryHeap::new(),
 			scratch: Vec::new(),
 			dirty: false,
-			sent_any: false,
 		}
 	}
 
 	/// Inserts a candidate index when the collector still has capacity.
-	fn insert(&mut self, index: usize) {
+	pub fn insert(&mut self, index: usize) {
 		if self.limit == 0 {
 			return;
 		}
@@ -227,28 +222,29 @@ where
 	}
 
 	/// Emits an incremental update when new items were inserted.
-	fn flush_partial(&mut self) -> bool {
-		if !self.dirty {
-			return true;
-		}
-		self.emit(false)
-	}
-
-	/// Emits the final alphabetical set.
-	fn finish(&mut self) -> bool {
-		if self.limit == 0 {
-			return self.emit(true);
-		}
-
-		if !self.emit(true) {
-			return false;
+	pub fn flush_partial(&mut self) -> bool {
+		if self.dirty {
+			return self.emit(false);
 		}
 		true
 	}
 
+	/// Emits the final alphabetical set.
+	pub fn finish(&mut self) -> bool {
+		self.emit(true)
+	}
+
 	fn emit(&mut self, complete: bool) -> bool {
 		if self.limit == 0 {
-			return self.stream.send(Vec::new(), Vec::new(), complete);
+			self.dirty = false;
+			return self.stream.send_batch(
+				MatchBatch {
+					indices: Vec::new(),
+					ids: None,
+					scores: Vec::new(),
+				},
+				complete,
+			);
 		}
 
 		self.scratch.clear();
@@ -262,13 +258,15 @@ where
 		}
 		let scores = vec![0; indices.len()];
 
-		if self.stream.send(indices, scores, complete) {
-			self.sent_any = true;
-			self.dirty = false;
-			true
-		} else {
-			false
-		}
+		self.dirty = false;
+		self.stream.send_batch(
+			MatchBatch {
+				indices,
+				ids: None,
+				scores,
+			},
+			complete,
+		)
 	}
 }
 
@@ -277,18 +275,13 @@ pub trait Dataset {
 	/// Total number of entries in the dataset.
 	fn len(&self) -> usize;
 
+	/// Returns true if the dataset contains no entries.
+	fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
+
 	/// Return the searchable key associated with `index`.
 	fn key_for(&self, index: usize) -> &str;
-}
-
-impl Dataset for [FileRow] {
-	fn len(&self) -> usize {
-		<[FileRow]>::len(self)
-	}
-
-	fn key_for(&self, index: usize) -> &str {
-		self[index].search_text()
-	}
 }
 
 impl<T> Dataset for &T
@@ -304,23 +297,10 @@ where
 	}
 }
 
-/// Streams file matches for the given query back to the UI thread.
-pub fn stream_files(
-	data: &SearchData,
-	query: &str,
-	stream: SearchStream<'_>,
-	latest_query_id: &AtomicU64,
-) -> bool {
-	let files = data.files.as_slice();
-	stream_dataset(files, query, stream, latest_query_id, move |index| {
-		files[index].path.clone()
-	})
-}
-
 /// Perform fuzzy matching on a dataset, emitting batches of ranked matches to the stream.
 ///
 /// Returns `true` if streaming completed successfully, `false` if the receiver hung up.
-fn stream_dataset<D, F>(
+pub fn stream_dataset<D, F>(
 	dataset: D,
 	query: &str,
 	stream: SearchStream<'_>,
@@ -381,7 +361,7 @@ where
 /// Stream results in alphabetical order when no query is provided.
 ///
 /// Returns `true` if streaming completed successfully, `false` if the receiver hung up.
-fn stream_alphabetical<F>(
+pub fn stream_alphabetical<F>(
 	total: usize,
 	stream: SearchStream<'_>,
 	latest_query_id: &AtomicU64,
@@ -418,13 +398,26 @@ where
 }
 
 /// Check if this query has been superseded by a newer one.
-fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
+pub fn should_abort(id: u64, latest_query_id: &AtomicU64) -> bool {
 	latest_query_id.load(AtomicOrdering::Acquire) != id
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::search::SearchView;
+
+	struct TestDataset(Vec<String>);
+
+	impl Dataset for TestDataset {
+		fn len(&self) -> usize {
+			self.0.len()
+		}
+
+		fn key_for(&self, index: usize) -> &str {
+			&self.0[index]
+		}
+	}
 
 	#[test]
 	fn enables_prefilter_for_large_datasets() {
@@ -438,5 +431,52 @@ mod tests {
 		let config = config_for_query("example", PREFILTER_ENABLE_THRESHOLD - 1);
 		assert!(!config.prefilter);
 		assert_eq!(config.max_typos, None);
+	}
+
+	#[test]
+	fn streams_empty_query_alphabetically() {
+		use std::sync::atomic::AtomicU64;
+		use std::sync::mpsc::{Receiver, channel};
+
+		struct StubView {
+			indices: Vec<usize>,
+			scores: Vec<u16>,
+			completions: Vec<bool>,
+		}
+
+		impl SearchView for StubView {
+			fn replace_matches(&mut self, indices: Vec<usize>, scores: Vec<u16>) {
+				self.indices = indices;
+				self.scores = scores;
+			}
+
+			fn clear_matches(&mut self) {
+				self.indices.clear();
+				self.scores.clear();
+			}
+
+			fn record_completion(&mut self, complete: bool) {
+				self.completions.push(complete);
+			}
+		}
+
+		let dataset = TestDataset(vec!["b".into(), "a".into()]);
+		let (tx, rx): (_, Receiver<_>) = channel();
+		let latest = AtomicU64::new(1);
+		let stream = SearchStream::new(&tx, 1);
+		stream_dataset(&dataset, "", stream, &latest, |idx| dataset.0[idx].clone());
+
+		let envelope = rx.recv().unwrap();
+		assert!(envelope.complete);
+		let mut view = StubView {
+			indices: Vec::new(),
+			scores: Vec::new(),
+			completions: Vec::new(),
+		};
+		envelope.dispatch(&mut view);
+
+		assert_eq!(view.indices, vec![1, 0]); // alphabetical order
+		assert_eq!(view.scores, vec![0, 0]);
+		assert_eq!(view.completions, vec![true]);
 	}
 }

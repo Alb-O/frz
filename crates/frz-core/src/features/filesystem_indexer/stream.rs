@@ -1,7 +1,8 @@
 use std::sync::mpsc::Sender;
 
+use frz_stream::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
+
 use super::{IndexUpdate, ProgressSnapshot};
-use crate::streams::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
 
 /// Metadata describing the type of indexing message being delivered.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

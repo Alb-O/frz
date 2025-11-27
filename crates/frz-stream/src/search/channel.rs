@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use crate::streams::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
+use crate::{DataStream, StreamEnvelope, ViewAction, ViewTarget};
 
 /// Batch of search matches emitted by a producer.
 #[derive(Clone)]
@@ -68,6 +68,19 @@ pub type SearchAction = ViewAction<SearchViewTarget>;
 /// Search result envelope containing actions.
 pub type SearchResult = StreamEnvelope<SearchMarker, SearchAction>;
 
+fn apply_batch(view: &mut dyn SearchView, batch: MatchBatch) {
+	if batch.is_empty() {
+		view.clear_matches();
+	} else if let Some(view2) = view.as_v2() {
+		view2.replace_matches_v2(batch);
+	} else {
+		let MatchBatch {
+			indices, scores, ..
+		} = batch;
+		view.replace_matches(indices, scores);
+	}
+}
+
 /// Handle used to stream search results back to the UI.
 pub struct SearchStream<'a> {
 	inner: DataStream<'a, SearchMarker, SearchAction>,
@@ -94,36 +107,20 @@ impl<'a> SearchStream<'a> {
 	/// the receiving [`SearchView`], allowing the consumer to distinguish
 	/// between partial flushes and the terminal update for a query.
 	pub fn send(&self, indices: Vec<usize>, scores: Vec<u16>, complete: bool) -> bool {
-		let empty = indices.is_empty() && scores.is_empty();
-		self.send_with(
-			move |view| {
-				if empty {
-					view.clear_matches();
-				} else {
-					view.replace_matches(indices, scores);
-				}
-				view.record_completion(complete);
-			},
-			complete,
-		)
+		let batch = MatchBatch {
+			indices,
+			ids: None,
+			scores,
+		};
+		self.send_batch(batch, complete)
 	}
 
 	/// Send a batch of search results to the UI thread using the new
 	/// identifier-aware path when available.
 	pub fn send_batch(&self, batch: MatchBatch, complete: bool) -> bool {
-		let empty = batch.is_empty();
 		self.send_with(
 			move |view| {
-				if empty {
-					view.clear_matches();
-				} else if let Some(view2) = view.as_v2() {
-					view2.replace_matches_v2(batch);
-				} else {
-					let MatchBatch {
-						indices, scores, ..
-					} = batch;
-					view.replace_matches(indices, scores);
-				}
+				apply_batch(view, batch);
 				view.record_completion(complete);
 			},
 			complete,

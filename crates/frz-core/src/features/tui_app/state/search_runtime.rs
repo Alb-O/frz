@@ -8,10 +8,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
+use frz_stream::StreamAction;
+
 use crate::features::filesystem_indexer::{IndexUpdate, merge_update};
 use crate::features::search_pipeline::runtime::SearchCommand;
 use crate::features::search_pipeline::{SearchData, SearchResult};
-use crate::streams::StreamAction;
 
 /// Tracks the revision counters used to determine when data has changed.
 #[derive(Default)]
@@ -30,6 +31,7 @@ pub(crate) struct SearchRuntime {
 	next_query_id: u64,
 	current_query_id: Option<u64>,
 	in_flight: bool,
+	user_has_typed: bool,
 	revisions: RevisionState,
 }
 
@@ -47,6 +49,7 @@ impl SearchRuntime {
 			next_query_id: 0,
 			current_query_id: None,
 			in_flight: false,
+			user_has_typed: false,
 			revisions: RevisionState::default(),
 		}
 	}
@@ -61,6 +64,7 @@ impl SearchRuntime {
 
 	pub(crate) fn mark_query_dirty_from_user_input(&mut self) {
 		self.mark_query_dirty();
+		self.user_has_typed = true;
 		self.revisions.last_user_input = self.revisions.input;
 	}
 
@@ -96,6 +100,11 @@ impl SearchRuntime {
 		self.current_query_id.is_some()
 	}
 
+	pub(crate) fn user_has_typed(&self) -> bool {
+		self.user_has_typed
+	}
+
+	#[cfg(test)]
 	pub(crate) fn is_in_flight(&self) -> bool {
 		self.in_flight
 	}

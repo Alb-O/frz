@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use anyhow::{Result, anyhow};
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
@@ -99,22 +99,6 @@ impl<'a> App<'a> {
 		if !self.search.has_issued_query() {
 			self.mark_query_dirty();
 			self.request_search();
-		}
-
-		if let Some(timeout) = self.initial_results_timeout {
-			let deadline = Instant::now() + timeout;
-			self.initial_results_deadline = Some(deadline);
-			while Instant::now() < deadline {
-				self.pump_index_updates();
-				self.pump_search_results();
-				if !self.search.is_in_flight() {
-					break;
-				}
-				thread::sleep(Duration::from_millis(10));
-			}
-			self.pump_search_results();
-		} else {
-			self.initial_results_deadline = None;
 		}
 	}
 }

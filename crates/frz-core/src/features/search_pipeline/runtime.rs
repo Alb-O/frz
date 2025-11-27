@@ -5,8 +5,9 @@ use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use frz_stream::StreamAction;
+
 use super::{SearchData, SearchResult, SearchStream, stream_files};
-use crate::streams::StreamAction;
 
 /// Commands understood by the background search worker.
 #[derive(Debug)]

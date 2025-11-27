@@ -517,6 +517,7 @@ dependencies = [
  "bat",
  "dirs",
  "frizbee",
+ "frz-stream",
  "ignore",
  "include_dir",
  "ratatui",
@@ -528,6 +529,13 @@ dependencies = [
  "tui-textarea",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
+]
+
+[[package]]
+name = "frz-stream"
+version = "0.5.0"
+dependencies = [
+ "frizbee",
 ]
 
 [[package]]

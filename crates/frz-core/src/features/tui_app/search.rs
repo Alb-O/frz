@@ -1,5 +1,4 @@
 use std::sync::mpsc::TryRecvError;
-use std::time::Instant;
 
 use super::App;
 use crate::features::filesystem_indexer::IndexUpdate;
@@ -14,13 +13,13 @@ impl<'a> App<'a> {
 	/// Schedule a search refresh due to new index data while respecting the
 	/// currently running query.
 	pub(crate) fn request_search_after_index_update(&mut self) {
-		// When background indexing discovers new entries we keep the UI stable
-		// unless the user currently has a query edit that hasn't been
-		// processed yet. This lets indexing continue without the visible result
-		// list jumping around while the user is idle.
-		if self.initial_results_deadline.is_some()
-			|| self.search.should_refresh_after_index_update()
-		{
+		if !self.search.user_has_typed() {
+			// On launch, aggressively refresh so the list fills as soon as data arrives.
+			self.issue_search();
+			return;
+		}
+
+		if self.search.should_refresh_after_index_update() {
 			self.issue_search();
 		}
 	}
@@ -54,14 +53,6 @@ impl<'a> App<'a> {
 		let query = self.search_input.text().to_string();
 		self.search.issue_search(query);
 	}
-
-	pub(crate) fn settle_initial_results(&mut self, has_results: bool) {
-		if let Some(deadline) = self.initial_results_deadline
-			&& (has_results || Instant::now() >= deadline)
-		{
-			self.initial_results_deadline = None;
-		}
-	}
 }
 
 impl<'a> SearchView for App<'a> {
@@ -72,7 +63,6 @@ impl<'a> SearchView for App<'a> {
 	fn clear_matches(&mut self) {
 		self.tab_buffers.filtered.clear();
 		self.tab_buffers.scores.clear();
-		self.settle_initial_results(false);
 		self.ensure_selection();
 	}
 

@@ -5,7 +5,6 @@
 
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
-use std::time::{Duration, Instant};
 
 use ratatui::widgets::TableState;
 use throbber_widgets_tui::ThrobberState;
@@ -50,8 +49,6 @@ pub struct App<'a> {
 	pub(crate) row_id_map: HashMap<u64, usize>,
 	pub(crate) index_updates: Option<Receiver<IndexResult>>,
 	pub(in crate::features::tui_app) search: SearchRuntime,
-	pub(crate) initial_results_deadline: Option<Instant>,
-	pub(crate) initial_results_timeout: Option<Duration>,
 	/// Whether the preview pane is visible.
 	pub(crate) preview_enabled: bool,
 	/// Cached preview content for the currently selected file.
@@ -107,8 +104,6 @@ impl<'a> App<'a> {
 			row_id_map,
 			index_updates: None,
 			search,
-			initial_results_deadline: None,
-			initial_results_timeout: Some(Duration::from_millis(250)),
 			preview_enabled: false,
 			preview_content: PreviewContent::empty(),
 			preview_scroll: 0,
@@ -223,8 +218,6 @@ impl<'a> App<'a> {
 		};
 		self.tab_buffers.filtered = filtered;
 		self.tab_buffers.scores = scores;
-		let has_results = !self.tab_buffers.filtered.is_empty();
-		self.settle_initial_results(has_results);
 		self.ensure_selection();
 
 		// Update preview if enabled and the selected item changed

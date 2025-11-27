@@ -3,30 +3,46 @@
 //! This feature module contains the fuzzy matching engine, scoring aggregation,
 //! and streaming infrastructure that powers the search experience.
 
-mod channel;
+use std::sync::atomic::AtomicU64;
+
 mod data;
 mod file;
 mod fs;
-mod matcher;
 pub(crate) mod runtime;
 
-pub use channel::{MatchBatch, SearchMarker, SearchResult, SearchStream, SearchView, SearchViewV2};
 pub use data::{FILES_DATASET_KEY, SearchData};
 pub use file::{FileRow, SearchOutcome, SearchSelection, TruncationStyle};
+pub use frz_stream::search::{
+	Dataset, EMPTY_QUERY_BATCH, MATCH_CHUNK_SIZE, MAX_RENDERED_RESULTS, MatchBatch,
+	PREFILTER_ENABLE_THRESHOLD, SearchMarker, SearchResult, SearchStream, SearchView, SearchViewV2,
+	config_for_query,
+};
 pub use fs::{Fs, FsIter, OsFs};
-pub use matcher::{config_for_query, stream_files};
 
-/// Tunable thresholds shared across the search pipeline.
-pub const PREFILTER_ENABLE_THRESHOLD: usize = 1_000;
+/// Streams file matches for the given query back to the UI thread.
+pub fn stream_files(
+	data: &SearchData,
+	query: &str,
+	stream: SearchStream<'_>,
+	latest_query_id: &AtomicU64,
+) -> bool {
+	struct FileDataset<'a>(&'a [FileRow]);
 
-/// Maximum number of rows rendered in the result table.
-pub const MAX_RENDERED_RESULTS: usize = 2_000;
+	impl<'a> Dataset for FileDataset<'a> {
+		fn len(&self) -> usize {
+			self.0.len()
+		}
 
-/// Number of matches processed per scoring chunk.
-pub const MATCH_CHUNK_SIZE: usize = 512;
+		fn key_for(&self, index: usize) -> &str {
+			self.0[index].search_text()
+		}
+	}
 
-/// Number of rows processed before emitting a heartbeat for empty queries.
-pub const EMPTY_QUERY_BATCH: usize = 128;
+	let files = FileDataset(data.files.as_slice());
+	frz_stream::search::stream_dataset(&files, query, stream, latest_query_id, move |index| {
+		files.0[index].path.clone()
+	})
+}
 
 /// Compute a stable 64-bit hash for the provided value.
 ///

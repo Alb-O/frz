@@ -1,0 +1,15 @@
+[package]
+name = "frz-stream"
+version.workspace = true
+edition.workspace = true
+description = "Lightweight streaming primitives for delivering UI actions across threads"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+frizbee = "0.6"
+
+[lints]
+workspace = true
