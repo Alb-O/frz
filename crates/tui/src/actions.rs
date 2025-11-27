@@ -1,6 +1,8 @@
 use anyhow::Result;
 use frz_core::search_pipeline::SearchOutcome;
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
+use ratatui::crossterm::event::{
+	KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind,
+};
 
 use super::App;
 
@@ -66,28 +68,40 @@ impl<'a> App<'a> {
 		self.update_preview_hover(mouse.column, mouse.row);
 		self.update_results_hover(mouse.column, mouse.row);
 
-		if self.preview_enabled && self.preview_hovered {
-			match mouse.kind {
-				MouseEventKind::ScrollUp => self.scroll_preview_up(3),
-				MouseEventKind::ScrollDown => self.scroll_preview_down(3),
-				_ => {}
+		match mouse.kind {
+			MouseEventKind::ScrollUp if self.preview_enabled && self.preview_hovered => {
+				self.scroll_preview_up(3);
 			}
-		} else if self.results_hovered {
-			match mouse.kind {
-				MouseEventKind::ScrollUp => {
-					self.move_selection_up();
-					if self.preview_enabled {
-						self.update_preview();
-					}
-				}
-				MouseEventKind::ScrollDown => {
-					self.move_selection_down();
-					if self.preview_enabled {
-						self.update_preview();
-					}
-				}
-				_ => {}
+			MouseEventKind::ScrollDown if self.preview_enabled && self.preview_hovered => {
+				self.scroll_preview_down(3);
 			}
+			MouseEventKind::ScrollUp if self.results_hovered => {
+				self.move_selection_up();
+				if self.preview_enabled {
+					self.update_preview();
+				}
+			}
+			MouseEventKind::ScrollDown if self.results_hovered => {
+				self.move_selection_down();
+				if self.preview_enabled {
+					self.update_preview();
+				}
+			}
+			MouseEventKind::Down(MouseButton::Left) if self.results_hovered => {
+				if self.select_result_at(mouse.column, mouse.row) && self.preview_enabled {
+					self.update_preview();
+				}
+				self.results_dragging = true;
+			}
+			MouseEventKind::Up(MouseButton::Left) => {
+				self.results_dragging = false;
+			}
+			MouseEventKind::Drag(MouseButton::Left) if self.results_dragging => {
+				if self.select_result_at(mouse.column, mouse.row) && self.preview_enabled {
+					self.update_preview();
+				}
+			}
+			_ => {}
 		}
 	}
 

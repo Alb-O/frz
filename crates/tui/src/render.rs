@@ -56,6 +56,7 @@ impl App<'_> {
 		} else {
 			self.preview_area = None;
 			self.preview_hovered = false;
+			self.results_dragging = false;
 			self.results_area = Some(results_area);
 			self.render_results(frame, results_area);
 		}

@@ -11,8 +11,7 @@ mod render;
 mod worker;
 
 pub use content::{PreviewContent, PreviewKind};
-pub use render::{PreviewContext, render_preview};
-pub use worker::PreviewRuntime;
-
 #[cfg(feature = "media-preview")]
 pub use image::{ImagePreview, is_available as is_image_available, is_image_file, protocol_name};
+pub use render::{PreviewContext, render_preview};
+pub use worker::PreviewRuntime;

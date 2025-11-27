@@ -68,6 +68,8 @@ pub struct App<'a> {
 	pub(crate) results_area: Option<Rect>,
 	/// Whether the mouse is currently hovering the results table.
 	pub(crate) results_hovered: bool,
+	/// Whether the user is dragging within the results table.
+	pub(crate) results_dragging: bool,
 	/// Path of the file whose preview is currently displayed.
 	pub(crate) preview_path: String,
 	/// Path of the file we're currently loading a preview for (if any).
@@ -126,6 +128,7 @@ impl<'a> App<'a> {
 			preview_hovered: false,
 			results_area: None,
 			results_hovered: false,
+			results_dragging: false,
 			preview_path: String::new(),
 			pending_preview_path: None,
 			preview_runtime: PreviewRuntime::new(),
@@ -289,6 +292,7 @@ impl<'a> App<'a> {
 		self.preview_area = None;
 		self.preview_hovered = false;
 		self.results_hovered = false;
+		self.results_dragging = false;
 	}
 
 	/// Update preview visibility based on terminal width.
@@ -425,6 +429,41 @@ impl<'a> App<'a> {
 		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
 		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
 		self.results_hovered = inside_x && inside_y;
+	}
+
+	pub(crate) fn select_result_at(&mut self, _column: u16, row: u16) -> bool {
+		let Some(area) = self.results_area else {
+			return false;
+		};
+
+		// Table is rendered inside a rounded border block; subtract borders.
+		let inner_y = area.y.saturating_add(1);
+		let inner_width = area.width.saturating_sub(2);
+		let inner_height = area.height.saturating_sub(2);
+		if inner_width == 0 || inner_height == 0 {
+			return false;
+		}
+
+		// Header row (1) + bottom margin (1) + separator (1) → rows start at y + 2.
+		let body_start_y = inner_y.saturating_add(2);
+		if row < body_start_y {
+			return false;
+		}
+
+		let body_end_y = inner_y.saturating_add(inner_height);
+		if row >= body_end_y {
+			return false;
+		}
+
+		let row_in_view = row.saturating_sub(body_start_y) as usize;
+		let visible_index = self.table_state.offset().saturating_add(row_in_view);
+
+		if visible_index >= self.filtered_len() {
+			return false;
+		}
+
+		self.table_state.select(Some(visible_index));
+		true
 	}
 
 	/// Update scrollbar state to match current preview content and scroll position.

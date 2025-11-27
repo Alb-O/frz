@@ -15,7 +15,6 @@ use bat::assets::HighlightingAssets;
 
 use super::content::PreviewContent;
 use super::highlight::highlight_with_bat;
-
 #[cfg(feature = "media-preview")]
 use super::image::{ImagePreview, is_image_file};
 
