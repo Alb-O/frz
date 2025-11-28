@@ -29,10 +29,7 @@ impl<'a> Drop for App<'a> {
 /// Aggregate state shared across the terminal UI.
 ///
 /// The `App` owns the current search data, manages extension-defined
-/// contributions, and keeps track of UI affordances such as tab buffers and
-/// loading indicators.  Splitting the implementation into smaller modules lets
-/// call-sites interact with a focused surface area while the underlying state
-/// remains centralized here.
+/// contributions, and keeps track of UI affordances.
 pub struct App<'a> {
 	/// Current search data including files and metadata.
 	pub data: SearchData,
@@ -62,6 +59,8 @@ pub struct App<'a> {
 	pub(crate) preview_viewport_height: usize,
 	/// Last known preview area on screen.
 	pub(crate) preview_area: Option<Rect>,
+	/// Screen area of the preview scrollbar if rendered.
+	pub(crate) preview_scrollbar_area: Option<Rect>,
 	/// Whether the mouse is currently hovering the preview.
 	pub(crate) preview_hovered: bool,
 	/// Last known results area on screen.
@@ -70,6 +69,8 @@ pub struct App<'a> {
 	pub(crate) results_hovered: bool,
 	/// Whether the user is dragging within the results table.
 	pub(crate) results_dragging: bool,
+	/// Whether the user is dragging the preview scrollbar.
+	pub(crate) preview_dragging: bool,
 	/// Path of the file whose preview is currently displayed.
 	pub(crate) preview_path: String,
 	/// Path of the file we're currently loading a preview for (if any).
@@ -125,10 +126,12 @@ impl<'a> App<'a> {
 			preview_scrollbar_state: ScrollbarState::default(),
 			preview_viewport_height: 1,
 			preview_area: None,
+			preview_scrollbar_area: None,
 			preview_hovered: false,
 			results_area: None,
 			results_hovered: false,
 			results_dragging: false,
+			preview_dragging: false,
 			preview_path: String::new(),
 			pending_preview_path: None,
 			preview_runtime: PreviewRuntime::new(),
@@ -290,9 +293,11 @@ impl<'a> App<'a> {
 	pub fn disable_preview(&mut self) {
 		self.preview_enabled = false;
 		self.preview_area = None;
+		self.preview_scrollbar_area = None;
 		self.preview_hovered = false;
 		self.results_hovered = false;
 		self.results_dragging = false;
+		self.preview_dragging = false;
 	}
 
 	/// Update preview visibility based on terminal width.

@@ -148,6 +148,7 @@ impl App<'_> {
 			content: &self.preview_content,
 			scroll_offset: self.preview_scroll,
 			scrollbar_state: &mut self.preview_scrollbar_state,
+			scrollbar_area: &mut self.preview_scrollbar_area,
 			theme: &self.style.theme,
 		};
 		render_preview(frame, area, ctx);

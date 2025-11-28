@@ -87,6 +87,14 @@ impl<'a> App<'a> {
 					self.update_preview();
 				}
 			}
+			MouseEventKind::Down(MouseButton::Left)
+				if self.preview_enabled
+					&& self.preview_scrollbar_contains(mouse.column, mouse.row) =>
+			{
+				self.drag_preview_scrollbar_to(mouse.row);
+				self.preview_dragging = true;
+				self.results_dragging = false;
+			}
 			MouseEventKind::Down(MouseButton::Left) if self.results_hovered => {
 				if self.select_result_at(mouse.column, mouse.row) && self.preview_enabled {
 					self.update_preview();
@@ -95,6 +103,10 @@ impl<'a> App<'a> {
 			}
 			MouseEventKind::Up(MouseButton::Left) => {
 				self.results_dragging = false;
+				self.preview_dragging = false;
+			}
+			MouseEventKind::Drag(MouseButton::Left) if self.preview_dragging => {
+				self.drag_preview_scrollbar_to(mouse.row);
 			}
 			MouseEventKind::Drag(MouseButton::Left) if self.results_dragging => {
 				if self.select_result_at(mouse.column, mouse.row) && self.preview_enabled {
@@ -124,5 +136,51 @@ impl<'a> App<'a> {
 				self.table_state.select(Some(selected + 1));
 			}
 		}
+	}
+
+	fn preview_scrollbar_contains(&self, column: u16, row: u16) -> bool {
+		let Some(area) = self.preview_scrollbar_area else {
+			return false;
+		};
+		if area.width == 0 || area.height == 0 {
+			return false;
+		}
+		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
+		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
+		inside_x && inside_y
+	}
+
+	fn drag_preview_scrollbar_to(&mut self, row: u16) -> bool {
+		let Some(area) = self.preview_scrollbar_area else {
+			return false;
+		};
+		if area.height == 0 {
+			return false;
+		}
+
+		let content_length = self.preview_content.line_count();
+		let viewport_len = self.preview_viewport_height.max(1).min(content_length);
+		let max_scroll = content_length.saturating_sub(viewport_len);
+
+		if max_scroll == 0 {
+			self.preview_scroll = 0;
+			self.update_scrollbar_state();
+			return true;
+		}
+
+		let track_start = area.y;
+		let track_end = area.y.saturating_add(area.height).saturating_sub(1);
+		let clamped_row = row.clamp(track_start, track_end);
+		let relative = clamped_row.saturating_sub(track_start) as usize;
+		let track_span = area.height.saturating_sub(1) as usize;
+		let new_scroll = if track_span == 0 {
+			0
+		} else {
+			max_scroll.saturating_mul(relative.min(track_span)) / track_span
+		};
+
+		self.preview_scroll = new_scroll.min(max_scroll);
+		self.update_scrollbar_state();
+		true
 	}
 }

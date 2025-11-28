@@ -19,6 +19,8 @@ pub struct PreviewContext<'a> {
 	pub scroll_offset: usize,
 	/// Scrollbar state for the preview pane.
 	pub scrollbar_state: &'a mut ScrollbarState,
+	/// Output slot for the rendered scrollbar area (if any).
+	pub scrollbar_area: &'a mut Option<Rect>,
 	/// Color theme.
 	pub theme: &'a Theme,
 }
@@ -41,6 +43,8 @@ fn render_centered_placeholder(frame: &mut Frame, area: Rect, message: &str, the
 
 /// Render the preview pane with syntax-highlighted content or image.
 pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
+	*ctx.scrollbar_area = None;
+
 	let title = if ctx.content.path.is_empty() {
 		" Preview ".to_string()
 	} else {
@@ -98,6 +102,7 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 					width: 1,
 					height: inner.height,
 				};
+				*ctx.scrollbar_area = Some(scrollbar_area);
 				frame.render_stateful_widget(scrollbar, scrollbar_area, ctx.scrollbar_state);
 			}
 		}
