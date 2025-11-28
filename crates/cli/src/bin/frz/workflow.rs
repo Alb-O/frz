@@ -1,12 +1,12 @@
 use anyhow::Result;
 use frz_core::SearchOutcome;
-use frz_tui::SearchUi;
+use frz_tui::Picker;
 
 use crate::config::Config;
 
 /// Coordinates building and running the interactive search experience.
 pub(crate) struct SearchWorkflow {
-	search_ui: SearchUi,
+	search_ui: Picker,
 }
 
 impl SearchWorkflow {
@@ -21,7 +21,7 @@ impl SearchWorkflow {
 			file_headers,
 		} = config;
 
-		let mut search_ui = SearchUi::filesystem_with_options(root, filesystem)?;
+		let mut search_ui = Picker::filesystem_with_options(root, filesystem)?;
 
 		search_ui = search_ui.with_ui_config(ui);
 		search_ui = search_ui.with_initial_query(initial_query);

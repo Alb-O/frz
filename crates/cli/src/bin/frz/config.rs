@@ -3,7 +3,7 @@ use std::{env, fs};
 
 use anyhow::{Context, Result, ensure};
 use frz_core::filesystem_indexer::FilesystemOptions;
-use frz_tui::UiConfig;
+use frz_tui::UiLabels;
 
 use crate::cli::CliArgs;
 
@@ -14,7 +14,7 @@ pub struct Config {
 	pub filesystem: FilesystemOptions,
 	pub initial_query: String,
 	pub theme: Option<String>,
-	pub ui: UiConfig,
+	pub ui: UiLabels,
 	pub file_headers: Option<Vec<String>>,
 }
 
@@ -109,7 +109,7 @@ fn build_filesystem_options(cli: &CliArgs) -> FilesystemOptions {
 }
 
 /// Build UI configuration from CLI arguments, applying preset and overrides.
-fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
+fn build_ui_config(cli: &CliArgs) -> Result<UiLabels> {
 	let preset = cli.ui_preset.as_ref().map(|p| p.as_str());
 	let mut ui = ui_from_preset(preset)?;
 
@@ -145,9 +145,9 @@ fn build_ui_config(cli: &CliArgs) -> Result<UiConfig> {
 }
 
 /// Resolve a UI preset name to its configuration.
-fn ui_from_preset(preset: Option<&str>) -> Result<UiConfig> {
+fn ui_from_preset(preset: Option<&str>) -> Result<UiLabels> {
 	match preset {
-		None | Some("default") => Ok(UiConfig::default()),
+		None | Some("default") => Ok(UiLabels::default()),
 		Some(name) => anyhow::bail!("unknown UI preset: {}", name),
 	}
 }

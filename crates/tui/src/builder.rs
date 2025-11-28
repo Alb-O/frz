@@ -6,24 +6,24 @@ use frz_core::search_pipeline::{SearchData, SearchOutcome};
 use ratatui::layout::Constraint;
 
 use super::App;
-use super::config::UiConfig;
+use super::config::UiLabels;
 use super::style::Theme;
 
-/// A small builder for configuring the interactive search UI.
+/// A builder for configuring an interactive fuzzy picker.
 /// This presents an fzf-like API for setting prompts, column
 /// headings and column widths before running the interactive picker.
-pub struct SearchUi {
+pub struct Picker {
 	data: SearchData,
 	headers: Option<Vec<String>>,
 	widths: Option<Vec<Constraint>>,
-	ui_config: Option<UiConfig>,
+	ui_config: Option<UiLabels>,
 	theme: Option<Theme>,
 	bat_theme: Option<String>,
 	index_updates: Option<Receiver<IndexResult>>,
 	preview_enabled: bool,
 }
 
-impl SearchUi {
+impl Picker {
 	/// Create a new search UI for the provided data.
 	pub fn new(data: SearchData) -> Self {
 		Self {
@@ -68,7 +68,7 @@ impl SearchUi {
 	}
 
 	/// Apply a complete UI configuration override.
-	pub fn with_ui_config(mut self, config: UiConfig) -> Self {
+	pub fn with_ui_config(mut self, config: UiLabels) -> Self {
 		self.ui_config = Some(config);
 		self
 	}

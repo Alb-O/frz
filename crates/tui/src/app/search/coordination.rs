@@ -3,7 +3,7 @@ use std::sync::mpsc::TryRecvError;
 use frz_core::filesystem_indexer::IndexUpdate;
 use frz_core::search_pipeline::{MatchBatch, SearchResult, SearchView, SearchViewV2};
 
-use super::App;
+use crate::app::state::App;
 
 impl<'a> App<'a> {
 	/// Send a search request for the current query text and mode.
@@ -62,8 +62,8 @@ impl<'a> SearchView for App<'a> {
 	}
 
 	fn clear_matches(&mut self) {
-		self.tab_buffers.filtered.clear();
-		self.tab_buffers.scores.clear();
+		self.results.buffers.filtered.clear();
+		self.results.buffers.scores.clear();
 		self.ensure_selection();
 	}
 

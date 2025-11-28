@@ -2,13 +2,13 @@ use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use throbber_widgets_tui::{Throbber, ThrobberState};
 
-use crate::input::SearchInput;
+use crate::input::QueryInput;
 use crate::style::Theme;
 
 /// Argument bundle for rendering the input area.
 pub struct InputContext<'a> {
 	/// The search input widget.
-	pub search_input: &'a SearchInput<'a>,
+	pub search_input: &'a QueryInput<'a>,
 	/// Placeholder text shown when input is empty.
 	pub placeholder: Option<&'a str>,
 	/// Rendering area.

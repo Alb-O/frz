@@ -14,8 +14,7 @@ pub use theme::{
 	builtin_themes, by_name, default_theme, descriptors, names, register_additional,
 };
 
-/// Aggregate container for styling knobs. Additional visual tweaks can be
-/// surfaced here over time while keeping themes focused on color schemes.
+/// Aggregate container for styling knobs. Currently only color themes.
 #[derive(Clone, Debug, Default)]
 pub struct StyleConfig {
 	/// The active theme for the UI.

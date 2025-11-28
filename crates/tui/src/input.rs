@@ -9,13 +9,13 @@ use tui_textarea::{Input, Key, TextArea};
 
 use super::style::Theme;
 
-/// A single-line text input widget
-pub struct SearchInput<'a> {
+/// A single-line text input widget for entering search queries
+pub struct QueryInput<'a> {
 	textarea: TextArea<'a>,
 }
 
-impl<'a> SearchInput<'a> {
-	/// Create a new search input with optional initial text
+impl<'a> QueryInput<'a> {
+	/// Create a new query input with optional initial text
 	pub fn new(initial_text: impl Into<String>) -> Self {
 		let text = initial_text.into().replace(['\n', '\r'], " ");
 		let mut textarea = TextArea::new(vec![text]);
@@ -103,7 +103,7 @@ impl<'a> SearchInput<'a> {
 	}
 }
 
-impl<'a> Default for SearchInput<'a> {
+impl<'a> Default for QueryInput<'a> {
 	fn default() -> Self {
 		Self::new("")
 	}
@@ -115,33 +115,33 @@ mod tests {
 
 	#[test]
 	fn test_new_input() {
-		let input = SearchInput::new("test");
+		let input = QueryInput::new("test");
 		assert_eq!(input.text(), "test");
 	}
 
 	#[test]
 	fn test_newlines_replaced() {
-		let input = SearchInput::new("test\nwith\rnewlines");
+		let input = QueryInput::new("test\nwith\rnewlines");
 		assert_eq!(input.text(), "test with newlines");
 	}
 
 	#[test]
 	fn test_clear() {
-		let mut input = SearchInput::new("test");
+		let mut input = QueryInput::new("test");
 		input.clear();
 		assert_eq!(input.text(), "");
 	}
 
 	#[test]
 	fn test_set_text() {
-		let mut input = SearchInput::new("initial");
+		let mut input = QueryInput::new("initial");
 		input.set_text("updated");
 		assert_eq!(input.text(), "updated");
 	}
 
 	#[test]
 	fn test_input_noop_backspace() {
-		let mut input = SearchInput::default();
+		let mut input = QueryInput::default();
 		let backspace = Input {
 			key: Key::Backspace,
 			ctrl: false,
@@ -153,7 +153,7 @@ mod tests {
 
 	#[test]
 	fn test_input_whitespace_only_change_is_ignored() {
-		let mut input = SearchInput::default();
+		let mut input = QueryInput::default();
 		let space = Input {
 			key: Key::Char(' '),
 			ctrl: false,
@@ -166,7 +166,7 @@ mod tests {
 
 	#[test]
 	fn test_input_actual_change_triggers_update() {
-		let mut input = SearchInput::default();
+		let mut input = QueryInput::default();
 		let letter = Input {
 			key: Key::Char('a'),
 			ctrl: false,

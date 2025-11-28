@@ -1,0 +1,16 @@
+---
+source: crates/tui/src/components/preview/wrap.rs
+expression: snapshot
+---
+ Files                                                         Indexed Files: 0 
+ ╭─────────────────────────────────────╮╭ wrap_example.rs ────────────────────╮ 
+ │Path                         Score   ││   1 fn long_function_name(arg_one: █│ 
+ │ ─────────────────────────────────── ││     usize, arg_two: usize,         █│ 
+ │             No results              ││     arg_three: usize) {            █│ 
+ │                                     ││   2     do_something_complicated(  █│ 
+ │                                     ││         arg_one, arg_two, arg_three││ 
+ │                                     ││         );                         ││ 
+ │                                     ││   3     do_something_even_more_comp││ 
+ │                                     ││         licated();                 ││ 
+ │                                     ││   4 }                              ││ 
+ ╰─────────────────────────────────────╯╰─────────────────────────────────────╯
