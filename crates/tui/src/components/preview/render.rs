@@ -7,8 +7,7 @@ use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Borders, Paragraph, ScrollbarState};
 
 use super::content::{PreviewContent, PreviewKind};
-use crate::app::preview::PreviewScrollMetrics;
-use crate::components::render_scrollbar;
+use crate::components::{ScrollMetrics, render_scrollbar};
 use crate::style::Theme;
 
 /// Context for rendering the preview pane.
@@ -24,7 +23,7 @@ pub struct PreviewContext<'a> {
 	/// Output slot for the rendered scrollbar area (if any).
 	pub scrollbar_area: &'a mut Option<Rect>,
 	/// Cached scroll metrics for the current viewport/content.
-	pub scroll_metrics: Option<PreviewScrollMetrics>,
+	pub scroll_metrics: Option<ScrollMetrics>,
 	/// Color theme.
 	pub theme: &'a Theme,
 }
@@ -78,7 +77,7 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 		}
 		PreviewKind::Text { lines: _ } => {
 			let metrics = ctx.scroll_metrics.unwrap_or_else(|| {
-				PreviewScrollMetrics::compute(ctx.wrapped_lines.len(), inner.height as usize)
+				ScrollMetrics::compute(ctx.wrapped_lines.len(), inner.height as usize)
 			});
 
 			let visible_lines: Vec<Line<'_>> = ctx

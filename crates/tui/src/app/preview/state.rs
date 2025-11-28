@@ -4,39 +4,7 @@ use ratatui::layout::Rect;
 use ratatui::text::Line;
 use ratatui::widgets::ScrollbarState;
 
-use crate::components::{PreviewContent, PreviewRuntime};
-
-/// Precomputed scrolling metrics for the preview viewport.
-#[derive(Clone, Copy, Debug, Default)]
-pub struct PreviewScrollMetrics {
-	pub content_length: usize,
-	pub viewport_len: usize,
-	pub max_scroll: usize,
-	pub needs_scrollbar: bool,
-}
-
-impl PreviewScrollMetrics {
-	/// Compute scroll metrics from content length and viewport height.
-	///
-	/// Returns default (empty) metrics if either value is zero.
-	#[must_use]
-	pub fn compute(content_length: usize, viewport_height: usize) -> Self {
-		if content_length == 0 || viewport_height == 0 {
-			return Self::default();
-		}
-
-		let viewport_len = viewport_height.min(content_length).max(1);
-		let max_scroll = content_length.saturating_sub(viewport_len);
-		let needs_scrollbar = content_length > viewport_len;
-
-		Self {
-			content_length,
-			viewport_len,
-			max_scroll,
-			needs_scrollbar,
-		}
-	}
-}
+use crate::components::{PreviewContent, PreviewRuntime, ScrollMetrics, point_in_rect};
 
 /// State for the preview pane.
 pub(crate) struct PreviewState {
@@ -71,7 +39,7 @@ pub(crate) struct PreviewState {
 	/// Background preview generation runtime.
 	pub runtime: PreviewRuntime,
 	/// Cached scroll metrics for the current viewport/content.
-	pub scroll_metrics: Option<PreviewScrollMetrics>,
+	pub scroll_metrics: Option<ScrollMetrics>,
 }
 
 impl Default for PreviewState {
@@ -115,9 +83,9 @@ impl PreviewState {
 		content_length.saturating_sub(viewport_len)
 	}
 
-	pub fn compute_scroll_metrics(&self, viewport_height: usize) -> Option<PreviewScrollMetrics> {
+	pub fn compute_scroll_metrics(&self, viewport_height: usize) -> Option<ScrollMetrics> {
 		let content_length = self.wrapped_lines.len();
-		let metrics = PreviewScrollMetrics::compute(content_length, viewport_height);
+		let metrics = ScrollMetrics::compute(content_length, viewport_height);
 		if metrics.content_length == 0 {
 			None
 		} else {
@@ -146,8 +114,7 @@ impl PreviewState {
 
 		self.scroll_metrics = Some(metrics);
 		self.scroll = self.scroll.min(metrics.max_scroll);
-		let position =
-			self.scrollbar_position(self.scroll, metrics.max_scroll, metrics.content_length);
+		let position = metrics.scrollbar_position(self.scroll);
 
 		self.scrollbar_state = self
 			.scrollbar_state
@@ -167,16 +134,6 @@ impl PreviewState {
 			return;
 		};
 
-		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
-		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
-		self.hovered = inside_x && inside_y;
-	}
-
-	fn scrollbar_position(&self, scroll: usize, max_scroll: usize, content_length: usize) -> usize {
-		if max_scroll == 0 || content_length == 0 {
-			0
-		} else {
-			scroll.saturating_mul(content_length.saturating_sub(1)) / max_scroll
-		}
+		self.hovered = point_in_rect(column, row, area);
 	}
 }

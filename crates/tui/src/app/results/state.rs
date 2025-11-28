@@ -6,15 +6,7 @@ use ratatui::layout::Rect;
 use ratatui::widgets::{ScrollbarState, TableState};
 
 use crate::components::tables::TABLE_HEADER_ROWS;
-
-/// Precomputed scrolling metrics for the current viewport/content.
-#[derive(Clone, Copy, Debug)]
-pub(crate) struct ScrollMetrics {
-	pub content_length: usize,
-	pub max_offset: usize,
-	pub needs_scrollbar: bool,
-	pub viewport_rows: usize,
-}
+use crate::components::{ScrollMetrics, point_in_rect};
 
 /// Cache of rendered rows for a specific tab.
 #[derive(Default)]
@@ -98,9 +90,7 @@ impl ResultsState {
 			return;
 		};
 
-		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
-		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
-		self.hovered = inside_x && inside_y;
+		self.hovered = point_in_rect(column, row, area);
 	}
 
 	/// Attempt to select a result at the given mouse position.
@@ -141,6 +131,8 @@ impl ResultsState {
 	}
 
 	/// Compute scroll/offset metrics for the results viewport.
+	///
+	/// Uses `ScrollMetrics` but accounts for table header rows.
 	pub fn scroll_metrics(&self, viewport_height: usize) -> Option<ScrollMetrics> {
 		let content_length = self.filtered_len();
 		if content_length == 0 || viewport_height == 0 {
@@ -148,15 +140,13 @@ impl ResultsState {
 		}
 
 		let available_rows = viewport_height.saturating_sub(TABLE_HEADER_ROWS);
-		let needs_scrollbar = available_rows > 0 && content_length > available_rows;
-		let max_offset = content_length.saturating_sub(available_rows);
-
-		Some(ScrollMetrics {
-			content_length,
-			max_offset,
-			needs_scrollbar,
-			viewport_rows: available_rows,
-		})
+		// Use the unified ScrollMetrics::compute for the available rows
+		let metrics = ScrollMetrics::compute(content_length, available_rows);
+		if metrics.content_length == 0 {
+			None
+		} else {
+			Some(metrics)
+		}
 	}
 
 	/// Update scrollbar state to match current table content and scroll position.
@@ -178,25 +168,19 @@ impl ResultsState {
 			return;
 		}
 
-		let offset = self.table_state.offset().min(metrics.max_offset);
+		let offset = self.table_state.offset().min(metrics.max_scroll);
 		*self.table_state.offset_mut() = offset;
 		if let Some(selected) = self.table_state.selected() {
 			self.table_state
 				.select(Some(selected.min(metrics.content_length.saturating_sub(1))));
 		}
 
-		let position = if metrics.max_offset > 0 {
-			// Map offset to scrollbar position
-			((offset as f64 / metrics.max_offset as f64) * (metrics.content_length - 1) as f64)
-				.round() as usize
-		} else {
-			0
-		};
+		let position = metrics.scrollbar_position(offset);
 
 		self.scrollbar_state = self
 			.scrollbar_state
 			.content_length(metrics.content_length)
-			.viewport_content_length(metrics.viewport_rows)
+			.viewport_content_length(metrics.viewport_len)
 			.position(position);
 	}
 }

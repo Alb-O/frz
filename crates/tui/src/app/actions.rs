@@ -6,6 +6,7 @@ use ratatui::crossterm::event::{
 use ratatui::layout::Rect;
 
 use super::App;
+use crate::components::point_in_rect;
 
 impl<'a> App<'a> {
 	/// Process a keyboard event and return a result if the user exits.
@@ -159,24 +160,14 @@ impl<'a> App<'a> {
 		let Some(area) = self.preview.scrollbar_area else {
 			return false;
 		};
-		if area.width == 0 || area.height == 0 {
-			return false;
-		}
-		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
-		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
-		inside_x && inside_y
+		point_in_rect(column, row, area)
 	}
 
 	fn results_scrollbar_contains(&self, column: u16, row: u16) -> bool {
 		let Some(area) = self.results.scrollbar_area else {
 			return false;
 		};
-		if area.width == 0 || area.height == 0 {
-			return false;
-		}
-		let inside_x = column >= area.x && column < area.x.saturating_add(area.width);
-		let inside_y = row >= area.y && row < area.y.saturating_add(area.height);
-		inside_x && inside_y
+		point_in_rect(column, row, area)
 	}
 
 	pub(crate) fn drag_preview_scrollbar_to(&mut self, row: u16) -> bool {
@@ -257,8 +248,8 @@ impl<'a> App<'a> {
 			area,
 			row,
 			self.results.table_state.offset(),
-			metrics.max_offset,
-			metrics.viewport_rows,
+			metrics.max_scroll,
+			metrics.viewport_len,
 			metrics.content_length,
 			&mut self.results.drag_anchor,
 		) else {

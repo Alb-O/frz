@@ -20,5 +20,5 @@ pub use preview::{
 };
 pub use progress::IndexProgress;
 pub use prompt::{InputContext, ProgressState, render_input};
-pub use scrollbar::render_scrollbar;
+pub use scrollbar::{ScrollMetrics, point_in_rect, render_scrollbar};
 pub use tables::render_table;

@@ -10,8 +10,6 @@ use super::config::UiLabels;
 use super::style::Theme;
 
 /// A builder for configuring an interactive fuzzy picker.
-/// This presents an fzf-like API for setting prompts, column
-/// headings and column widths before running the interactive picker.
 pub struct Picker {
 	data: SearchData,
 	headers: Option<Vec<String>>,
