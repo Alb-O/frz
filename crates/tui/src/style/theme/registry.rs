@@ -3,8 +3,7 @@ use std::sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use super::builtins;
 use super::types::{
-	AliasConflict, Theme, ThemeDefinition, ThemeDescriptor, ThemeRegistration,
-	ThemeRegistrationReport,
+	AliasConflict, Theme, ThemeDescriptor, ThemeRegistration, ThemeRegistrationReport,
 };
 
 #[derive(Debug)]
@@ -198,12 +197,6 @@ where
 	}
 
 	report
-}
-
-/// Register additional static theme definitions.
-#[must_use]
-pub fn register_definitions(definitions: &[ThemeDefinition]) -> ThemeRegistrationReport {
-	register_additional(definitions.iter().copied().map(ThemeRegistration::from))
 }
 
 /// Lookup a Theme by case-insensitive name.

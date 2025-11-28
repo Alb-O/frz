@@ -88,7 +88,7 @@ impl<'a> SearchInput<'a> {
 		} else {
 			format!("{} > {}", prompt, self.text())
 		};
-		let para = Paragraph::new(display).style(Theme::default().prompt_style());
+		let para = Paragraph::new(display).style(Theme::default().prompt);
 		para.render(area, frame.buffer_mut());
 	}
 

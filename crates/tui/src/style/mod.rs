@@ -10,9 +10,8 @@ pub mod theme;
 
 /// Re-export theme types and utilities.
 pub use theme::{
-	AliasConflict, Theme, ThemeDefinition, ThemeDescriptor, ThemeRegistration,
-	ThemeRegistrationReport, bat_theme, builtin_themes, by_name, default_theme, descriptors, names,
-	register_additional, register_definitions,
+	AliasConflict, Theme, ThemeDescriptor, ThemeRegistration, ThemeRegistrationReport, bat_theme,
+	builtin_themes, by_name, default_theme, descriptors, names, register_additional,
 };
 
 /// Aggregate container for styling knobs. Additional visual tweaks can be

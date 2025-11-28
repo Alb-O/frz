@@ -125,7 +125,7 @@ impl App<'_> {
 			&self.tab_buffers.scores,
 			&self.data.files,
 			highlight_state,
-			self.style.theme.highlight_style(),
+			self.style.theme.highlight,
 			Some(&column_widths),
 		);
 

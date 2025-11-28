@@ -69,7 +69,7 @@ fn render_placeholder(frame: &mut ratatui::Frame, area: Rect, text: &str, theme:
 	if area.width == 0 || area.height == 0 || text.is_empty() {
 		return;
 	}
-	let dimmed_style = theme.empty_style();
+	let dimmed_style = theme.empty;
 	let available_width = area.width as usize;
 	let display_text: String = text.chars().take(available_width).collect();
 	let buffer = frame.buffer_mut();
@@ -93,7 +93,7 @@ fn render_progress(
 		return;
 	}
 
-	let muted_style = theme.empty_style();
+	let muted_style = theme.empty;
 	let label_span = Span::styled(progress_text.to_string(), muted_style);
 	let mut line = Line::default();
 	if !progress_complete {

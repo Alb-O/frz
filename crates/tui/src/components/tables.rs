@@ -53,7 +53,7 @@ pub fn render_table(
 	let mut block = Block::default()
 		.borders(Borders::ALL)
 		.border_set(ratatui::symbols::border::ROUNDED)
-		.border_style(Style::default().fg(theme.header_fg()));
+		.border_style(Style::default().fg(theme.header.fg.unwrap_or(ratatui::style::Color::Reset)));
 
 	if let Some(title) = spec.title.clone() {
 		block = block.title(title);
@@ -81,7 +81,7 @@ fn render_configured_table(
 	spec: TableSpec<'_>,
 ) {
 	let header_cells = spec.headers.into_iter().map(Cell::from).collect::<Vec<_>>();
-	let header_style = Style::default().fg(theme.header_fg());
+	let header_style = Style::default().fg(theme.header.fg.unwrap_or(ratatui::style::Color::Reset));
 	let header = Row::new(header_cells)
 		.style(header_style)
 		.height(1)
@@ -96,7 +96,7 @@ fn render_configured_table(
 		.header(header)
 		.column_spacing(TABLE_COLUMN_SPACING)
 		.highlight_spacing(highlight_spacing)
-		.row_highlight_style(theme.row_highlight_style())
+		.row_highlight_style(theme.row_highlight)
 		.highlight_symbol(HIGHLIGHT_SYMBOL);
 	frame.render_stateful_widget(table, area, table_state);
 
@@ -131,7 +131,7 @@ fn render_header_separator(frame: &mut Frame, area: Rect, theme: &Theme, header_
 	}
 
 	let middle = "─".repeat(width - 2);
-	let middle_style = Style::default().fg(theme.header_fg());
+	let middle_style = Style::default().fg(theme.header.fg.unwrap_or(ratatui::style::Color::Reset));
 	let middle_span = Span::styled(middle, middle_style);
 	let spans = vec![Span::raw(" "), middle_span, Span::raw(" ")];
 	let para = Paragraph::new(Text::from(Line::from(spans)));

@@ -3,12 +3,9 @@ mod registry;
 mod types;
 
 pub use builtins::default_theme;
-pub use registry::{
-	bat_theme, by_name, descriptors, names, register_additional, register_definitions,
-};
+pub use registry::{bat_theme, by_name, descriptors, names, register_additional};
 pub use types::{
-	AliasConflict, Theme, ThemeDefinition, ThemeDescriptor, ThemeRegistration,
-	ThemeRegistrationReport,
+	AliasConflict, Theme, ThemeDescriptor, ThemeRegistration, ThemeRegistrationReport,
 };
 
 /// Return the built-in themes bundled with the application.

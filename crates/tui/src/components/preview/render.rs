@@ -29,10 +29,7 @@ pub struct PreviewContext<'a> {
 
 /// Render a centered placeholder message.
 fn render_centered_placeholder(frame: &mut Frame, area: Rect, message: &str, theme: &Theme) {
-	let style = Style::default().fg(theme
-		.empty_style()
-		.fg
-		.unwrap_or(ratatui::style::Color::Gray));
+	let style = Style::default().fg(theme.empty.fg.unwrap_or(ratatui::style::Color::Gray));
 
 	// Vertically center by adding blank lines
 	let vertical_padding = area.height.saturating_sub(1) / 2;
@@ -56,7 +53,9 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 	let block = Block::default()
 		.borders(Borders::ALL)
 		.border_set(ratatui::symbols::border::ROUNDED)
-		.border_style(Style::default().fg(ctx.theme.header_fg()))
+		.border_style(
+			Style::default().fg(ctx.theme.header.fg.unwrap_or(ratatui::style::Color::Reset)),
+		)
 		.title(title);
 
 	let inner = block.inner(area);

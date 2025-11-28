@@ -1,6 +1,4 @@
-mod config;
 mod loader;
-mod style;
 
 use std::sync::OnceLock;
 

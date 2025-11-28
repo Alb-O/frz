@@ -16,104 +16,18 @@ pub struct Theme {
 }
 
 impl Theme {
-	/// Returns the style for header elements.
-	#[must_use]
-	pub fn header_style(&self) -> Style {
-		self.header
-	}
-
-	/// Returns the style for highlighted rows.
-	#[must_use]
-	pub fn row_highlight_style(&self) -> Style {
-		self.row_highlight
-	}
-
-	/// Returns the style for prompt elements.
-	#[must_use]
-	pub fn prompt_style(&self) -> Style {
-		self.prompt
-	}
-
-	/// Returns the style for empty states.
-	#[must_use]
-	pub fn empty_style(&self) -> Style {
-		self.empty
-	}
-
-	/// Returns the style for highlighted elements.
-	#[must_use]
-	pub fn highlight_style(&self) -> Style {
-		self.highlight
-	}
-
-	/// Returns the foreground color of the header style.
-	#[must_use]
-	pub fn header_fg(&self) -> Color {
-		self.header.fg.unwrap_or(Color::Reset)
-	}
-
-	/// Returns the background color of the header style.
-	#[must_use]
-	pub fn header_bg(&self) -> Color {
-		self.header.bg.unwrap_or(Color::Reset)
-	}
-
-	/// Returns the background color of the row highlight style.
-	#[must_use]
-	pub fn row_highlight_bg(&self) -> Color {
-		self.row_highlight.bg.unwrap_or(Color::Reset)
-	}
-
 	/// Returns the style for inactive tabs.
 	#[must_use]
 	pub fn tab_inactive_style(&self) -> Style {
 		Style::new()
-			.fg(self.header_fg())
-			.bg(self.row_highlight_bg())
+			.fg(self.header.fg.unwrap_or(Color::Reset))
+			.bg(self.row_highlight.bg.unwrap_or(Color::Reset))
 	}
 
 	/// Returns the style for highlighted tabs.
 	#[must_use]
 	pub fn tab_highlight_style(&self) -> Style {
-		Style::new().bg(self.header_bg())
-	}
-}
-
-/// Definition for a built-in theme bundled with the application.
-#[derive(Debug, Clone, Copy)]
-pub struct ThemeDefinition {
-	/// The name of the theme.
-	pub name: &'static str,
-	/// The theme configuration.
-	pub theme: Theme,
-	/// Alternate names for the theme.
-	pub aliases: &'static [&'static str],
-}
-
-impl ThemeDefinition {
-	/// Creates a new theme definition with the given name and theme.
-	pub const fn new(name: &'static str, theme: Theme) -> Self {
-		Self {
-			name,
-			theme,
-			aliases: &[],
-		}
-	}
-
-	/// Adds aliases to this theme definition.
-	pub const fn with_aliases(mut self, aliases: &'static [&'static str]) -> Self {
-		self.aliases = aliases;
-		self
-	}
-
-	/// Converts this definition into a theme registration.
-	pub fn to_registration(self) -> ThemeRegistration {
-		ThemeRegistration {
-			name: self.name.to_owned(),
-			theme: self.theme,
-			aliases: self.aliases.iter().map(|alias| alias.to_string()).collect(),
-			bat_theme: None,
-		}
+		Style::new().bg(self.header.bg.unwrap_or(Color::Reset))
 	}
 }
 
@@ -161,12 +75,6 @@ impl ThemeRegistration {
 	{
 		self.aliases.extend(aliases.into_iter().map(Into::into));
 		self
-	}
-}
-
-impl From<ThemeDefinition> for ThemeRegistration {
-	fn from(definition: ThemeDefinition) -> Self {
-		definition.to_registration()
 	}
 }
 
