@@ -6,7 +6,7 @@
 
 mod actions;
 mod indexing;
-mod preview;
+pub(crate) mod preview;
 mod render;
 mod results;
 mod search;

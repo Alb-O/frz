@@ -4,11 +4,11 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{
-	Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
-};
+use ratatui::widgets::{Block, Borders, Paragraph, ScrollbarState};
 
 use super::content::{PreviewContent, PreviewKind};
+use crate::app::preview::PreviewScrollMetrics;
+use crate::components::render_scrollbar;
 use crate::style::Theme;
 
 /// Context for rendering the preview pane.
@@ -23,6 +23,8 @@ pub struct PreviewContext<'a> {
 	pub scrollbar_state: &'a mut ScrollbarState,
 	/// Output slot for the rendered scrollbar area (if any).
 	pub scrollbar_area: &'a mut Option<Rect>,
+	/// Cached scroll metrics for the current viewport/content.
+	pub scroll_metrics: Option<PreviewScrollMetrics>,
 	/// Color theme.
 	pub theme: &'a Theme,
 }
@@ -75,53 +77,52 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 			render_centered_placeholder(frame, inner, msg, ctx.theme);
 		}
 		PreviewKind::Text { lines: _ } => {
+			let metrics = ctx.scroll_metrics.unwrap_or_else(|| {
+				let viewport_len = inner.height as usize;
+				let content_length = ctx.wrapped_lines.len();
+				if content_length == 0 {
+					return PreviewScrollMetrics {
+						content_length,
+						viewport_len: 0,
+						max_scroll: 0,
+						needs_scrollbar: false,
+					};
+				}
+				let viewport_len = viewport_len.min(content_length).max(1);
+				let max_scroll = content_length.saturating_sub(viewport_len);
+				let needs_scrollbar = content_length > viewport_len;
+				PreviewScrollMetrics {
+					content_length,
+					viewport_len,
+					max_scroll,
+					needs_scrollbar,
+				}
+			});
+
 			// Create scrollable view of content
 			let visible_lines: Vec<Line<'_>> = ctx
 				.wrapped_lines
 				.iter()
 				.skip(ctx.scroll_offset)
-				.take(inner.height as usize)
+				.take(metrics.viewport_len)
 				.cloned()
 				.collect();
 
 			let para = Paragraph::new(visible_lines);
 
 			// Render scrollbar only if content overflows
-			let content_length = ctx.wrapped_lines.len();
-			let viewport_height = inner.height as usize;
-
-			if content_length > viewport_height {
-				let text_area = Rect {
-					x: inner.x,
-					y: inner.y,
-					width: inner.width.saturating_sub(1),
-					height: inner.height,
-				};
+			if metrics.needs_scrollbar {
+				// Render scrollbar and get adjusted content area
+				let text_area = render_scrollbar(
+					frame,
+					inner,
+					ctx.scrollbar_state,
+					ctx.scrollbar_area,
+					ctx.theme,
+				);
 
 				// Render the text inside the adjusted area so it doesn't overlap the scrollbar
 				frame.render_widget(para, text_area);
-
-				let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-					.begin_symbol(None)
-					.end_symbol(None)
-					.track_symbol(Some("│"))
-					.style(
-						Style::default().fg(ctx
-							.theme
-							.header
-							.fg
-							.unwrap_or(ratatui::style::Color::Reset)),
-					);
-
-				// Render scrollbar aligned to the content's right edge
-				let scrollbar_area = Rect {
-					x: inner.x + inner.width.saturating_sub(1),
-					y: inner.y,
-					width: 1,
-					height: inner.height,
-				};
-				*ctx.scrollbar_area = Some(scrollbar_area);
-				frame.render_stateful_widget(scrollbar, scrollbar_area, ctx.scrollbar_state);
 			} else {
 				frame.render_widget(para, inner);
 			}

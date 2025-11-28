@@ -339,10 +339,6 @@ impl<'a> App<'a> {
 		self.preview.scroll_down(lines);
 	}
 
-	pub(crate) fn max_preview_scroll(&self, content_length: usize) -> usize {
-		self.preview.max_scroll(content_length)
-	}
-
 	pub(crate) fn update_preview_hover(&mut self, column: u16, row: u16) {
 		self.preview.update_hover(column, row);
 	}
@@ -461,7 +457,7 @@ mod tests {
 		let dragged = app.drag_preview_scrollbar_to(bottom);
 		assert!(dragged, "drag should succeed when scrollbar is present");
 
-		let expected_max = app.max_preview_scroll(app.preview.wrapped_lines.len());
+		let expected_max = app.preview.max_scroll(app.preview.wrapped_lines.len());
 		assert_eq!(
 			app.preview.scroll, expected_max,
 			"dragging to the bottom should reach max scroll based on wrapped lines"

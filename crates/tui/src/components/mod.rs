@@ -7,6 +7,8 @@ pub mod progress;
 pub mod prompt;
 /// Table row construction and highlighting.
 pub mod rows;
+/// Scrollbar for viewports.
+pub mod scrollbar;
 /// Table rendering and configuration.
 pub mod tables;
 
@@ -18,4 +20,5 @@ pub use preview::{
 };
 pub use progress::IndexProgress;
 pub use prompt::{InputContext, ProgressState, render_input};
-pub use tables::{TableRenderContext, render_table};
+pub use scrollbar::render_scrollbar;
+pub use tables::render_table;

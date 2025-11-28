@@ -6,6 +6,15 @@ use ratatui::widgets::ScrollbarState;
 
 use crate::components::{PreviewContent, PreviewRuntime};
 
+/// Precomputed scrolling metrics for the preview viewport.
+#[derive(Clone, Copy, Debug)]
+pub struct PreviewScrollMetrics {
+	pub content_length: usize,
+	pub viewport_len: usize,
+	pub max_scroll: usize,
+	pub needs_scrollbar: bool,
+}
+
 /// State for the preview pane.
 pub(crate) struct PreviewState {
 	/// Whether the preview pane is visible.
@@ -30,12 +39,16 @@ pub(crate) struct PreviewState {
 	pub hovered: bool,
 	/// Whether the user is dragging the preview scrollbar.
 	pub dragging: bool,
+	/// Mouse offset into the scrollbar thumb when dragging.
+	pub drag_anchor: Option<u16>,
 	/// Path of the file whose preview is currently displayed.
 	pub path: String,
 	/// Path of the file we're currently loading a preview for (if any).
 	pub pending_path: Option<String>,
 	/// Background preview generation runtime.
 	pub runtime: PreviewRuntime,
+	/// Cached scroll metrics for the current viewport/content.
+	pub scroll_metrics: Option<PreviewScrollMetrics>,
 }
 
 impl Default for PreviewState {
@@ -52,9 +65,11 @@ impl Default for PreviewState {
 			scrollbar_area: None,
 			hovered: false,
 			dragging: false,
+			drag_anchor: None,
 			path: String::new(),
 			pending_path: None,
 			runtime: PreviewRuntime::default(),
+			scroll_metrics: None,
 		}
 	}
 }
@@ -77,6 +92,24 @@ impl PreviewState {
 		content_length.saturating_sub(viewport_len)
 	}
 
+	pub fn compute_scroll_metrics(&self, viewport_height: usize) -> Option<PreviewScrollMetrics> {
+		let content_length = self.wrapped_lines.len();
+		if content_length == 0 || viewport_height == 0 {
+			return None;
+		}
+
+		let viewport_len = viewport_height.min(content_length).max(1);
+		let max_scroll = content_length.saturating_sub(viewport_len);
+		let needs_scrollbar = content_length > viewport_len;
+
+		Some(PreviewScrollMetrics {
+			content_length,
+			viewport_len,
+			max_scroll,
+			needs_scrollbar,
+		})
+	}
+
 	pub fn scroll_up(&mut self, lines: usize) {
 		self.scroll = self.scroll.saturating_sub(lines);
 		self.update_scrollbar();
@@ -90,16 +123,21 @@ impl PreviewState {
 	}
 
 	pub fn update_scrollbar(&mut self) {
-		let content_length = self.wrapped_lines.len();
-		let viewport_len = self.viewport_len(content_length);
-		let max_scroll = self.max_scroll(content_length);
-		self.scroll = self.scroll.min(max_scroll);
-		let position = self.scrollbar_position(self.scroll, max_scroll, content_length);
+		let Some(metrics) = self.compute_scroll_metrics(self.viewport_height) else {
+			self.scrollbar_state = ScrollbarState::default();
+			self.scroll_metrics = None;
+			return;
+		};
+
+		self.scroll_metrics = Some(metrics);
+		self.scroll = self.scroll.min(metrics.max_scroll);
+		let position =
+			self.scrollbar_position(self.scroll, metrics.max_scroll, metrics.content_length);
 
 		self.scrollbar_state = self
 			.scrollbar_state
-			.content_length(content_length)
-			.viewport_content_length(viewport_len)
+			.content_length(metrics.content_length)
+			.viewport_content_length(metrics.viewport_len)
 			.position(position);
 	}
 

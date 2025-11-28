@@ -33,7 +33,10 @@ pub fn build_file_rows<'a>(
 			let path_highlight = highlight_state
 				.as_ref()
 				.and_then(|(needle, config)| highlight_for_refs(needle, config, &entry.path));
-			let path_width = column_widths.and_then(|widths| widths.first().copied());
+			// Leave one column of slack so we don't rely on the table drawing right up to the edge.
+			let path_width = column_widths
+				.and_then(|widths| widths.first().copied())
+				.map(|w| w.saturating_sub(1));
 			Some(Row::new([
 				highlight_cell_with_prefix(
 					&entry.path,

@@ -9,7 +9,7 @@ use ratatui::widgets::Paragraph;
 
 use super::App;
 use crate::components::rows::build_file_rows;
-use crate::components::tables::TableSpec;
+use crate::components::tables::{TABLE_HIGHLIGHT_SPACING, TableSpec};
 use crate::components::{
 	InputContext, PreviewContext, ProgressState, render_input, render_preview, render_table,
 };
@@ -28,7 +28,6 @@ impl App<'_> {
 			.split(area);
 
 		let (progress_text, progress_complete) = self.progress_status();
-		// Use tab label as placeholder
 		let placeholder = self.ui.tabs().first().map(|tab| tab.tab_label.as_str());
 		let input_ctx = InputContext {
 			search_input: &self.search_input,
@@ -83,7 +82,7 @@ impl App<'_> {
 				message_area.width = message_area.width.saturating_sub(2);
 				message_area.height -= 2; // Remove top and bottom borders
 
-				// Now account for header and divider within the inner area
+				// Account for header and divider within the inner area
 				const HEADER_AND_DIVIDER_HEIGHT: u16 = 2;
 				if message_area.height > HEADER_AND_DIVIDER_HEIGHT {
 					message_area.y += HEADER_AND_DIVIDER_HEIGHT;
@@ -102,12 +101,16 @@ impl App<'_> {
 	}
 
 	fn render_results(&mut self, frame: &mut Frame, area: ratatui::layout::Rect) {
+		// Update scrollbar state based on current viewport
+		let inner_height = area.height.saturating_sub(2) as usize;
+		self.results.update_scrollbar(inner_height);
+
 		let highlight_owned = self.highlight_for_query(self.data.files.len());
 		let highlight_state = highlight_owned
 			.as_ref()
 			.map(|(text, config)| (text.as_str(), config.clone()));
 
-		// Default headers and widths if not customized
+		// Default headers and widths if not set
 		let default_headers = vec!["Path".into(), "Score".into()];
 		let default_widths = vec![Constraint::Min(20), Constraint::Length(8)];
 
@@ -140,12 +143,15 @@ impl App<'_> {
 			widths: widths.clone(),
 			rows,
 			title: None,
+			highlight_spacing: TABLE_HIGHLIGHT_SPACING,
 		};
 
 		render_table(
 			frame,
 			area,
 			&mut self.results.table_state,
+			&mut self.results.scrollbar_state,
+			&mut self.results.scrollbar_area,
 			spec,
 			&self.style.theme,
 		);
@@ -165,6 +171,7 @@ impl App<'_> {
 			scroll_offset: self.preview.scroll,
 			scrollbar_state: &mut self.preview.scrollbar_state,
 			scrollbar_area: &mut self.preview.scrollbar_area,
+			scroll_metrics: self.preview.scroll_metrics,
 			theme: &self.style.theme,
 		};
 		render_preview(frame, area, ctx);

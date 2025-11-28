@@ -5,4 +5,4 @@
 
 mod state;
 
-pub(super) use state::PreviewState;
+pub(crate) use state::{PreviewScrollMetrics, PreviewState};
