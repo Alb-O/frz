@@ -399,7 +399,7 @@ impl<'a> App<'a> {
 		self.update_scrollbar_state();
 	}
 
-	fn preview_viewport_len(&self, content_length: usize) -> usize {
+	pub(crate) fn preview_viewport_len(&self, content_length: usize) -> usize {
 		if content_length == 0 {
 			0
 		} else {
@@ -407,7 +407,7 @@ impl<'a> App<'a> {
 		}
 	}
 
-	fn max_preview_scroll(&self, content_length: usize) -> usize {
+	pub(crate) fn max_preview_scroll(&self, content_length: usize) -> usize {
 		let viewport_len = self.preview_viewport_len(content_length);
 		content_length.saturating_sub(viewport_len)
 	}
@@ -516,6 +516,7 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use frz_core::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
+	use ratatui::text::Line;
 
 	use super::*;
 
@@ -579,5 +580,27 @@ mod tests {
 		};
 		app.replace_matches_v2(batch);
 		assert_eq!(app.tab_buffers.filtered, vec![0]);
+	}
+
+	#[test]
+	fn dragging_scrollbar_respects_wrapped_lines() {
+		let mut app = App::new(sample_data());
+		app.preview_enabled = true;
+		app.preview_viewport_height = 8;
+		app.preview_wrapped_lines = vec![Line::from("x"); 30];
+		app.preview_content = PreviewContent::text("wrapped.rs", vec![Line::from("x"); 5]);
+		app.preview_scrollbar_area = Some(Rect::new(0, 0, 1, 8));
+		app.update_scrollbar_state();
+
+		let area = app.preview_scrollbar_area.unwrap();
+		let bottom = area.y.saturating_add(area.height).saturating_sub(1);
+		let dragged = app.drag_preview_scrollbar_to(bottom);
+		assert!(dragged, "drag should succeed when scrollbar is present");
+
+		let expected_max = app.max_preview_scroll(app.preview_wrapped_lines.len());
+		assert_eq!(
+			app.preview_scroll, expected_max,
+			"dragging to the bottom should reach max scroll based on wrapped lines"
+		);
 	}
 }

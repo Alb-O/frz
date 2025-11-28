@@ -150,7 +150,7 @@ impl<'a> App<'a> {
 		inside_x && inside_y
 	}
 
-	fn drag_preview_scrollbar_to(&mut self, row: u16) -> bool {
+	pub(crate) fn drag_preview_scrollbar_to(&mut self, row: u16) -> bool {
 		let Some(area) = self.preview_scrollbar_area else {
 			return false;
 		};
@@ -158,9 +158,8 @@ impl<'a> App<'a> {
 			return false;
 		}
 
-		let content_length = self.preview_content.line_count();
-		let viewport_len = self.preview_viewport_height.max(1).min(content_length);
-		let max_scroll = content_length.saturating_sub(viewport_len);
+		let content_length = self.preview_wrapped_lines.len();
+		let max_scroll = self.max_preview_scroll(content_length);
 
 		if max_scroll == 0 {
 			self.preview_scroll = 0;

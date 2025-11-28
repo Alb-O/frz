@@ -1,4 +1,8 @@
-use ratatui::text::{Line, Span};
+use ratatui::{
+	style::Style,
+	text::{Line, Span},
+};
+use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 /// Soft-wrap highlighted lines while preserving a line number gutter and basic indentation.
@@ -210,41 +214,73 @@ fn take_spans_within_width(
 		return (Vec::new(), spans.to_vec());
 	}
 
-	let mut taken = Vec::new();
+	let mut taken_segments: Vec<(String, Style)> = Vec::new();
 	let mut used = 0;
-	let mut index = 0;
+	let mut last_break_index: Option<usize> = None;
+	let mut prev_was_break = false;
 
-	while index < spans.len() {
-		let span = spans[index].clone();
-		let span_text = span.content.to_string();
-		let span_width = span_text.width();
+	for (span_index, span) in spans.iter().enumerate() {
+		let mut parts = span.content.split_word_bounds().peekable();
 
-		if used + span_width <= max_width {
-			used += span_width;
-			taken.push(span);
-			index += 1;
-		} else {
-			let remaining_width = max_width.saturating_sub(used);
-			if remaining_width == 0 {
-				break;
+		while let Some(part) = parts.next() {
+			let part_width = part.width();
+			let is_break_segment = part.chars().all(|ch| !is_word_char(ch));
+
+			if used + part_width > max_width {
+				if used > 0 {
+					let break_index = if is_break_segment || prev_was_break {
+						Some(taken_segments.len())
+					} else {
+						last_break_index
+					};
+
+					if let Some(break_index) = break_index.filter(|idx| *idx > 0) {
+						let (head, tail) = taken_segments.split_at(break_index);
+						let mut rest_segments: Vec<(String, Style)> = tail.to_vec();
+						rest_segments.push((part.to_string(), span.style));
+						for remaining in parts {
+							rest_segments.push((remaining.to_string(), span.style));
+						}
+						let mut rest = coalesce_segments(&rest_segments);
+						rest.extend_from_slice(&spans[span_index + 1..]);
+						return (coalesce_segments(head), rest);
+					}
+
+					let remaining_width = max_width.saturating_sub(used);
+					let (left, right) = split_text_at_width(part, remaining_width);
+					if !left.is_empty() {
+						taken_segments.push((left, span.style));
+					}
+					let mut rest = Vec::new();
+					if !right.is_empty() {
+						rest.push(Span::styled(right, span.style));
+					}
+					rest.extend_from_slice(&spans[span_index + 1..]);
+					return (coalesce_segments(&taken_segments), rest);
+				}
+
+				let (left, right) = split_text_at_width(part, max_width);
+				if !left.is_empty() {
+					taken_segments.push((left, span.style));
+				}
+				let mut rest = Vec::new();
+				if !right.is_empty() {
+					rest.push(Span::styled(right, span.style));
+				}
+				rest.extend_from_slice(&spans[span_index + 1..]);
+				return (coalesce_segments(&taken_segments), rest);
 			}
 
-			let (left, right) = split_text_at_width(&span_text, remaining_width);
-			if !left.is_empty() {
-				taken.push(Span::styled(left, span.style));
+			taken_segments.push((part.to_string(), span.style));
+			used += part_width;
+			if is_break_segment || prev_was_break {
+				last_break_index = Some(taken_segments.len());
 			}
-
-			let mut rest = Vec::new();
-			if !right.is_empty() {
-				rest.push(Span::styled(right, span.style));
-			}
-			rest.extend_from_slice(&spans[index + 1..]);
-			return (taken, rest);
+			prev_was_break = is_break_segment;
 		}
 	}
 
-	let rest = spans[index..].to_vec();
-	(taken, rest)
+	(coalesce_segments(&taken_segments), Vec::new())
 }
 
 fn split_text_at_width(text: &str, target_width: usize) -> (String, String) {
@@ -287,6 +323,31 @@ fn leading_indent_width(spans: &[Span<'static>]) -> usize {
 	width
 }
 
+fn coalesce_segments(segments: &[(String, Style)]) -> Vec<Span<'static>> {
+	let mut coalesced: Vec<Span<'static>> = Vec::new();
+	let mut iter = segments.iter().peekable();
+
+	while let Some((text, style)) = iter.next() {
+		let mut merged = text.clone();
+		while let Some((next_text, next_style)) = iter.peek() {
+			if *next_style != *style {
+				break;
+			}
+			merged.push_str(next_text);
+			iter.next();
+		}
+		if !merged.is_empty() {
+			coalesced.push(Span::styled(merged, *style));
+		}
+	}
+
+	coalesced
+}
+
+fn is_word_char(ch: char) -> bool {
+	ch.is_alphanumeric() || ch == '_'
+}
+
 #[cfg(test)]
 mod tests {
 	use std::path::Path;
@@ -321,5 +382,46 @@ mod tests {
 				assert_eq!(prefix, "       ", "continuation should keep gutter spacing");
 			}
 		}
+	}
+
+	#[test]
+	fn wraps_at_word_boundaries() {
+		let line = Line::from(vec![Span::raw("alpha beta gamma")]);
+
+		let wrapped = wrap_highlighted_lines(&[line], 10);
+		let rendered: Vec<String> = wrapped
+			.iter()
+			.map(|line| line.spans.iter().map(|s| s.content.as_ref()).collect())
+			.collect();
+
+		assert_eq!(rendered.len(), 2);
+		assert_eq!(rendered[0], "alpha beta");
+		assert_eq!(rendered[1], " gamma");
+	}
+
+	#[test]
+	fn splits_long_words_when_needed() {
+		let line = Line::from(vec![Span::raw("superlong")]);
+
+		let wrapped = wrap_highlighted_lines(&[line], 6);
+		let rendered: Vec<String> = wrapped
+			.iter()
+			.map(|line| line.spans.iter().map(|s| s.content.as_ref()).collect())
+			.collect();
+
+		assert_eq!(rendered, vec!["superl", "ong"]);
+	}
+
+	#[test]
+	fn punctuation_counts_as_break_opportunity() {
+		let line = Line::from(vec![Span::raw("alpha.beta.gamma")]);
+
+		let wrapped = wrap_highlighted_lines(&[line], 10);
+		let rendered: Vec<String> = wrapped
+			.iter()
+			.map(|line| line.spans.iter().map(|s| s.content.as_ref()).collect())
+			.collect();
+
+		assert_eq!(rendered, vec!["alpha.beta", ".gamma"]);
 	}
 }

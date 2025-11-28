@@ -611,6 +611,7 @@ dependencies = [
  "throbber-widgets-tui",
  "toml",
  "tui-textarea",
+ "unicode-segmentation",
  "unicode-truncate 2.0.0",
  "unicode-width 0.2.0",
 ]
