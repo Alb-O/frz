@@ -1,6 +1,6 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use frz_core::SearchOutcome;
-use frz_tui::Picker;
+use frz_tui::{Picker, style};
 
 use crate::config::Config;
 
@@ -26,8 +26,17 @@ impl SearchWorkflow {
 		search_ui = search_ui.with_ui_config(ui);
 		search_ui = search_ui.with_initial_query(initial_query);
 
-		if let Some(theme) = theme {
-			search_ui = search_ui.with_theme_name(&theme);
+		if let Some(theme_name) = theme {
+			if style::by_name(&theme_name).is_none() {
+				let available_themes = style::names();
+				let themes_list = available_themes.join("\n  ");
+				bail!(
+					"Theme '{}' not found.\n\nAvailable themes:\n  {}",
+					theme_name,
+					themes_list
+				);
+			}
+			search_ui = search_ui.with_theme_name(&theme_name);
 		}
 
 		if let Some(headers) = file_headers {

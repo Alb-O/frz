@@ -104,7 +104,14 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 				let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
 					.begin_symbol(None)
 					.end_symbol(None)
-					.track_symbol(Some("│"));
+					.track_symbol(Some("│"))
+					.style(
+						Style::default().fg(ctx
+							.theme
+							.header
+							.fg
+							.unwrap_or(ratatui::style::Color::Reset)),
+					);
 
 				// Render scrollbar aligned to the content's right edge
 				let scrollbar_area = Rect {
