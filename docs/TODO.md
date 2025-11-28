@@ -1,0 +1,2 @@
+- [ ] Investigate runtime filesystem re-indexing causing a full flush of all results, not repopulating.
+- [ ] Double draw/overflow bug with `Project 👾⚡.txt`

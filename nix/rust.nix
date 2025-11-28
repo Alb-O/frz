@@ -29,7 +29,18 @@
           };
           "frz-tui" = {
             path = ../crates/tui;
-            crane.args.buildInputs = darwinInputs;
+            crane.args = {
+              buildInputs =
+                darwinInputs
+                ++ (with pkgs; [
+                  poppler.dev
+                  glib.dev
+                  cairo.dev
+                ]);
+              nativeBuildInputs = with pkgs; [
+                pkg-config
+              ];
+            };
           };
           "frz-cli" = {
             path = ../crates/cli;

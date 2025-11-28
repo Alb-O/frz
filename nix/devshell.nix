@@ -22,6 +22,10 @@
           cargo-edit
           cargo-sort
           cargo-insta
+          pkg-config
+          poppler.dev
+          glib.dev
+          cairo.dev
         ];
       };
     };

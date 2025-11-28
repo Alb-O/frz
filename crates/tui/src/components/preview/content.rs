@@ -4,6 +4,8 @@ use ratatui::text::Line;
 
 #[cfg(feature = "media-preview")]
 use super::image::ImagePreview;
+#[cfg(feature = "media-preview")]
+use super::pdf::PdfPreview;
 
 /// The type of content being previewed.
 #[derive(Debug, Clone)]
@@ -18,6 +20,12 @@ pub enum PreviewKind {
 	Image {
 		/// Loaded image.
 		image: ImagePreview,
+	},
+	/// PDF content (requires `media-preview` feature).
+	#[cfg(feature = "media-preview")]
+	Pdf {
+		/// Rendered PDF preview.
+		pdf: PdfPreview,
 	},
 	/// Placeholder (loading, error, empty).
 	Placeholder {
@@ -96,6 +104,16 @@ impl PreviewContent {
 		Self {
 			path: path.into(),
 			kind: PreviewKind::Image { image },
+		}
+	}
+
+	/// PDF preview.
+	#[cfg(feature = "media-preview")]
+	#[must_use]
+	pub fn pdf(path: impl Into<String>, pdf: PdfPreview) -> Self {
+		Self {
+			path: path.into(),
+			kind: PreviewKind::Pdf { pdf },
 		}
 	}
 

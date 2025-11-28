@@ -13,7 +13,7 @@ pub mod scrollbar;
 pub mod tables;
 
 #[cfg(feature = "media-preview")]
-pub use preview::{ImagePreview, is_image_available, is_image_file, protocol_name};
+pub use preview::{ImagePreview, PdfPreview, is_image_available, is_pdf_file, protocol_name};
 pub use preview::{
 	PreviewContent, PreviewContext, PreviewKind, PreviewRuntime, render_preview,
 	wrap_highlighted_lines,

@@ -5,16 +5,19 @@
 TUI fuzzy finder revolving around tabular data, utilising [Saghen](https://github.com/Saghen)'s [Frizbee](https://github.com/Saghen/frizbee) crate for matching.
 
 ## Features
+
 - Interactive TUI built on `ratatui`.
 - Uses `frizbee` fuzzy matching for typo-tolerant search.
 - Builder-style API to configure prompts, column headers and widths.
 - Ready-to-use filesystem scanner (`SearchUi::filesystem`) that walks directories recursively.
 - Multi-threaded filesystem traversal powered by the [`ignore`](https://docs.rs/ignore) crate with built-in `.gitignore` support.
 - Rich outcome information including which entry was selected and the final query string.
+- Optional image and PDF preview support.
 
 ## Architecture
 
 The workspace is split into focused crates:
+
 - `frz-core` hosts the search pipeline, filesystem indexer, and shared data types.
 - `frz-stream` provides the lightweight streaming primitives used by the search and index workers.
 - `frz-tui` contains the ratatui-based UI, themes, and the `SearchUi` builder.
@@ -42,6 +45,32 @@ if let Some(file) = outcome.selected_file() {
 cargo run -p frz --example demo
 cargo run -p frz --example filesystem -- /path/to/project
 ```
+
+## Media preview support
+
+Media and PDF previews require building with the `media-preview` feature.
+
+System dependencies required:
+
+- `poppler-glib` (for PDF rendering)
+- `glib-2.0`
+- `cairo`
+- `pkg-config` (build-time)
+
+Common installation commands:
+
+```bash
+# Arch Linux
+sudo pacman -S poppler-glib cairo
+
+# Ubuntu/Debian
+sudo apt install libpoppler-glib-dev libcairo2-dev
+
+# macOS
+brew install poppler cairo
+```
+
+Image and PDF previews require a terminal that supports graphics protocols (Kitty, iTerm2, Sixel-compatible terminals, or halfblocks as fallback).
 
 ## Command-line application and configuration
 

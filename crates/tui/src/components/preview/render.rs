@@ -78,28 +78,9 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 		}
 		PreviewKind::Text { lines: _ } => {
 			let metrics = ctx.scroll_metrics.unwrap_or_else(|| {
-				let viewport_len = inner.height as usize;
-				let content_length = ctx.wrapped_lines.len();
-				if content_length == 0 {
-					return PreviewScrollMetrics {
-						content_length,
-						viewport_len: 0,
-						max_scroll: 0,
-						needs_scrollbar: false,
-					};
-				}
-				let viewport_len = viewport_len.min(content_length).max(1);
-				let max_scroll = content_length.saturating_sub(viewport_len);
-				let needs_scrollbar = content_length > viewport_len;
-				PreviewScrollMetrics {
-					content_length,
-					viewport_len,
-					max_scroll,
-					needs_scrollbar,
-				}
+				PreviewScrollMetrics::compute(ctx.wrapped_lines.len(), inner.height as usize)
 			});
 
-			// Create scrollable view of content
 			let visible_lines: Vec<Line<'_>> = ctx
 				.wrapped_lines
 				.iter()
@@ -112,7 +93,6 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 
 			// Render scrollbar only if content overflows
 			if metrics.needs_scrollbar {
-				// Render scrollbar and get adjusted content area
 				let text_area = render_scrollbar(
 					frame,
 					inner,
@@ -120,8 +100,6 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 					ctx.scrollbar_area,
 					ctx.theme,
 				);
-
-				// Render the text inside the adjusted area so it doesn't overlap the scrollbar
 				frame.render_widget(para, text_area);
 			} else {
 				frame.render_widget(para, inner);
@@ -130,6 +108,10 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 		#[cfg(feature = "media-preview")]
 		PreviewKind::Image { image } => {
 			image.render(frame, inner);
+		}
+		#[cfg(feature = "media-preview")]
+		PreviewKind::Pdf { pdf } => {
+			pdf.image.render(frame, inner);
 		}
 	}
 }

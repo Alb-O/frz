@@ -7,12 +7,35 @@ use ratatui::widgets::ScrollbarState;
 use crate::components::{PreviewContent, PreviewRuntime};
 
 /// Precomputed scrolling metrics for the preview viewport.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct PreviewScrollMetrics {
 	pub content_length: usize,
 	pub viewport_len: usize,
 	pub max_scroll: usize,
 	pub needs_scrollbar: bool,
+}
+
+impl PreviewScrollMetrics {
+	/// Compute scroll metrics from content length and viewport height.
+	///
+	/// Returns default (empty) metrics if either value is zero.
+	#[must_use]
+	pub fn compute(content_length: usize, viewport_height: usize) -> Self {
+		if content_length == 0 || viewport_height == 0 {
+			return Self::default();
+		}
+
+		let viewport_len = viewport_height.min(content_length).max(1);
+		let max_scroll = content_length.saturating_sub(viewport_len);
+		let needs_scrollbar = content_length > viewport_len;
+
+		Self {
+			content_length,
+			viewport_len,
+			max_scroll,
+			needs_scrollbar,
+		}
+	}
 }
 
 /// State for the preview pane.
@@ -94,20 +117,12 @@ impl PreviewState {
 
 	pub fn compute_scroll_metrics(&self, viewport_height: usize) -> Option<PreviewScrollMetrics> {
 		let content_length = self.wrapped_lines.len();
-		if content_length == 0 || viewport_height == 0 {
-			return None;
+		let metrics = PreviewScrollMetrics::compute(content_length, viewport_height);
+		if metrics.content_length == 0 {
+			None
+		} else {
+			Some(metrics)
 		}
-
-		let viewport_len = viewport_height.min(content_length).max(1);
-		let max_scroll = content_length.saturating_sub(viewport_len);
-		let needs_scrollbar = content_length > viewport_len;
-
-		Some(PreviewScrollMetrics {
-			content_length,
-			viewport_len,
-			max_scroll,
-			needs_scrollbar,
-		})
 	}
 
 	pub fn scroll_up(&mut self, lines: usize) {

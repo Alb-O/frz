@@ -16,7 +16,11 @@ use bat::assets::HighlightingAssets;
 use super::content::PreviewContent;
 use super::highlight::highlight_with_bat;
 #[cfg(feature = "media-preview")]
-use super::image::{ImagePreview, is_image_file};
+use super::image::ImagePreview;
+#[cfg(feature = "media-preview")]
+use super::media::{MAX_IMAGE_SIZE, MAX_PDF_SIZE, MediaType, detect_media_type};
+#[cfg(feature = "media-preview")]
+use super::pdf::PdfPreview;
 
 /// Maximum number of previews to keep in the LRU cache.
 const CACHE_CAPACITY: usize = 32;
@@ -131,7 +135,6 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 				max_lines,
 			} => {
 				// Before doing any work, drain the channel to get the latest request.
-				// This avoids processing stale requests when the user navigates quickly.
 				let (final_id, final_path, final_theme, final_max_lines) =
 					drain_to_latest(&command_rx, id, path, theme, max_lines);
 
@@ -140,7 +143,7 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 					theme: final_theme.clone(),
 				};
 
-				// Check cache first for instant response
+				// Check cache first
 				let content = if let Some(cached) = cache.get(&cache_key) {
 					cached
 				} else {
@@ -154,7 +157,7 @@ fn worker_loop(command_rx: Receiver<PreviewCommand>, result_tx: Sender<PreviewRe
 					generated
 				};
 
-				// If the receiver is gone, just exit gracefully
+				// If the receiver is gone, just exit
 				if result_tx
 					.send(PreviewResult {
 						id: final_id,
@@ -202,7 +205,6 @@ fn drain_to_latest(
 				break;
 			}
 			Err(_) => {
-				// No more messages
 				break;
 			}
 		}
@@ -210,12 +212,12 @@ fn drain_to_latest(
 	(id, path, theme, max_lines)
 }
 
-/// Maximum file size to preview (in bytes). Larger files are skipped.
+/// Maximum file size for text preview (in bytes). Larger files are skipped.
 const MAX_PREVIEW_SIZE: u64 = 512 * 1024; // 512 KB
 
-/// Maximum file size for image preview (in bytes). Larger images are skipped.
+/// Number of bytes to read for magic byte detection.
 #[cfg(feature = "media-preview")]
-const MAX_IMAGE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB
+const MAGIC_HEADER_SIZE: usize = 64;
 
 /// Generate syntax-highlighted preview content for a file.
 fn generate_preview_impl(
@@ -226,7 +228,6 @@ fn generate_preview_impl(
 ) -> PreviewContent {
 	let path_str = path.display().to_string();
 
-	// Check file metadata
 	let metadata = match std::fs::metadata(path) {
 		Ok(m) => m,
 		Err(e) => return PreviewContent::error(&path_str, format!("Cannot access: {e}")),
@@ -236,20 +237,42 @@ fn generate_preview_impl(
 		return PreviewContent::error(&path_str, "Not a file");
 	}
 
-	// Handle image files when media-preview is enabled
+	// Detect media type using magic bytes (with extension fallback for SVG)
 	#[cfg(feature = "media-preview")]
-	if is_image_file(path) {
-		if metadata.len() > MAX_IMAGE_SIZE {
-			return PreviewContent::error(
-				&path_str,
-				format!("Image too large ({} MB)", metadata.len() / (1024 * 1024)),
-			);
-		}
+	{
+		// Read a small header for magic byte detection
+		let header = read_header(path, MAGIC_HEADER_SIZE).unwrap_or_default();
 
-		return match ImagePreview::load(path) {
-			Some(image) => PreviewContent::image(&path_str, image),
-			None => PreviewContent::error(&path_str, "Failed to load image"),
-		};
+		if let Some(media_type) = detect_media_type(path, &header) {
+			return match media_type {
+				MediaType::Pdf => {
+					if metadata.len() > MAX_PDF_SIZE {
+						PreviewContent::error(
+							&path_str,
+							format!("PDF too large ({} MB)", metadata.len() / (1024 * 1024)),
+						)
+					} else {
+						match PdfPreview::load(path) {
+							Ok(pdf) => PreviewContent::pdf(&path_str, pdf),
+							Err(e) => PreviewContent::error(&path_str, format!("PDF error: {}", e)),
+						}
+					}
+				}
+				MediaType::Image | MediaType::Svg => {
+					if metadata.len() > MAX_IMAGE_SIZE {
+						PreviewContent::error(
+							&path_str,
+							format!("Image too large ({} MB)", metadata.len() / (1024 * 1024)),
+						)
+					} else {
+						match ImagePreview::load(path) {
+							Some(image) => PreviewContent::image(&path_str, image),
+							None => PreviewContent::error(&path_str, "Failed to load image"),
+						}
+					}
+				}
+			};
+		}
 	}
 
 	if metadata.len() > MAX_PREVIEW_SIZE {
@@ -259,37 +282,40 @@ fn generate_preview_impl(
 		);
 	}
 
-	// Read file content
 	let content = match std::fs::read_to_string(path) {
 		Ok(c) => c,
-		Err(_) => {
-			// Try reading as bytes for binary detection
-			match std::fs::read(path) {
-				Ok(bytes) => {
-					if is_binary(&bytes) {
-						return PreviewContent::error(&path_str, "Binary file");
-					}
-					String::from_utf8_lossy(&bytes).into_owned()
+		Err(_) => match std::fs::read(path) {
+			Ok(bytes) => {
+				if is_binary(&bytes) {
+					return PreviewContent::error(&path_str, "Binary file");
 				}
-				Err(e) => return PreviewContent::error(&path_str, format!("Cannot read: {e}")),
+				String::from_utf8_lossy(&bytes).into_owned()
 			}
-		}
+			Err(e) => return PreviewContent::error(&path_str, format!("Cannot read: {e}")),
+		},
 	};
 
-	// Handle empty files
 	if content.is_empty() {
 		return PreviewContent::empty_file(&path_str);
 	}
 
-	// Generate highlighted output using bat
 	let highlighted = highlight_with_bat(path, &content, bat_theme, max_lines, assets);
-
 	PreviewContent::text(&path_str, highlighted)
+}
+
+/// Read the first N bytes of a file for magic byte detection.
+#[cfg(feature = "media-preview")]
+fn read_header(path: &std::path::Path, size: usize) -> std::io::Result<Vec<u8>> {
+	use std::io::Read;
+	let mut file = std::fs::File::open(path)?;
+	let mut buf = vec![0u8; size];
+	let n = file.read(&mut buf)?;
+	buf.truncate(n);
+	Ok(buf)
 }
 
 /// Check if content appears to be binary.
 fn is_binary(bytes: &[u8]) -> bool {
-	// Check first 8KB for null bytes (common binary indicator)
 	let check_len = bytes.len().min(8192);
 	bytes[..check_len].contains(&0)
 }
@@ -326,7 +352,6 @@ impl PreviewRuntime {
 			theme,
 			max_lines,
 		});
-
 		id
 	}
 

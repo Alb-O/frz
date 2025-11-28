@@ -14,37 +14,18 @@ use ratatui_image::picker::{Picker, ProtocolType};
 use ratatui_image::protocol::Protocol;
 use ratatui_image::{Image, Resize};
 
-static PICKER: OnceLock<Option<Picker>> = OnceLock::new();
+use super::media::{center_rect, is_svg_file};
 
-const IMAGE_EXTENSIONS: &[&str] = &[
-	"png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "tiff", "tif", "pnm", "pbm", "pgm", "ppm",
-	"svg",
-];
+static PICKER: OnceLock<Option<Picker>> = OnceLock::new();
 
 const MAX_SVG_DIMENSION: u32 = 2048;
 
-/// Default size for pre-encoding images (in terminal cells).
-/// This should be large enough for most preview panes.
 const DEFAULT_ENCODE_SIZE: Rect = Rect {
 	x: 0,
 	y: 0,
 	width: 80,
 	height: 40,
 };
-
-/// Check if a path has a recognized image extension.
-#[must_use]
-pub fn is_image_file(path: &Path) -> bool {
-	path.extension()
-		.and_then(|ext| ext.to_str())
-		.is_some_and(|ext| IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
-}
-
-fn is_svg(path: &Path) -> bool {
-	path.extension()
-		.and_then(|ext| ext.to_str())
-		.is_some_and(|ext| ext.eq_ignore_ascii_case("svg"))
-}
 
 fn render_svg(path: &Path) -> Option<DynamicImage> {
 	let data = std::fs::read(path).ok()?;
@@ -129,7 +110,7 @@ impl ImagePreview {
 	/// rendering is instant.
 	pub fn load(path: &Path) -> Option<Self> {
 		let picker = get_picker()?;
-		let img = if is_svg(path) {
+		let img = if is_svg_file(path) {
 			render_svg(path)?
 		} else {
 			image::ImageReader::open(path).ok()?.decode().ok()?
@@ -177,49 +158,5 @@ impl ImagePreview {
 	#[must_use]
 	pub fn dimensions_string(&self) -> String {
 		format!("{}×{}", self.dimensions.0, self.dimensions.1)
-	}
-}
-
-/// Center a smaller rect within a larger available area.
-fn center_rect(inner: Rect, outer: Rect) -> Rect {
-	let x = outer.x + (outer.width.saturating_sub(inner.width)) / 2;
-	let y = outer.y + (outer.height.saturating_sub(inner.height)) / 2;
-
-	Rect {
-		x,
-		y,
-		width: inner.width.min(outer.width),
-		height: inner.height.min(outer.height),
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_is_image_file() {
-		assert!(is_image_file(Path::new("test.png")));
-		assert!(is_image_file(Path::new("test.PNG")));
-		assert!(is_image_file(Path::new("test.jpg")));
-		assert!(is_image_file(Path::new("test.gif")));
-		assert!(is_image_file(Path::new("test.svg")));
-		assert!(is_image_file(Path::new("/path/to/image.bmp")));
-
-		assert!(!is_image_file(Path::new("test.rs")));
-		assert!(!is_image_file(Path::new("test.txt")));
-		assert!(!is_image_file(Path::new("test")));
-	}
-
-	#[test]
-	fn test_center_rect() {
-		let inner = Rect::new(0, 0, 10, 5);
-		let outer = Rect::new(0, 0, 20, 10);
-		let centered = center_rect(inner, outer);
-
-		assert_eq!(centered.x, 5);
-		assert_eq!(centered.y, 2);
-		assert_eq!(centered.width, 10);
-		assert_eq!(centered.height, 5);
 	}
 }
