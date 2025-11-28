@@ -4,14 +4,16 @@
 //! images via terminal graphics protocols (Kitty, Sixel, iTerm2, halfblocks).
 
 mod content;
-mod highlight;
+pub(crate) mod highlight;
 #[cfg(feature = "media-preview")]
 pub mod image;
 mod render;
 mod worker;
+mod wrap;
 
 pub use content::{PreviewContent, PreviewKind};
 #[cfg(feature = "media-preview")]
 pub use image::{ImagePreview, is_available as is_image_available, is_image_file, protocol_name};
 pub use render::{PreviewContext, render_preview};
 pub use worker::PreviewRuntime;
+pub use wrap::wrap_highlighted_lines;

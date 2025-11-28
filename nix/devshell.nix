@@ -21,6 +21,7 @@
           bacon
           cargo-edit
           cargo-sort
+          cargo-insta
         ];
       };
     };

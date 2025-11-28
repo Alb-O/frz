@@ -142,10 +142,14 @@ impl App<'_> {
 	fn render_preview_pane(&mut self, frame: &mut Frame, area: Rect) {
 		// Update viewport height (accounting for borders)
 		self.preview_viewport_height = area.height.saturating_sub(2) as usize;
+		let inner_width = area.width.saturating_sub(2) as usize;
+		let wrap_width = inner_width.saturating_sub(1);
+		self.rebuild_preview_wrap(wrap_width);
 		self.update_scrollbar_state();
 
 		let ctx = PreviewContext {
 			content: &self.preview_content,
+			wrapped_lines: &self.preview_wrapped_lines,
 			scroll_offset: self.preview_scroll,
 			scrollbar_state: &mut self.preview_scrollbar_state,
 			scrollbar_area: &mut self.preview_scrollbar_area,

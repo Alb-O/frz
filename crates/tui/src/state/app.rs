@@ -11,11 +11,14 @@ use frz_core::search_pipeline::{
 	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
 };
 use ratatui::layout::Rect;
+use ratatui::text::Line;
 use ratatui::widgets::{ScrollbarState, TableState};
 use throbber_widgets_tui::ThrobberState;
 
 use super::SearchRuntime;
-use crate::components::{IndexProgress, PreviewContent, PreviewRuntime};
+use crate::components::{
+	IndexProgress, PreviewContent, PreviewKind, PreviewRuntime, wrap_highlighted_lines,
+};
 use crate::config::UiConfig;
 use crate::input::SearchInput;
 use crate::style::{StyleConfig, Theme};
@@ -57,6 +60,10 @@ pub struct App<'a> {
 	pub(crate) preview_scrollbar_state: ScrollbarState,
 	/// Last known viewport height for scroll bounds.
 	pub(crate) preview_viewport_height: usize,
+	/// Last known wrap width for the preview content.
+	pub(crate) preview_wrap_width: usize,
+	/// Wrapped preview lines sized to the current viewport width.
+	pub(crate) preview_wrapped_lines: Vec<Line<'static>>,
 	/// Last known preview area on screen.
 	pub(crate) preview_area: Option<Rect>,
 	/// Screen area of the preview scrollbar if rendered.
@@ -125,6 +132,8 @@ impl<'a> App<'a> {
 			preview_scroll: 0,
 			preview_scrollbar_state: ScrollbarState::default(),
 			preview_viewport_height: 1,
+			preview_wrap_width: 80,
+			preview_wrapped_lines: Vec::new(),
 			preview_area: None,
 			preview_scrollbar_area: None,
 			preview_hovered: false,
@@ -298,6 +307,7 @@ impl<'a> App<'a> {
 		self.results_hovered = false;
 		self.results_dragging = false;
 		self.preview_dragging = false;
+		self.preview_wrapped_lines.clear();
 	}
 
 	/// Update preview visibility based on terminal width.
@@ -365,6 +375,7 @@ impl<'a> App<'a> {
 						self.preview_content = result.content;
 						self.pending_preview_path = None;
 						self.preview_scroll = 0;
+						self.rebuild_preview_wrap(self.preview_wrap_width);
 						self.update_scrollbar_state();
 					}
 				}
@@ -382,7 +393,7 @@ impl<'a> App<'a> {
 
 	/// Scroll the preview pane down.
 	pub(crate) fn scroll_preview_down(&mut self, lines: usize) {
-		let content_length = self.preview_content.line_count();
+		let content_length = self.preview_wrapped_lines.len();
 		let max_scroll = self.max_preview_scroll(content_length);
 		self.preview_scroll = (self.preview_scroll + lines).min(max_scroll);
 		self.update_scrollbar_state();
@@ -473,7 +484,7 @@ impl<'a> App<'a> {
 
 	/// Update scrollbar state to match current preview content and scroll position.
 	pub(crate) fn update_scrollbar_state(&mut self) {
-		let content_length = self.preview_content.line_count();
+		let content_length = self.preview_wrapped_lines.len();
 		let viewport_len = self.preview_viewport_len(content_length);
 		let max_scroll = self.max_preview_scroll(content_length);
 		self.preview_scroll = self.preview_scroll.min(max_scroll);
@@ -484,6 +495,19 @@ impl<'a> App<'a> {
 			.content_length(content_length)
 			.viewport_content_length(viewport_len)
 			.position(position);
+	}
+
+	pub(crate) fn rebuild_preview_wrap(&mut self, available_width: usize) {
+		self.preview_wrap_width = available_width;
+
+		self.preview_wrapped_lines = match &self.preview_content.kind {
+			PreviewKind::Text { lines } => wrap_highlighted_lines(lines, available_width),
+			_ => Vec::new(),
+		};
+
+		let content_length = self.preview_wrapped_lines.len();
+		let max_scroll = self.max_preview_scroll(content_length);
+		self.preview_scroll = self.preview_scroll.min(max_scroll);
 	}
 }
 

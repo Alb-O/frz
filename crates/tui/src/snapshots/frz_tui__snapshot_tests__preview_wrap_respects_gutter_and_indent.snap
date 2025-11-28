@@ -1,0 +1,36 @@
+---
+source: crates/tui/src/snapshot_tests.rs
+expression: snapshot
+---
+ Files                                                                                                 Indexed Files: 0 
+ ╭─────────────────────────────────────────────────────────╮╭ wrap_example.rs ────────────────────────────────────────╮ 
+ │Path                                             Score   ││   1 fn long_function_name(arg_one: usize, arg_two: usiz │ 
+ │ ─────────────────────────────────────────────────────── ││     e, arg_three: usize) {                              │ 
+ │                       No results                        ││   2     do_something_complicated(arg_one, arg_two, arg_ │ 
+ │                                                         ││         three);                                         │ 
+ │                                                         ││   3     do_something_even_more_complicated();           │ 
+ │                                                         ││   4 }                                                   │ 
+ │                                                         ││   5                                                     │ 
+ │                                                         ││   6 println!("still indented");                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ │                                                         ││                                                         │ 
+ ╰─────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────────────────╯

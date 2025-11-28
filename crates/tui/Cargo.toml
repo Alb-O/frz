@@ -32,5 +32,8 @@ tui-textarea = "0.7"
 unicode-truncate = "2"
 unicode-width = "0.2"
 
+[dev-dependencies]
+insta = "1.44.3"
+
 [lints]
 workspace = true

@@ -27,3 +27,6 @@ pub use state::App;
 pub use crate::components::{progress, rows as utils, tables, tabs};
 pub use crate::input::SearchInput;
 pub use crate::style::{StyleConfig, Theme, builtin_themes, default_theme};
+
+#[cfg(test)]
+mod snapshot_tests;

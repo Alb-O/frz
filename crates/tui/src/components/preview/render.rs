@@ -5,7 +5,7 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{
-	Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
+	Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
 
 use super::content::{PreviewContent, PreviewKind};
@@ -15,6 +15,8 @@ use crate::style::Theme;
 pub struct PreviewContext<'a> {
 	/// Preview content to render.
 	pub content: &'a PreviewContent,
+	/// Wrapped lines sized to the current viewport width.
+	pub wrapped_lines: &'a [Line<'static>],
 	/// Vertical scroll offset (for text content).
 	pub scroll_offset: usize,
 	/// Scrollbar state for the preview pane.
@@ -73,23 +75,33 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 			};
 			render_centered_placeholder(frame, inner, msg, ctx.theme);
 		}
-		PreviewKind::Text { lines } => {
+		PreviewKind::Text { lines: _ } => {
 			// Create scrollable view of content
-			let visible_lines: Vec<Line<'_>> = lines
+			let visible_lines: Vec<Line<'_>> = ctx
+				.wrapped_lines
 				.iter()
 				.skip(ctx.scroll_offset)
 				.take(inner.height as usize)
 				.cloned()
 				.collect();
 
-			let para = Paragraph::new(visible_lines).wrap(Wrap { trim: false });
-			frame.render_widget(para, inner);
+			let para = Paragraph::new(visible_lines);
 
 			// Render scrollbar only if content overflows
-			let content_length = lines.len();
+			let content_length = ctx.wrapped_lines.len();
 			let viewport_height = inner.height as usize;
 
 			if content_length > viewport_height {
+				let text_area = Rect {
+					x: inner.x,
+					y: inner.y,
+					width: inner.width.saturating_sub(1),
+					height: inner.height,
+				};
+
+				// Render the text inside the adjusted area so it doesn't overlap the scrollbar
+				frame.render_widget(para, text_area);
+
 				let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
 					.begin_symbol(None)
 					.end_symbol(None)
@@ -104,6 +116,8 @@ pub fn render_preview(frame: &mut Frame, area: Rect, ctx: PreviewContext<'_>) {
 				};
 				*ctx.scrollbar_area = Some(scrollbar_area);
 				frame.render_stateful_widget(scrollbar, scrollbar_area, ctx.scrollbar_state);
+			} else {
+				frame.render_widget(para, inner);
 			}
 		}
 		#[cfg(feature = "media-preview")]
