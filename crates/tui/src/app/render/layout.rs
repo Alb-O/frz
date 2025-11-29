@@ -44,7 +44,7 @@ pub(crate) fn resolve_column_widths(
 
 #[cfg(test)]
 mod tests {
-	use frz_core::search_pipeline::TruncationStyle;
+	use frz_core::filesystem::search::TruncationStyle;
 
 	use super::*;
 

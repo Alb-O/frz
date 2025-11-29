@@ -1,6 +1,6 @@
 use std::mem;
 
-use frz_core::search_pipeline::TruncationStyle;
+use frz_core::filesystem::search::TruncationStyle;
 use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Cell;

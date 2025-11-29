@@ -4,7 +4,7 @@ use std::{io, thread};
 
 use ignore::{DirEntry, Error as IgnoreError, WalkState};
 
-use crate::filesystem_indexer::{FilesystemOptions, build_walk};
+use crate::filesystem::indexer::{FilesystemOptions, build_walk};
 
 /// Iterator over filesystem paths produced by an [`Fs`] implementation.
 pub struct FsIter {

@@ -11,7 +11,6 @@ use image::DynamicImage;
 use poppler::Document;
 
 use super::image::{ImagePreview, get_picker};
-
 pub use super::media::is_pdf_file;
 
 /// PDF preview containing rendered first page as an image.

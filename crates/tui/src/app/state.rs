@@ -5,8 +5,8 @@
 
 use std::sync::mpsc::Receiver;
 
-use frz_core::filesystem_indexer::IndexResult;
-use frz_core::search_pipeline::{
+use frz_core::filesystem::indexer::IndexResult;
+use frz_core::filesystem::search::{
 	FILES_DATASET_KEY, SearchData, SearchSelection, runtime as search,
 };
 use throbber_widgets_tui::ThrobberState;
@@ -374,7 +374,7 @@ impl<'a> App<'a> {
 mod tests {
 	use std::time::{Duration, Instant};
 
-	use frz_core::search_pipeline::{FileRow, MatchBatch, SearchViewV2};
+	use frz_core::filesystem::search::{FileRow, MatchBatch, SearchViewV2};
 	use ratatui::layout::Rect;
 	use ratatui::text::Line;
 

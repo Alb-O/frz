@@ -1,7 +1,7 @@
 use std::sync::mpsc::TryRecvError;
 
-use frz_core::filesystem_indexer::IndexUpdate;
-use frz_core::search_pipeline::{MatchBatch, SearchResult, SearchView, SearchViewV2};
+use frz_core::filesystem::indexer::IndexUpdate;
+use frz_core::filesystem::search::{MatchBatch, SearchResult, SearchView, SearchViewV2};
 
 use crate::app::state::App;
 

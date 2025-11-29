@@ -1,5 +1,5 @@
 use anyhow::Result;
-use frz_core::search_pipeline::SearchOutcome;
+use frz_core::filesystem::search::SearchOutcome;
 use ratatui::crossterm::event::{
 	KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind,
 };

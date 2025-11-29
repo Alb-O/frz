@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use frz_core::filesystem_indexer::{IndexUpdate, IndexView, ProgressSnapshot};
-use frz_core::search_pipeline::{FileRow, MatchBatch, SearchData, SearchViewV2};
+use frz_core::filesystem::indexer::{IndexUpdate, IndexView, ProgressSnapshot};
+use frz_core::filesystem::search::{FileRow, MatchBatch, SearchData, SearchViewV2};
 
 use crate::app::App;
 

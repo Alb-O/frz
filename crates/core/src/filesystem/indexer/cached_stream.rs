@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::cache::CachedEntry;
 use super::{IndexKind, IndexResult, IndexStream, IndexUpdate, MAX_BATCH_SIZE, ProgressSnapshot};
-use crate::search_pipeline::FileRow;
+use crate::filesystem::search::FileRow;
 
 pub(super) fn stream_cached_entry(
 	entry: CachedEntry,

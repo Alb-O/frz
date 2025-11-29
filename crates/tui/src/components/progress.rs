@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use frz_core::search_pipeline::SearchData;
+use frz_core::filesystem::search::SearchData;
 
 #[derive(Default, Clone, Debug)]
 struct ProgressEntry {

@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
-use frz_core::search_pipeline::{SearchData, SearchOutcome};
+use frz_core::filesystem::search::{SearchData, SearchOutcome};
 use ratatui::crossterm::event::{
 	self, DisableMouseCapture, EnableMouseCapture, Event, KeyEventKind,
 };

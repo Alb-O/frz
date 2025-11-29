@@ -6,8 +6,8 @@ use std::time::{Duration, Instant};
 // bounds how many incremental updates we merge in a single frame, while
 // `MAX_INDEX_PROCESSING_TIME` caps the wall-clock time spent applying updates before we
 // yield back to drawing and input handling.
-use frz_core::filesystem_indexer::{IndexResult, IndexUpdate, ProgressSnapshot, merge_update};
-use frz_core::search_pipeline::FILES_DATASET_KEY;
+use frz_core::filesystem::indexer::{IndexResult, IndexUpdate, ProgressSnapshot, merge_update};
+use frz_core::filesystem::search::FILES_DATASET_KEY;
 
 use crate::app::App;
 use crate::components::IndexProgress;

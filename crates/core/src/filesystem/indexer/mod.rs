@@ -19,7 +19,7 @@ pub use stream::{IndexKind, IndexResult, IndexStream, IndexView};
 pub(crate) use traversal::build_walk;
 pub use traversal::spawn_filesystem_index;
 
-use crate::search_pipeline::{FileRow, SearchData};
+use crate::filesystem::search::{FileRow, SearchData};
 
 pub(crate) const MIN_BATCH_SIZE: usize = 32;
 pub(crate) const MAX_BATCH_SIZE: usize = 1_024;

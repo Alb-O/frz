@@ -1,8 +1,8 @@
 use std::sync::mpsc::Receiver;
 
 use anyhow::Result;
-use frz_core::filesystem_indexer::{FilesystemOptions, IndexResult, spawn_filesystem_index};
-use frz_core::search_pipeline::{SearchData, SearchOutcome};
+use frz_core::filesystem::indexer::{FilesystemOptions, IndexResult, spawn_filesystem_index};
+use frz_core::filesystem::search::{SearchData, SearchOutcome};
 use ratatui::layout::Constraint;
 
 use super::App;

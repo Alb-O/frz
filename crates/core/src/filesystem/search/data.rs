@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 
 use super::file::FileRow;
-use super::fs::{Fs, OsFs};
+use super::iteration::{Fs, OsFs};
 
 /// Dataset key for the files collection.
 pub const FILES_DATASET_KEY: &str = "files";

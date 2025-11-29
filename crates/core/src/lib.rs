@@ -5,9 +5,8 @@
 //! through the module hierarchy.
 
 pub mod app_dirs;
-pub mod filesystem_indexer;
-pub mod search_pipeline;
+pub mod filesystem;
 
-pub use crate::search_pipeline::{
+pub use crate::filesystem::search::{
 	FileRow, SearchData, SearchOutcome, SearchSelection, TruncationStyle,
 };

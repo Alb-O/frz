@@ -351,7 +351,7 @@ mod tests {
 	use std::path::Path;
 
 	use bat::assets::HighlightingAssets;
-	use frz_core::search_pipeline::SearchData;
+	use frz_core::filesystem::search::SearchData;
 	use ratatui::Terminal;
 	use ratatui::backend::TestBackend;
 	use ratatui::buffer::Buffer;

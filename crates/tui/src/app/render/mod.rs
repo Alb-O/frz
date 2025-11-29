@@ -1,7 +1,7 @@
 pub(crate) mod layout;
 
 use frizbee::Config;
-use frz_core::search_pipeline;
+use frz_core::filesystem::search;
 use layout::resolve_column_widths;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
@@ -182,7 +182,7 @@ impl App<'_> {
 		if query.is_empty() {
 			return None;
 		}
-		let config = search_pipeline::config_for_query(query, dataset_len);
+		let config = search::config_for_query(query, dataset_len);
 		Some((query.to_string(), config))
 	}
 }

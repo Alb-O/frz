@@ -1,4 +1,4 @@
-use frz_core::filesystem_indexer::{IndexUpdate, IndexView, ProgressSnapshot};
+use frz_core::filesystem::indexer::{IndexUpdate, IndexView, ProgressSnapshot};
 
 use crate::app::App;
 

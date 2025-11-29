@@ -8,9 +8,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use frz_core::filesystem_indexer::{IndexUpdate, merge_update};
-use frz_core::search_pipeline::runtime::SearchCommand;
-use frz_core::search_pipeline::{SearchData, SearchResult};
+use frz_core::filesystem::indexer::{IndexUpdate, merge_update};
+use frz_core::filesystem::search::runtime::SearchCommand;
+use frz_core::filesystem::search::{SearchData, SearchResult};
 use frz_stream::StreamAction;
 
 /// Tracks the revision counters used to determine when data has changed.
@@ -132,7 +132,7 @@ impl SearchRuntime {
 mod tests {
 	use std::sync::mpsc;
 
-	use frz_core::search_pipeline::runtime::SearchCommand;
+	use frz_core::filesystem::search::runtime::SearchCommand;
 
 	use super::*;
 

@@ -1,14 +1,14 @@
-//! Search pipeline and results aggregation.
+//! Filesystem search pipeline and results aggregation.
 //!
 //! This feature module contains the fuzzy matching engine, scoring aggregation,
-//! and streaming infrastructure that powers the search experience.
+//! and streaming infrastructure that powers the filesystem search experience.
 
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
 mod data;
 mod file;
-mod fs;
+mod iteration;
 pub mod runtime;
 
 pub use data::{FILES_DATASET_KEY, SearchData};
@@ -18,7 +18,7 @@ pub use frz_stream::search::{
 	PREFILTER_ENABLE_THRESHOLD, SearchMarker, SearchResult, SearchStream, SearchView, SearchViewV2,
 	config_for_query,
 };
-pub use fs::{Fs, FsIter, OsFs};
+pub use iteration::{Fs, FsIter, OsFs};
 
 /// Streams file matches for the given query back to the UI thread.
 pub fn stream_files(

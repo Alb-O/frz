@@ -1,5 +1,5 @@
 use frizbee::{Config, match_indices};
-use frz_core::search_pipeline::FileRow;
+use frz_core::filesystem::search::FileRow;
 use ratatui::style::Style;
 use ratatui::widgets::{Cell, Row};
 

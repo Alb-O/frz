@@ -3,6 +3,7 @@
 //! The helpers in this module respect environment overrides while falling back
 //! to platform-appropriate locations provided by the `dirs` crate.
 
+use dirs::{cache_dir, config_dir, data_dir};
 use std::env;
 use std::path::PathBuf;
 
@@ -33,7 +34,7 @@ pub fn get_config_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	let base = dirs::config_dir().ok_or_else(|| anyhow!("unable to determine config directory"))?;
+	let base = config_dir().ok_or_else(|| anyhow!("unable to determine config directory"))?;
 	Ok(base.join(APPLICATION))
 }
 
@@ -43,7 +44,7 @@ pub fn get_data_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	let base = dirs::data_dir().ok_or_else(|| anyhow!("unable to determine data directory"))?;
+	let base = data_dir().ok_or_else(|| anyhow!("unable to determine data directory"))?;
 	Ok(base.join(APPLICATION))
 }
 
@@ -53,6 +54,6 @@ pub fn get_cache_dir() -> Result<PathBuf> {
 		return Ok(dir);
 	}
 
-	let base = dirs::cache_dir().ok_or_else(|| anyhow!("unable to determine cache directory"))?;
+	let base = cache_dir().ok_or_else(|| anyhow!("unable to determine cache directory"))?;
 	Ok(base.join(APPLICATION))
 }

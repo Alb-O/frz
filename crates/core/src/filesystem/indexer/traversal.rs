@@ -13,7 +13,7 @@ use super::update_batcher::UpdateBatcher;
 use super::{
 	FilesystemOptions, IndexKind, IndexResult, IndexStream, IndexUpdate, ProgressSnapshot,
 };
-use crate::search_pipeline::{FileRow, SearchData};
+use crate::filesystem::search::{FileRow, SearchData};
 
 /// Spawn a background thread that walks the filesystem and streams updates.
 ///
