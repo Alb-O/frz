@@ -21,6 +21,7 @@ media-preview = [
 
 [dependencies]
 anyhow = "1.0"
+base64 = "0.22.1"
 bat = { version = "0.24", default-features = false, features = ["regex-onig"] }
 cairo-rs = { version = "0.21", optional = true }
 frizbee = { version = "0.6" }

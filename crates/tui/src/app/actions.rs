@@ -6,7 +6,7 @@ use ratatui::crossterm::event::{
 use ratatui::layout::Rect;
 
 use super::App;
-use crate::components::point_in_rect;
+use crate::components::{copy_to_clipboard, extract_selected_text, point_in_rect};
 
 impl<'a> App<'a> {
 	/// Process a keyboard event and return a result if the user exits.
@@ -96,6 +96,18 @@ impl<'a> App<'a> {
 				self.drag_preview_scrollbar_to(mouse.row);
 				self.preview.dragging = true;
 				self.preview.drag_anchor = None;
+				self.preview.selection.clear();
+				self.results.dragging = false;
+			}
+			// Start text selection in preview content area
+			MouseEventKind::Down(MouseButton::Left)
+				if self.preview.enabled
+					&& self.preview_content_contains(mouse.column, mouse.row) =>
+			{
+				self.preview
+					.selection
+					.start(mouse.column, mouse.row, self.preview.scroll);
+				self.preview.dragging = false;
 				self.results.dragging = false;
 			}
 			MouseEventKind::Down(MouseButton::Left)
@@ -106,19 +118,32 @@ impl<'a> App<'a> {
 				self.results.drag_anchor = None;
 				self.results.dragging = false;
 				self.preview.dragging = false;
+				self.preview.selection.clear();
 			}
 			MouseEventKind::Down(MouseButton::Left) if self.results.hovered => {
 				if self.select_result_at(mouse.column, mouse.row) && self.preview.enabled {
 					self.update_preview();
 				}
 				self.results.dragging = true;
+				self.preview.selection.clear();
 			}
 			MouseEventKind::Up(MouseButton::Left) => {
+				// Finish text selection and copy to clipboard
+				if self.preview.selection.selecting {
+					self.preview.selection.finish();
+					self.copy_preview_selection();
+				}
 				self.results.dragging = false;
 				self.results.dragging_scrollbar = false;
 				self.results.drag_anchor = None;
 				self.preview.drag_anchor = None;
 				self.preview.dragging = false;
+			}
+			// Update text selection during drag
+			MouseEventKind::Drag(MouseButton::Left) if self.preview.selection.selecting => {
+				self.preview
+					.selection
+					.update(mouse.column, mouse.row, self.preview.scroll);
 			}
 			MouseEventKind::Drag(MouseButton::Left) if self.preview.dragging => {
 				self.drag_preview_scrollbar_to(mouse.row);
@@ -132,6 +157,38 @@ impl<'a> App<'a> {
 				}
 			}
 			_ => {}
+		}
+	}
+
+	/// Check if point is in preview content area (not scrollbar).
+	fn preview_content_contains(&self, column: u16, row: u16) -> bool {
+		let Some(area) = self.preview.area else {
+			return false;
+		};
+		// Exclude scrollbar area if present
+		if self
+			.preview
+			.scrollbar_area
+			.is_some_and(|sb| point_in_rect(column, row, sb))
+		{
+			return false;
+		}
+		point_in_rect(column, row, area)
+	}
+
+	/// Copy the current preview selection to clipboard.
+	fn copy_preview_selection(&mut self) {
+		let Some(area) = self.preview.area else {
+			return;
+		};
+
+		// Get the inner area (excluding border)
+		let inner = Rect::new(area.x + 1, area.y + 1, area.width - 2, area.height - 2);
+
+		if let Some(text) =
+			extract_selected_text(&self.preview.wrapped_lines, &self.preview.selection, inner)
+		{
+			let _ = copy_to_clipboard(&text);
 		}
 	}
 

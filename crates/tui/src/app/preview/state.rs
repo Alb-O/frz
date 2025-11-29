@@ -4,7 +4,9 @@ use ratatui::layout::Rect;
 use ratatui::text::Line;
 use ratatui::widgets::ScrollbarState;
 
-use crate::components::{PreviewContent, PreviewRuntime, ScrollMetrics, point_in_rect};
+use crate::components::{
+	PreviewContent, PreviewRuntime, ScrollMetrics, TextSelection, point_in_rect,
+};
 
 /// State for the preview pane.
 pub(crate) struct PreviewState {
@@ -40,6 +42,8 @@ pub(crate) struct PreviewState {
 	pub runtime: PreviewRuntime,
 	/// Cached scroll metrics for the current viewport/content.
 	pub scroll_metrics: Option<ScrollMetrics>,
+	/// Text selection state for copy functionality.
+	pub selection: TextSelection,
 }
 
 impl Default for PreviewState {
@@ -61,6 +65,7 @@ impl Default for PreviewState {
 			pending_path: None,
 			runtime: PreviewRuntime::default(),
 			scroll_metrics: None,
+			selection: TextSelection::new(),
 		}
 	}
 }

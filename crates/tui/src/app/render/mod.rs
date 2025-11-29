@@ -8,6 +8,7 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Margin, Rect};
 use ratatui::widgets::Paragraph;
 
 use super::App;
+use crate::components::preview::selection::apply_selection_to_lines;
 use crate::components::rows::build_file_rows;
 use crate::components::tables::{TABLE_HIGHLIGHT_SPACING, TableSpec};
 use crate::components::{
@@ -158,6 +159,9 @@ impl App<'_> {
 	}
 
 	fn render_preview_pane(&mut self, frame: &mut Frame, area: Rect) {
+		// Store the area for mouse hit testing
+		self.preview.area = Some(area);
+
 		// Update viewport height (accounting for borders)
 		self.preview.viewport_height = area.height.saturating_sub(2) as usize;
 		let inner_width = area.width.saturating_sub(2) as usize;
@@ -165,9 +169,22 @@ impl App<'_> {
 		self.rebuild_preview_wrap(wrap_width);
 		self.update_scrollbar_state();
 
+		// Apply selection highlighting if active
+		let inner = Rect::new(area.x + 1, area.y + 1, area.width - 2, area.height - 2);
+		let lines_with_selection = if self.preview.selection.has_selection() {
+			apply_selection_to_lines(
+				&self.preview.wrapped_lines,
+				&self.preview.selection,
+				inner,
+				&self.style.theme,
+			)
+		} else {
+			self.preview.wrapped_lines.clone()
+		};
+
 		let ctx = PreviewContext {
 			content: &self.preview.content,
-			wrapped_lines: &self.preview.wrapped_lines,
+			wrapped_lines: &lines_with_selection,
 			scroll_offset: self.preview.scroll,
 			scrollbar_state: &mut self.preview.scrollbar_state,
 			scrollbar_area: &mut self.preview.scrollbar_area,

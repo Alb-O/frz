@@ -12,6 +12,10 @@ pub mod scrollbar;
 /// Table rendering and configuration.
 pub mod tables;
 
+pub use preview::selection::{
+	TextSelection, apply_selection_to_lines, copy_to_clipboard, extract_selected_text,
+	selection_style,
+};
 #[cfg(feature = "media-preview")]
 pub use preview::{ImagePreview, PdfPreview, is_image_available, is_pdf_file, protocol_name};
 pub use preview::{

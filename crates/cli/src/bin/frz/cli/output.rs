@@ -3,7 +3,6 @@ use frz_core::{SearchOutcome, SearchSelection};
 use serde_json::json;
 
 /// Print a plain-text representation of the search outcome.
-/// Print a plain-text representation of the search outcome.
 pub(crate) fn print_plain(outcome: &SearchOutcome) {
 	if !outcome.accepted {
 		println!("Search cancelled (query: '{}')", outcome.query);
@@ -16,7 +15,6 @@ pub(crate) fn print_plain(outcome: &SearchOutcome) {
 	}
 }
 
-/// Format the search outcome as a JSON string.
 /// Format the search outcome as a JSON string.
 pub(crate) fn format_outcome_json(outcome: &SearchOutcome) -> Result<String> {
 	let selection = match &outcome.selection {

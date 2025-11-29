@@ -1,2 +1,5 @@
 - [ ] Investigate runtime filesystem re-indexing causing a full flush of all results, not repopulating.
 - [ ] Double draw/overflow bug with `Project 👾⚡.txt`
+- [ ] Fix mouse drag on results list scrollbar forcing the active result selection to jump to top.
+- [ ] Notification/toast system for copy to clipboard and other actions.
+- [ ] Add keybinding reference/help screen.

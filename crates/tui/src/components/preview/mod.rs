@@ -12,6 +12,7 @@ mod media;
 #[cfg(feature = "media-preview")]
 pub mod pdf;
 mod render;
+pub mod selection;
 mod worker;
 mod wrap;
 
@@ -21,5 +22,9 @@ pub use image::{ImagePreview, is_available as is_image_available, protocol_name}
 #[cfg(feature = "media-preview")]
 pub use pdf::{PdfPreview, is_pdf_file};
 pub use render::{PreviewContext, render_preview};
+pub use selection::{
+	TextSelection, apply_selection_to_lines, copy_to_clipboard, extract_selected_text,
+	selection_style,
+};
 pub use worker::PreviewRuntime;
 pub use wrap::wrap_highlighted_lines;
