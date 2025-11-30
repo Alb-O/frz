@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*"]
+default-members = ["crates/cli", "crates/core", "crates/stream", "crates/tui"]
 resolver = "2"
 
 [workspace.lints.rust]
@@ -17,7 +18,7 @@ authors = ["Albert O'Shea"]
 readme = "README.md"
 
 [workspace.dependencies]
-frz-cli = { path = "crates/cli" }
 frz-core = { path = "crates/core" }
 frz-stream = { path = "crates/stream" }
 frz-tui = { path = "crates/tui" }
+kitty-macro-tests = { path = "crates/kitty-macro-tests" }

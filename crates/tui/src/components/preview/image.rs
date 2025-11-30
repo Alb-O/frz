@@ -166,20 +166,18 @@ fn encode_size() -> Rect {
 	static OVERRIDE: OnceLock<Rect> = OnceLock::new();
 
 	*OVERRIDE.get_or_init(|| {
-		if let Ok(raw) = std::env::var("FRZ_PREVIEW_IMAGE_ENCODE_CELLS") {
-			if let Some((w, h)) = raw.split_once(['x', 'X']) {
-				if let (Ok(width), Ok(height)) = (w.trim().parse::<u16>(), h.trim().parse::<u16>())
-				{
-					if width > 0 && height > 0 {
-						return Rect {
-							x: 0,
-							y: 0,
-							width,
-							height,
-						};
-					}
-				}
-			}
+		if let Ok(raw) = std::env::var("FRZ_PREVIEW_IMAGE_ENCODE_CELLS")
+			&& let Some((w, h)) = raw.split_once(['x', 'X'])
+			&& let (Ok(width), Ok(height)) = (w.trim().parse::<u16>(), h.trim().parse::<u16>())
+			&& width > 0
+			&& height > 0
+		{
+			return Rect {
+				x: 0,
+				y: 0,
+				width,
+				height,
+			};
 		}
 
 		DEFAULT_ENCODE_SIZE

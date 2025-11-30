@@ -26,6 +26,10 @@
           poppler.dev
           glib.dev
           cairo.dev
+          # Create a wrapper script for kitty-runner
+          (pkgs.writeShellScriptBin "kitty-runner" ''
+            exec cargo run -q -p kitty-macro-tests --bin kitty-runner -- "$@"
+          '')
         ];
       };
     };

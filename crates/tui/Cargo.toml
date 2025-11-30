@@ -11,17 +11,17 @@ authors.workspace = true
 [features]
 default = []
 media-preview = [
-    "dep:ratatui-image",
     "dep:image",
     "dep:resvg",
     "dep:poppler-rs",
     "dep:cairo-rs",
     "dep:infer",
+    "dep:ratatui-image",
 ]
 
 [dependencies]
 anyhow = "1.0"
-base64 = "0.22.1"
+base64 = "0.22"
 bat = { version = "0.24", default-features = false, features = ["regex-onig"] }
 cairo-rs = { version = "0.21", optional = true }
 frizbee = { version = "0.6" }
@@ -32,7 +32,7 @@ include_dir = "0.7"
 infer = { version = "0.19", optional = true }
 poppler-rs = { version = "0.25", optional = true }
 ratatui = "0.29"
-ratatui-image = { version = "7", optional = true, default-features = false, features = ["crossterm"] }
+ratatui-image = { version = "8.0", optional = true }
 resvg = { version = "0.45", optional = true, default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 throbber-widgets-tui = "0.9"
