@@ -4,6 +4,7 @@
 //! crate for magic byte detection with extension-based fallbacks for text formats like SVG.
 
 use std::path::Path;
+use std::sync::OnceLock;
 
 use ratatui::layout::Rect;
 
@@ -55,6 +56,19 @@ pub fn detect_by_extension(path: &Path) -> Option<MediaType> {
 		| "pbm" | "pgm" | "ppm" | "avif" | "heic" | "heif" => Some(MediaType::Image),
 		_ => None,
 	}
+}
+
+/// Max image size with optional env override for constrained environments (e.g., CI/tmux).
+#[must_use]
+pub fn max_image_size() -> u64 {
+	static OVERRIDE: OnceLock<u64> = OnceLock::new();
+	*OVERRIDE.get_or_init(|| {
+		std::env::var("FRZ_PREVIEW_MAX_IMAGE_BYTES")
+			.ok()
+			.and_then(|v| v.parse::<u64>().ok())
+			.filter(|v| *v > 0)
+			.unwrap_or(MAX_IMAGE_SIZE)
+	})
 }
 
 /// Check if a path might be a PDF file (by extension).

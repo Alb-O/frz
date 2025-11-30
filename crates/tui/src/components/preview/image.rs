@@ -57,7 +57,7 @@ fn render_svg(path: &Path) -> Option<DynamicImage> {
 /// Get the global image picker (lazily initialized).
 pub fn get_picker() -> Option<&'static Picker> {
 	PICKER
-		.get_or_init(|| Picker::from_query_stdio().ok())
+		.get_or_init(|| picker_from_env().or_else(|| Picker::from_query_stdio().ok()))
 		.as_ref()
 }
 
@@ -128,13 +128,14 @@ impl ImagePreview {
 		let dimensions = (img.width(), img.height());
 
 		// Pre-encode for a reasonable preview size
+		let encode_area = encode_size();
 		let protocol = picker
-			.new_protocol(img, DEFAULT_ENCODE_SIZE, Resize::Fit(None))
+			.new_protocol(img, encode_area, Resize::Fit(None))
 			.ok()?;
 
 		Some(Self {
 			protocol,
-			encoded_area: DEFAULT_ENCODE_SIZE,
+			encoded_area: encode_area,
 			dimensions,
 		})
 	}
@@ -159,4 +160,43 @@ impl ImagePreview {
 	pub fn dimensions_string(&self) -> String {
 		format!("{}×{}", self.dimensions.0, self.dimensions.1)
 	}
+}
+
+fn encode_size() -> Rect {
+	static OVERRIDE: OnceLock<Rect> = OnceLock::new();
+
+	*OVERRIDE.get_or_init(|| {
+		if let Ok(raw) = std::env::var("FRZ_PREVIEW_IMAGE_ENCODE_CELLS") {
+			if let Some((w, h)) = raw.split_once(['x', 'X']) {
+				if let (Ok(width), Ok(height)) = (w.trim().parse::<u16>(), h.trim().parse::<u16>())
+				{
+					if width > 0 && height > 0 {
+						return Rect {
+							x: 0,
+							y: 0,
+							width,
+							height,
+						};
+					}
+				}
+			}
+		}
+
+		DEFAULT_ENCODE_SIZE
+	})
+}
+
+fn picker_from_env() -> Option<Picker> {
+	let requested = std::env::var("FRZ_PREVIEW_IMAGE_PROTOCOL").ok()?;
+	let proto = match requested.to_ascii_lowercase().as_str() {
+		"halfblocks" | "halfblock" => ProtocolType::Halfblocks,
+		"sixel" => ProtocolType::Sixel,
+		"kitty" => ProtocolType::Kitty,
+		"iterm2" | "iterm" => ProtocolType::Iterm2,
+		_ => return None,
+	};
+
+	let mut picker = Picker::from_fontsize((8, 16));
+	picker.set_protocol_type(proto);
+	Some(picker)
 }

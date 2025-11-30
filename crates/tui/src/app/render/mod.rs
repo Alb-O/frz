@@ -1,5 +1,7 @@
 pub(crate) mod layout;
 
+use std::sync::OnceLock;
+
 use frizbee::Config;
 use frz_core::filesystem::search;
 use layout::resolve_column_widths;
@@ -17,7 +19,7 @@ use crate::components::{
 
 impl App<'_> {
 	pub(crate) fn draw(&mut self, frame: &mut Frame) {
-		let area = frame.area();
+		let area = clamp_area(frame.area());
 		let area = area.inner(Margin {
 			vertical: 0,
 			horizontal: 1,
@@ -202,4 +204,38 @@ impl App<'_> {
 		let config = search::config_for_query(query, dataset_len);
 		Some((query.to_string(), config))
 	}
+}
+
+fn clamp_area(area: Rect) -> Rect {
+	let Some((max_w, max_h)) = max_size_override() else {
+		return area;
+	};
+
+	let width = area.width.min(max_w);
+	let height = area.height.min(max_h);
+	Rect {
+		x: area.x,
+		y: area.y,
+		width,
+		height,
+	}
+}
+
+fn max_size_override() -> Option<(u16, u16)> {
+	static MAX: OnceLock<Option<(u16, u16)>> = OnceLock::new();
+	*MAX.get_or_init(|| {
+		std::env::var("FRZ_TUI_MAX_SIZE")
+			.ok()
+			.and_then(|v| parse_size(&v))
+	})
+}
+
+fn parse_size(raw: &str) -> Option<(u16, u16)> {
+	let (w, h) = raw.split_once(['x', 'X'])?;
+	let width: u16 = w.trim().parse().ok()?;
+	let height: u16 = h.trim().parse().ok()?;
+	if width == 0 || height == 0 {
+		return None;
+	}
+	Some((width, height))
 }

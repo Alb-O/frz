@@ -18,7 +18,7 @@ use super::highlight::highlight_with_bat;
 #[cfg(feature = "media-preview")]
 use super::image::ImagePreview;
 #[cfg(feature = "media-preview")]
-use super::media::{MAX_IMAGE_SIZE, MAX_PDF_SIZE, MediaType, detect_media_type};
+use super::media::{MAX_PDF_SIZE, MediaType, detect_media_type, max_image_size};
 #[cfg(feature = "media-preview")]
 use super::pdf::PdfPreview;
 
@@ -259,10 +259,15 @@ fn generate_preview_impl(
 					}
 				}
 				MediaType::Image | MediaType::Svg => {
-					if metadata.len() > MAX_IMAGE_SIZE {
+					let max_image_bytes = max_image_size();
+					if metadata.len() > max_image_bytes {
 						PreviewContent::error(
 							&path_str,
-							format!("Image too large ({} MB)", metadata.len() / (1024 * 1024)),
+							format!(
+								"Image too large ({} MB > {} MB limit)",
+								metadata.len() / (1024 * 1024),
+								max_image_bytes / (1024 * 1024)
+							),
 						)
 					} else {
 						match ImagePreview::load(path) {
