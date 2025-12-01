@@ -19,6 +19,7 @@ readme = "README.md"
 
 [workspace.dependencies]
 frz-core = { path = "crates/core" }
+frz-integration-tests = { path = "crates/integration-tests" }
 frz-stream = { path = "crates/stream" }
 frz-tui = { path = "crates/tui" }
-kitty-macro-tests = { path = "crates/kitty-macro-tests" }
+kitty-test-harness = { path = "crates/kitty-test-harness" }

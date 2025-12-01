@@ -1,12 +1,10 @@
 //! Captures visual escape sequence artifacts in frz against ~/desktop.
 
-#![allow(unused_crate_dependencies)]
-
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
 
-use kitty_macro_tests::{kitty_send_keys, with_kitty_capture};
+use kitty_test_harness::{kitty_send_keys, with_kitty_capture};
 use termwiz::input::KeyCode;
 
 const FAIL_ON_RAW: Option<&str> = None;

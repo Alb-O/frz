@@ -1,5 +1,5 @@
 [package]
-name = "kitty-macro-tests"
+name = "kitty-test-harness"
 version = "0.1.0"
 edition = "2024"
 description = "Integration test harness for driving kitty terminal via remote control and capturing screen output"

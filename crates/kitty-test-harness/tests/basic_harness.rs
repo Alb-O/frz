@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use kitty_macro_tests::{KeyPress, kitty_send_keys, with_kitty_capture};
+use kitty_test_harness::{KeyPress, kitty_send_keys, with_kitty_capture};
 use termwiz::input::KeyCode;
 
 #[test]

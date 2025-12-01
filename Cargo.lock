@@ -944,9 +944,7 @@ dependencies = [
  "clap",
  "frz-core",
  "frz-tui",
- "kitty-macro-tests",
  "serde_json",
- "termwiz",
 ]
 
 [[package]]
@@ -960,6 +958,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+]
+
+[[package]]
+name = "frz-integration-tests"
+version = "0.5.0"
+dependencies = [
+ "kitty-test-harness",
+ "termwiz",
 ]
 
 [[package]]
@@ -1457,16 +1463,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kitty-macro-tests"
-version = "0.1.0"
-dependencies = [
- "ansi-escape-sequences",
- "insta",
- "kitty-remote-bindings",
- "termwiz",
-]
-
-[[package]]
 name = "kitty-remote-bindings"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1495,6 +1491,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.111",
+]
+
+[[package]]
+name = "kitty-test-harness"
+version = "0.1.0"
+dependencies = [
+ "ansi-escape-sequences",
+ "insta",
+ "kitty-remote-bindings",
+ "termwiz",
 ]
 
 [[package]]

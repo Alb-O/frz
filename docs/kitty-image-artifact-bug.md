@@ -5,7 +5,7 @@
 When moving selection between images, the **results pane** still gets corrupted text on the previously imaged row (e.g. `t split: [6;29;13` replacing the scrollbar/dividers). Repro continues to fail via:
 
 ```bash
-kitty --dump-commands=yes sh -c "cargo test -p kitty-macro-tests -- --ignored" | grep "FAILED"
+kitty --dump-commands=yes sh -c "cargo test -p kitty-test-harness -- --ignored" | grep "FAILED"
 ```
 
 Failing test: `crates/kitty-tests/tests/desktop_preview_artifact.rs` (pattern `t split:` in cleaned output).

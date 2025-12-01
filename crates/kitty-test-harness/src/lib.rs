@@ -17,7 +17,7 @@
 //! # Example
 //!
 //! ```no_run
-//! use kitty_macro_tests::{kitty_send_keys, with_kitty_capture};
+//! use kitty_test_harness::{kitty_send_keys, with_kitty_capture};
 //! use termwiz::input::KeyCode;
 //! use std::path::PathBuf;
 //!

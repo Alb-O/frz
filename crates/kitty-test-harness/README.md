@@ -1,6 +1,8 @@
-# kitty-macro-tests
+# kitty-test-harness
 
 Integration test harness for driving kitty terminal via remote control protocol and capturing rendered screen output. The library enables automated testing of terminal-based applications by launching kitty instances, sending input sequences, and extracting screen content with or without ANSI escape sequences.
+
+This crate was developed to support integration tests for [frz](https://github.com/Alb-O/frz).
 
 ## Core functionality
 
@@ -13,7 +15,7 @@ Kitty terminal must be available on PATH with remote control enabled.
 ## Usage
 
 ```rust
-use kitty_macro_tests::{kitty_send_keys, with_kitty_capture};
+use kitty_test_harness::{kitty_send_keys, with_kitty_capture};
 use termwiz::input::KeyCode;
 use std::path::PathBuf;
 
@@ -40,7 +42,7 @@ fn terminal_application_test() {
 The `kitty_snapshot_test!` macro integrates with insta for snapshot-based regression testing. Snapshots preserve complete ANSI sequences. Generate snapshots with `cargo insta test`, review with `cargo insta review`.
 
 ```rust
-use kitty_macro_tests::kitty_snapshot_test;
+use kitty_test_harness::kitty_snapshot_test;
 
 kitty_snapshot_test!(navigation_state, |dir| {
     with_kitty_capture(&dir, "my-app", |kitty| {

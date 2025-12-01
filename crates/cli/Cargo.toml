@@ -19,9 +19,5 @@ frz-core.workspace = true
 frz-tui.workspace = true
 serde_json = "1.0"
 
-[dev-dependencies]
-kitty-macro-tests.workspace = true
-termwiz = "0.23"
-
 [lints]
 workspace = true

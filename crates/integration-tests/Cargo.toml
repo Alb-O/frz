@@ -1,0 +1,17 @@
+[package]
+name = "frz-integration-tests"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dev-dependencies]
+kitty-test-harness.workspace = true
+termwiz = "0.23"
+
+[lints]
+workspace = true
