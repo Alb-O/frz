@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use kitty_test_harness::{KeyPress, kitty_send_keys, with_kitty_capture};
+use kitty_test_harness::{wait_for_ready_marker, wait_for_screen_text, wait_for_screen_text_clean};
 use termwiz::input::KeyCode;
 
 #[test]
@@ -14,10 +15,11 @@ fn basic_echo_capture() {
 	let working_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 
 	let output = with_kitty_capture(&working_dir, "bash", |kitty| {
-		// Send echo command and capture output
+		wait_for_ready_marker(kitty);
 		kitty.send_text("echo 'Hello from kitty harness'\n");
-		std::thread::sleep(Duration::from_millis(100));
-		kitty.screen_text()
+		wait_for_screen_text(kitty, Duration::from_secs(2), |text| {
+			text.contains("Hello from kitty harness")
+		})
 	});
 
 	assert!(
@@ -32,17 +34,18 @@ fn key_press_navigation() {
 	let working_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 
 	with_kitty_capture(&working_dir, "bash", |kitty| {
-		// Create a multi-line output
+		wait_for_ready_marker(kitty);
 		kitty.send_text("printf 'Line 1\\nLine 2\\nLine 3\\n'\n");
-		std::thread::sleep(Duration::from_millis(100));
+		std::thread::sleep(Duration::from_millis(150));
 
-		// Send arrow keys using the macro
+		// Send arrow keys using macro
 		kitty_send_keys!(kitty, KeyCode::UpArrow, KeyCode::UpArrow);
-		std::thread::sleep(Duration::from_millis(50));
 
-		let after = kitty.screen_text();
+		let after = wait_for_screen_text(kitty, Duration::from_secs(2), |text| {
+			text.contains("Line 1") && text.contains("Line 2") && text.contains("Line 3")
+		});
 
-		// The screen should contain our output
+		// The screen should contain the output
 		assert!(after.contains("Line 1"));
 		assert!(after.contains("Line 2"));
 		assert!(after.contains("Line 3"));
@@ -55,13 +58,14 @@ fn ansi_stripping() {
 	let working_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 
 	with_kitty_capture(&working_dir, "bash", |kitty| {
-		// Send colored output
+		wait_for_ready_marker(kitty);
 		kitty.send_text("printf '\\033[31mRed text\\033[0m\\n'\n");
-		std::thread::sleep(Duration::from_millis(100));
+		let (raw, clean) =
+			wait_for_screen_text_clean(kitty, Duration::from_secs(2), |_raw, clean| {
+				clean.contains("Red text")
+			});
 
-		let (raw, clean) = kitty.screen_text_clean();
-
-		// Raw output should contain ANSI escape sequences
+		// Raw output should contain escape sequences
 		assert!(raw.contains("\x1b["));
 
 		// Clean output should not contain escape sequences
@@ -78,19 +82,33 @@ fn key_press_with_modifiers() {
 	with_kitty_capture(&working_dir, "bash", |kitty| {
 		use termwiz::input::Modifiers;
 
-		// Send text
-		kitty.send_text("hello world\n");
-		std::thread::sleep(Duration::from_millis(50));
+		wait_for_ready_marker(kitty);
 
-		// Send Ctrl+C using KeyPress
+		// Run `cat` so we can observe echoed input and stop it with Ctrl+C.
+		kitty.send_text("cat\n");
+		std::thread::sleep(Duration::from_millis(100));
+
+		// Send text and wait for it to echo back from cat
+		kitty.send_text("hello world\n");
+		let before_ctrl_c = wait_for_screen_text(kitty, Duration::from_secs(2), |text| {
+			text.contains("hello world")
+		});
+		assert!(
+			before_ctrl_c.contains("hello world"),
+			"expected cat echo to include hello world, got:\n{before_ctrl_c}"
+		);
+
 		let ctrl_c = KeyPress {
 			key: KeyCode::Char('c'),
 			mods: Modifiers::CTRL,
 		};
 		kitty_send_keys!(kitty, ctrl_c);
-		std::thread::sleep(Duration::from_millis(50));
-
-		let output = kitty.screen_text();
+		let output =
+			wait_for_screen_text(kitty, Duration::from_secs(2), |text| text.contains("^C"));
 		assert!(output.contains("hello world"));
+		assert!(
+			output.contains("^C"),
+			"expected ^C marker after sending Ctrl+C, got:\n{output}"
+		);
 	});
 }

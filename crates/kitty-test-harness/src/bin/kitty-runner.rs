@@ -140,13 +140,13 @@ fn main() -> io::Result<()> {
 	child.wait()?;
 
 	// Wait for stderr thread and print filtered output
-	if let Some(handle) = stderr_handle {
-		if let Ok(lines) = handle.join() {
-			// Trim blank lines from beginning and end
-			let trimmed_lines = trim_blank_lines(&lines);
-			for line in trimmed_lines {
-				eprintln!("{}", line);
-			}
+	if let Some(handle) = stderr_handle
+		&& let Ok(lines) = handle.join()
+	{
+		// Trim blank lines from beginning and end
+		let trimmed_lines = trim_blank_lines(&lines);
+		for line in trimmed_lines {
+			eprintln!("{}", line);
 		}
 	}
 

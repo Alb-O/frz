@@ -34,14 +34,19 @@
 
 use ansi_escape_sequences::strip_ansi;
 use kitty_remote_bindings::command::options::Matcher;
-use kitty_remote_bindings::command::{CommandOutput, Ls, SendText};
+use kitty_remote_bindings::command::{CommandOutput, SendText};
 use kitty_remote_bindings::model::WindowId;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 use std::time::Duration;
 use termwiz::escape::csi::KittyKeyboardFlags;
 use termwiz::input::{KeyCode, KeyCodeEncodeModes, KeyboardEncoding, Modifiers};
+use utils::window::{should_use_panel, wait_for_window};
+
+pub mod utils;
+pub use utils::wait::{wait_for_ready_marker, wait_for_screen_text, wait_for_screen_text_clean};
 
 #[cfg(test)]
 use insta as _;
@@ -55,31 +60,67 @@ pub struct KittyHarness {
 impl KittyHarness {
 	/// Launch a background kitty panel running the provided shell command.
 	pub fn launch(working_dir: &Path, command: &str) -> Self {
-		let session = format!("kitty-test-{}", std::process::id());
+		let session = next_session_name();
 		let socket = working_dir.join(format!("{session}.sock"));
 		let socket_addr = format!("unix:{}", socket.display());
 
-		let status = Command::new("kitty")
-			.current_dir(working_dir)
-			.args([
-				"+kitten",
-				"panel",
-				"--focus-policy=not-allowed",
-				"--edge=background",
-				"--listen-on",
-				&socket_addr,
-				"--class",
-				&session,
-				"-o",
-				"allow_remote_control=yes",
-				"--detach",
-				"bash",
-				"-lc",
-				command,
-			])
-			.status()
-			.expect("kitty launch should run");
-		assert!(status.success(), "kitty should launch");
+		if socket.exists() {
+			let _ = std::fs::remove_file(&socket);
+		}
+
+		// Panel requires Wayland with layer-shell protocol support
+		let use_panel = should_use_panel();
+
+		if use_panel {
+			// Try to launch as a background panel (requires Wayland layer-shell)
+			let mut cmd = Command::new("kitty");
+			let status = cmd
+				.current_dir(working_dir)
+				.args([
+					"+kitten",
+					"panel",
+					"--focus-policy=not-allowed",
+					"--edge=background",
+					"--listen-on",
+					&socket_addr,
+					"--class",
+					&session,
+					"-o",
+					"allow_remote_control=yes",
+					"--detach",
+					"bash",
+					"--noprofile",
+					"--norc",
+					"-lc",
+					command,
+				])
+				.status()
+				.expect("kitty panel launch should run");
+			assert!(status.success(), "kitty panel should launch");
+		} else {
+			// Use a normal window instead of a panel
+			let mut cmd = Command::new("kitty");
+			let _ = cmd
+				.current_dir(working_dir)
+				.args([
+					"--listen-on",
+					&socket_addr,
+					"--class",
+					&session,
+					"-o",
+					"allow_remote_control=yes",
+					"bash",
+					"--noprofile",
+					"--norc",
+					"-lc",
+					command,
+				])
+				.spawn()
+				.expect("kitty launch should spawn")
+				.wait();
+			// Give kitty a moment to create the socket
+			thread::sleep(Duration::from_millis(200));
+		}
 
 		let window_id = wait_for_window(&socket_addr);
 
@@ -132,6 +173,14 @@ impl KittyHarness {
 		let clean = strip_ansi(&raw);
 		(raw, clean)
 	}
+}
+
+static SESSION_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+fn next_session_name() -> String {
+	let pid = std::process::id();
+	let idx = SESSION_COUNTER.fetch_add(1, Ordering::Relaxed);
+	format!("kitty-test-{pid}-{idx}")
 }
 
 impl Drop for KittyHarness {
@@ -241,8 +290,6 @@ macro_rules! __kitty_key {
 }
 
 /// Define a kitty snapshot test with a provided working directory binding.
-///
-/// The test is not automatically ignored; add `#[ignore]` attribute if needed.
 #[macro_export]
 macro_rules! kitty_snapshot_test {
 	($name:ident, |$dir:ident| $body:block) => {
@@ -253,28 +300,6 @@ macro_rules! kitty_snapshot_test {
 			insta::assert_snapshot!(stringify!($name), output);
 		}
 	};
-}
-
-fn wait_for_window(socket_addr: &str) -> WindowId {
-	for _ in 0..40 {
-		let ls = Ls::new().to(socket_addr.to_string());
-		let mut cmd: Command = (&ls).into();
-		if let Ok(output) = cmd.output()
-			&& let Ok(os_windows) = Ls::result(&output)
-			&& let Some(id) = first_window_id(os_windows)
-		{
-			return id;
-		}
-		thread::sleep(Duration::from_millis(100));
-	}
-	panic!("kitty remote control not reachable or window not found");
-}
-
-fn first_window_id(ls: kitty_remote_bindings::model::OsWindows) -> Option<WindowId> {
-	ls.0.first()
-		.and_then(|os| os.tabs.first())
-		.and_then(|tab| tab.windows.first())
-		.map(|win| win.id)
 }
 
 fn clean_trailing_whitespace(input: &str) -> String {
