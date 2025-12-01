@@ -1,12 +1,12 @@
 # kitty-macro-tests
 
-Integration test harness for driving kitty terminal emulator via remote control protocol and capturing rendered screen output. The library enables automated testing of terminal-based applications by launching kitty instances, sending input sequences, and extracting screen content with or without ANSI escape sequences.
+Integration test harness for driving kitty terminal via remote control protocol and capturing rendered screen output. The library enables automated testing of terminal-based applications by launching kitty instances, sending input sequences, and extracting screen content with or without ANSI escape sequences.
 
 ## Core functionality
 
 The harness provides programmatic control over kitty terminal instances through the remote control protocol. It launches background kitty panels via Unix domain sockets, sends text and encoded key sequences, and captures screen contents for assertion in integration tests.
 
-Screen capture supports both raw output (preserving ANSI/OSC sequences) and stripped output (plain text). Key sequences are encoded using termwiz's keyboard protocol implementation rather than hardcoded escape strings, providing compatibility with kitty's keyboard protocol.
+Screen capture supports both raw output (preserving ANSI/OSC sequences) and stripped output (plain text). Key sequences are encoded using `termwiz`'s keyboard protocol implementation rather than hardcoded escape strings, providing compatibility with kitty's keyboard protocol.
 
 Kitty terminal must be available on PATH with remote control enabled.
 

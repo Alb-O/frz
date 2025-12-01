@@ -4,7 +4,7 @@
     (inputs.git-hooks + /flake-module.nix)
   ];
   perSystem =
-    { config, pkgs, ... }:
+    { config, ... }:
     {
       pre-commit.settings = {
         hooks = {
