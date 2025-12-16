@@ -1496,9 +1496,9 @@ dependencies = [
 [[package]]
 name = "kitty-test-harness"
 version = "0.1.0"
+source = "git+https://github.com/Alb-O/kitty-test-harness?branch=main#7357a55bd436a9c77cf171535229ea9c0f1de967"
 dependencies = [
  "ansi-escape-sequences",
- "insta",
  "kitty-remote-bindings",
  "termwiz",
 ]

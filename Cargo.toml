@@ -22,4 +22,4 @@ frz-core = { path = "crates/core" }
 frz-integration-tests = { path = "crates/integration-tests" }
 frz-stream = { path = "crates/stream" }
 frz-tui = { path = "crates/tui" }
-kitty-test-harness = { path = "crates/kitty-test-harness" }
+kitty-test-harness = { git = "https://github.com/Alb-O/kitty-test-harness", branch = "main" }

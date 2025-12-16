@@ -16,7 +16,7 @@
         cargo-insta
         # Utilities
         (writeShellScriptBin "kitty-runner" ''
-          exec cargo run -q -p kitty-test-harness --bin kitty-runner -- "$@"
+          exec nix run github:Alb-O/kitty-test-harness#kitty-runner -- "$@"
         '')
       ];
     };
