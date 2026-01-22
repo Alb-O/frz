@@ -1495,8 +1495,9 @@ dependencies = [
 
 [[package]]
 name = "kitty-test-harness"
-version = "0.1.0"
-source = "git+https://github.com/Alb-O/kitty-test-harness?branch=main#7357a55bd436a9c77cf171535229ea9c0f1de967"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b22ccd2622f17e2c840279d56f30c0c0a0a447f03b53fa2901a846c8600e232"
 dependencies = [
  "ansi-escape-sequences",
  "kitty-remote-bindings",
